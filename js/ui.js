@@ -39,6 +39,7 @@ class UI {
         this.elements.monsterHpText = document.getElementById('monster-hp-text');
         this.elements.damageNumbers = document.getElementById('damage-numbers');
         this.elements.lootPopup = document.getElementById('loot-popup');
+        this.elements.heroesDisplay = document.getElementById('heroes-display');
 
         // パネル
         this.elements.heroesList = document.getElementById('heroes-list');
@@ -333,7 +334,40 @@ class UI {
         this.renderArtifacts();
         this.renderEquipment();
         this.renderInventory();
+        this.renderHeroesDisplay();
         this.updateDisplay();
+    }
+
+    // 味方ヒーロー表示（バトルエリア）
+    renderHeroesDisplay() {
+        let html = '';
+
+        // ヒーローと仲間を表示
+        GameData.HEROES.forEach(hero => {
+            const level = this.game.state.heroLevels[hero.id] || 0;
+            if (level > 0) {
+                html += `
+                    <div class="hero-icon active" title="${hero.name} Lv.${level}">
+                        ${hero.emoji}
+                        <span class="hero-level">${level > 99 ? '99+' : level}</span>
+                    </div>
+                `;
+            }
+        });
+
+        GameData.COMPANIONS.forEach(comp => {
+            const level = this.game.state.companionLevels[comp.id] || 0;
+            if (level > 0) {
+                html += `
+                    <div class="hero-icon active" title="${comp.name} Lv.${level}">
+                        ${comp.emoji}
+                        <span class="hero-level">${level > 99 ? '99+' : level}</span>
+                    </div>
+                `;
+            }
+        });
+
+        this.elements.heroesDisplay.innerHTML = html;
     }
 
     renderHeroes() {
@@ -398,6 +432,7 @@ class UI {
                 }
 
                 this.renderHeroes();
+                this.renderHeroesDisplay();
             });
         });
     }
