@@ -84,8 +84,8 @@ body {
    ヘッダー - Persona Style
    ======================================== */
 #header {
-    padding: var(--spacing-sm) var(--spacing-md);
-    padding-top: calc(var(--spacing-sm) + var(--safe-area-top));
+    padding: var(--spacing-xs) var(--spacing-md);
+    padding-top: calc(var(--spacing-xs) + var(--safe-area-top));
     background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
     border-bottom: 3px solid var(--accent-red);
     position: relative;
@@ -199,17 +199,18 @@ body {
    バトルエリア - Dynamic Battle Zone
    ======================================== */
 #battle-area {
-    flex: 1;
+    flex: 0 0 auto;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: var(--spacing-md);
+    padding: var(--spacing-sm);
     background:
         radial-gradient(ellipse at center, rgba(255,0,64,0.1) 0%, transparent 60%),
         linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 50%, #1a1a1a 100%);
     position: relative;
-    min-height: 250px;
+    min-height: 180px;
+    max-height: 220px;
     cursor: pointer;
     overflow: hidden;
 }
@@ -811,11 +812,13 @@ body {
    タブパネル - Sleek Panels
    ======================================== */
 #tab-panels {
-    height: 35%;
-    min-height: 200px;
+    flex: 1;
+    min-height: 0;
     background: var(--bg-secondary);
     overflow: hidden;
     position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
 #tab-panels::before {
@@ -830,10 +833,10 @@ body {
 
 .tab-panel {
     display: none;
-    height: 100%;
+    flex: 1;
     flex-direction: column;
-    padding: var(--spacing-md);
-    padding-bottom: calc(var(--spacing-md) + var(--safe-area-bottom));
+    padding: var(--spacing-sm) var(--spacing-md);
+    padding-bottom: calc(var(--spacing-sm) + var(--safe-area-bottom));
     overflow-y: auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
@@ -883,10 +886,10 @@ body {
 .upgrade-item {
     display: flex;
     align-items: center;
-    padding: var(--spacing-sm) var(--spacing-md);
+    padding: 6px var(--spacing-sm);
     background: linear-gradient(90deg, rgba(42,42,42,0.8) 0%, rgba(26,26,26,0.8) 100%);
-    margin-bottom: var(--spacing-sm);
-    gap: var(--spacing-sm);
+    margin-bottom: 4px;
+    gap: var(--spacing-xs);
     border-left: 3px solid var(--accent-red);
     transition: all 0.2s ease;
     transform: skewX(-2deg);
@@ -902,8 +905,8 @@ body {
 }
 
 .upgrade-icon {
-    font-size: 28px;
-    width: 44px;
+    font-size: 22px;
+    width: 32px;
     text-align: center;
     filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
 }
@@ -914,7 +917,7 @@ body {
 
 .upgrade-name {
     font-weight: 900;
-    font-size: 14px;
+    font-size: 12px;
     color: var(--accent-white);
     letter-spacing: 1px;
 }
@@ -926,14 +929,14 @@ body {
 }
 
 .upgrade-btn {
-    padding: 8px 14px;
+    padding: 6px 10px;
     background: linear-gradient(180deg, var(--accent-red) 0%, var(--accent-red-dark) 100%);
     border: none;
     color: white;
     font-weight: 900;
     cursor: pointer;
-    min-width: 90px;
-    font-size: 12px;
+    min-width: 75px;
+    font-size: 11px;
     letter-spacing: 1px;
     transform: skewX(-5deg);
     box-shadow: 0 3px 10px rgba(255,0,64,0.4);
