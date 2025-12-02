@@ -44,6 +44,9 @@ class UI {
         this.elements.heroesList = document.getElementById('heroes-list');
         this.elements.totalDps = document.getElementById('total-dps');
         this.elements.inventoryList = document.getElementById('inventory-list');
+        this.elements.inventoryCount = document.getElementById('inventory-count');
+        this.elements.sortInventoryBtn = document.getElementById('sort-inventory-btn');
+        this.elements.sellCommonBtn = document.getElementById('sell-common-btn');
         this.elements.skillsList = document.getElementById('skills-list');
         this.elements.artifactsList = document.getElementById('artifacts-list');
         this.elements.artifactSouls = document.getElementById('artifact-souls');
@@ -192,6 +195,14 @@ class UI {
         }
         if (this.elements.resetBtn) {
             addTouchAndClick(this.elements.resetBtn, () => this.onDataReset());
+        }
+
+        // インベントリ管理ボタン
+        if (this.elements.sortInventoryBtn) {
+            addTouchAndClick(this.elements.sortInventoryBtn, () => this.sortInventory());
+        }
+        if (this.elements.sellCommonBtn) {
+            addTouchAndClick(this.elements.sellCommonBtn, () => this.sellCommonItems());
         }
     }
 
@@ -653,6 +664,11 @@ class UI {
     }
 
     renderInventory() {
+        // インベントリ数表示
+        if (this.elements.inventoryCount) {
+            this.elements.inventoryCount.textContent = `(${this.game.state.inventory.length})`;
+        }
+
         let html = '';
 
         this.game.state.inventory.forEach((item, index) => {
@@ -704,6 +720,62 @@ class UI {
                 if (!e.defaultPrevented) handleClick();
             });
         });
+    }
+
+    // レアリティの優先度マップ
+    getRarityPriority(rarity) {
+        const priorities = {
+            'LEGENDARY': 5,
+            'EPIC': 4,
+            'RARE': 3,
+            'UNCOMMON': 2,
+            'COMMON': 1
+        };
+        return priorities[rarity] || 0;
+    }
+
+    // インベントリソート（レアリティ高い順）
+    sortInventory() {
+        this.game.state.inventory.sort((a, b) => {
+            // まずレアリティで比較
+            const rarityDiff = this.getRarityPriority(b.rarity) - this.getRarityPriority(a.rarity);
+            if (rarityDiff !== 0) return rarityDiff;
+            // 同じレアリティなら値で比較
+            return b.value - a.value;
+        });
+        this.renderInventory();
+        this.showToast('📦 レアリティ順にソートしました');
+    }
+
+    // コモン・アンコモンアイテムを売却
+    sellCommonItems() {
+        const itemsToSell = this.game.state.inventory.filter(
+            item => item.rarity === 'COMMON' || item.rarity === 'UNCOMMON'
+        );
+
+        if (itemsToSell.length === 0) {
+            this.showToast('売却できるアイテムがありません');
+            return;
+        }
+
+        // 売却価格計算（レアリティに応じて）
+        let totalGold = 0;
+        itemsToSell.forEach(item => {
+            const basePrice = item.value * 10;
+            totalGold += item.rarity === 'UNCOMMON' ? basePrice * 2 : basePrice;
+        });
+
+        if (confirm(`コモン・アンコモン ${itemsToSell.length}個 を\n💰${this.formatNumber(totalGold)}G で売却しますか？`)) {
+            // アイテム削除
+            this.game.state.inventory = this.game.state.inventory.filter(
+                item => item.rarity !== 'COMMON' && item.rarity !== 'UNCOMMON'
+            );
+            // ゴールド追加
+            this.game.state.gold += totalGold;
+            this.renderInventory();
+            this.updateDisplay();
+            this.showToast(`💰 ${this.formatNumber(totalGold)}G 獲得！`);
+        }
     }
 
     // ========================================
@@ -1065,9 +1137,24 @@ class UI {
     }
 
     travelToWorld(world) {
-        // ワールドの開始ステージに移動
-        if (this.game.state.currentStage !== world.stageRange[0]) {
-            this.game.state.currentStage = world.stageRange[0];
+        const currentStage = this.game.state.currentStage;
+        const [minStage, maxStage] = world.stageRange;
+
+        // 既にそのワールド内にいる場合は何もしない
+        if (currentStage >= minStage && currentStage <= maxStage) {
+            this.showToast(`現在${world.name}にいます`);
+            this.closeWorldMap();
+            return;
+        }
+
+        // 別のワールドへの移動は確認を取る
+        if (confirm(`${world.name}のステージ${minStage}に移動しますか？\n\n※現在のステージ: ${currentStage}`)) {
+            // maxStageReachedを更新（より高いステージを記録）
+            if (!this.game.state.maxStageReached || currentStage > this.game.state.maxStageReached) {
+                this.game.state.maxStageReached = currentStage;
+            }
+
+            this.game.state.currentStage = minStage;
             this.game.state.monstersKilled = 0;
             this.game.spawnMonster();
             this.showToast(`${world.icon} ${world.name}へ移動しました！`);

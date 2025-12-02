@@ -115,7 +115,13 @@
                         <div id="accessory-slot" class="slot-item empty">なし</div>
                     </div>
                 </div>
-                <h3>所持品</h3>
+                <div class="inventory-header">
+                    <h3>所持品 <span id="inventory-count"></span></h3>
+                    <div class="inventory-actions">
+                        <button id="sort-inventory-btn" class="inv-btn">並替</button>
+                        <button id="sell-common-btn" class="inv-btn sell">売却</button>
+                    </div>
+                </div>
                 <div id="inventory-list" class="inventory-grid"></div>
             </div>
 
@@ -249,6 +255,6 @@
     <script src="js/ui.js"></script>
     <script src="js/save.js"></script>
     <script src="js/main.js"></script>
-    <div id="debug-version" style="position:fixed;bottom:5px;left:5px;font-size:10px;color:#666;z-index:9999;">v2.14</div>
+    <div id="debug-version" style="position:fixed;bottom:5px;left:5px;font-size:10px;color:#666;z-index:9999;">v2.15</div>
 </body>
 </html>
