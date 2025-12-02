@@ -55,6 +55,7 @@ class UI {
         this.elements.currentStageRebirth = document.getElementById('current-stage-rebirth');
         this.elements.rebirthCount = document.getElementById('rebirth-count');
         this.elements.pendingSouls = document.getElementById('pending-souls');
+        this.elements.pendingSP = document.getElementById('pending-sp');
         this.elements.rebirthBtn = document.getElementById('rebirth-btn');
 
         // セーブ・リセット・更新ボタン
@@ -422,6 +423,9 @@ class UI {
         this.elements.currentStageRebirth.textContent = this.game.state.currentStage;
         this.elements.rebirthCount.textContent = this.game.state.rebirthCount;
         this.elements.pendingSouls.textContent = this.formatNumber(this.game.getPendingSouls());
+        if (this.elements.pendingSP) {
+            this.elements.pendingSP.textContent = this.game.getPendingSkillPoints();
+        }
         this.elements.rebirthBtn.disabled = !this.game.canRebirth();
 
         // アーティファクトソウル（存在する場合のみ更新）
@@ -444,9 +448,12 @@ class UI {
     renderAll() {
         this.renderHeroes();
         this.renderSkills();
+        this.renderSkillTree();
         this.renderArtifacts();
         this.renderEquipment();
         this.renderInventory();
+        this.renderCollection();
+        this.renderAchievements();
         this.updateDisplay();
     }
 
@@ -912,9 +919,10 @@ class UI {
         if (!this.game.canRebirth()) return;
 
         const souls = this.game.getPendingSouls();
-        if (confirm(`転生しますか？\n\n獲得ソウル: ${this.formatNumber(souls)}\n\n※ゴールド、ヒーロー、仲間がリセットされます`)) {
+        const skillPoints = this.game.getPendingSkillPoints();
+        if (confirm(`転生しますか？\n\n獲得ソウル: ${this.formatNumber(souls)}\n獲得スキルポイント: ${skillPoints}\n\n※ゴールド、ヒーロー、仲間がリセットされます`)) {
             const gained = this.game.rebirth();
-            this.showToast(`転生完了！👻${this.formatNumber(gained)}ソウル獲得！`);
+            this.showToast(`転生完了！👻${this.formatNumber(gained)}ソウル ✨${skillPoints}SP獲得！`);
             this.renderAll();
         }
     }

@@ -868,6 +868,11 @@ class Game {
         this.state.souls += soulsGained;
         this.state.rebirthCount++;
 
+        // スキルポイント獲得（ステージ進行に基づく）
+        // 100ステージごとに1ポイント
+        const skillPointsGained = Math.floor(this.state.maxStageReached / 100);
+        this.state.skillPoints += skillPointsGained;
+
         // リセット
         this.state.gold = 0;
         this.state.currentStage = 1;
@@ -1003,8 +1008,8 @@ class Game {
     }
 
     getAvailableSkillPoints() {
-        // 転生回数がスキルポイント
-        const totalPoints = this.state.rebirthCount;
+        // 累計獲得スキルポイント
+        const totalPoints = this.state.skillPoints || 0;
         // 使用済みポイントを計算
         let usedPoints = 0;
         GameData.SKILL_TREE.SKILLS.forEach(skill => {
@@ -1012,6 +1017,11 @@ class Game {
             usedPoints += level * skill.costPerLevel;
         });
         return totalPoints - usedPoints;
+    }
+
+    // 転生時に獲得予定のスキルポイントを計算
+    getPendingSkillPoints() {
+        return Math.floor(this.state.maxStageReached / 100);
     }
 
     canUpgradeSkillTree(skillId) {
