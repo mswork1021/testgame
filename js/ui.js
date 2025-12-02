@@ -54,6 +54,10 @@ class UI {
         this.elements.pendingSouls = document.getElementById('pending-souls');
         this.elements.rebirthBtn = document.getElementById('rebirth-btn');
 
+        // セーブ・リセットボタン
+        this.elements.saveBtn = document.getElementById('save-btn');
+        this.elements.resetBtn = document.getElementById('reset-btn');
+
         // 装備スロット
         this.elements.weaponSlot = document.getElementById('weapon-slot');
         this.elements.armorSlot = document.getElementById('armor-slot');
@@ -181,6 +185,14 @@ class UI {
 
         // ストーリーモード
         addTouchAndClick(this.elements.storyNextBtn, () => this.advanceStory());
+
+        // セーブ・リセットボタン
+        if (this.elements.saveBtn) {
+            addTouchAndClick(this.elements.saveBtn, () => this.onManualSave());
+        }
+        if (this.elements.resetBtn) {
+            addTouchAndClick(this.elements.resetBtn, () => this.onDataReset());
+        }
     }
 
     setupGameCallbacks() {
@@ -644,21 +656,42 @@ class UI {
         let html = '';
 
         this.game.state.inventory.forEach((item, index) => {
+            // 現在の装備との比較
+            const currentEquip = this.game.state.equipment[item.type];
+            let compareText = '';
+            if (currentEquip) {
+                const diff = item.value - currentEquip.value;
+                if (diff > 0) {
+                    compareText = `<span class="item-compare up">▲${diff}</span>`;
+                } else if (diff < 0) {
+                    compareText = `<span class="item-compare down">▼${Math.abs(diff)}</span>`;
+                } else {
+                    compareText = `<span class="item-compare same">=</span>`;
+                }
+            } else {
+                compareText = `<span class="item-compare new">NEW</span>`;
+            }
+
             html += `
-                <div class="inventory-item ${item.rarityClass}" data-index="${index}">
-                    ${item.emoji}
+                <div class="inventory-item-row ${item.rarityClass}" data-index="${index}">
+                    <div class="item-icon">${item.emoji}</div>
+                    <div class="item-info">
+                        <div class="item-name">${item.name}</div>
+                        <div class="item-stat">${this.getStatLabel(item.stat)} +${item.value}</div>
+                    </div>
+                    ${compareText}
                 </div>
             `;
         });
 
         if (this.game.state.inventory.length === 0) {
-            html = '<div style="grid-column: 1/-1; text-align: center; color: #666; padding: 20px;">アイテムなし</div>';
+            html = '<div style="text-align: center; color: #666; padding: 20px;">アイテムなし</div>';
         }
 
         this.elements.inventoryList.innerHTML = html;
 
         // イベント（タッチとクリック両方対応）
-        this.elements.inventoryList.querySelectorAll('.inventory-item').forEach(el => {
+        this.elements.inventoryList.querySelectorAll('.inventory-item-row').forEach(el => {
             const handleClick = () => {
                 const index = parseInt(el.dataset.index);
                 this.openEquipmentModal(this.game.state.inventory[index]);
@@ -705,9 +738,31 @@ class UI {
         this.elements.equipModalTitle.textContent = `${item.emoji} ${item.name}`;
         this.elements.equipModalTitle.style.color = GameData.RARITY[item.rarity].color;
 
+        const typeLabel = item.type === 'weapon' ? '武器' : item.type === 'armor' ? '防具' : 'アクセサリー';
         let statsHtml = `<p style="color: ${GameData.RARITY[item.rarity].color}">${item.rarityName}</p>`;
-        statsHtml += `<p>タイプ: ${item.type === 'weapon' ? '武器' : item.type === 'armor' ? '防具' : 'アクセサリー'}</p>`;
+        statsHtml += `<p>タイプ: ${typeLabel}</p>`;
         statsHtml += `<p>効果: ${this.getStatLabel(item.stat)} +${item.value}</p>`;
+
+        // 現在の装備との比較
+        const currentEquip = this.game.state.equipment[item.type];
+        if (currentEquip) {
+            statsHtml += `<div class="equip-compare">`;
+            statsHtml += `<p style="color:#888; margin-top:10px;">── 現在の装備 ──</p>`;
+            statsHtml += `<p>${currentEquip.emoji} ${currentEquip.name}</p>`;
+            statsHtml += `<p>${this.getStatLabel(currentEquip.stat)} +${currentEquip.value}</p>`;
+
+            const diff = item.value - currentEquip.value;
+            if (diff > 0) {
+                statsHtml += `<p class="compare-result up">装備すると ▲+${diff} アップ！</p>`;
+            } else if (diff < 0) {
+                statsHtml += `<p class="compare-result down">装備すると ▼${diff} ダウン</p>`;
+            } else {
+                statsHtml += `<p class="compare-result same">性能は同じです</p>`;
+            }
+            statsHtml += `</div>`;
+        } else {
+            statsHtml += `<p class="compare-result new" style="margin-top:10px;">新しい${typeLabel}です！</p>`;
+        }
 
         this.elements.equipModalStats.innerHTML = statsHtml;
         this.elements.equipmentModal.classList.remove('hidden');
@@ -803,6 +858,28 @@ class UI {
 
         this.elements.offlineModal.classList.add('hidden');
         this.updateDisplay();
+    }
+
+    // ========================================
+    // セーブ・リセット
+    // ========================================
+    onManualSave() {
+        if (window.saveManager && window.saveManager.save()) {
+            this.showToast('💾 セーブしました！');
+        } else {
+            this.showToast('⚠️ セーブに失敗しました');
+        }
+    }
+
+    onDataReset() {
+        if (confirm('本当にデータをリセットしますか？\n\nすべての進行状況が失われます。\nこの操作は取り消せません。')) {
+            if (confirm('最終確認：本当にリセットしますか？')) {
+                if (window.saveManager) {
+                    window.saveManager.deleteSave();
+                }
+                location.reload();
+            }
+        }
     }
 
     // ========================================
