@@ -994,14 +994,41 @@ class UI {
         }
     }
 
-    onRefresh() {
+    async onRefresh() {
         // セーブしてからリロード
         const sm = window.TapQuest && window.TapQuest.saveManager;
         if (sm) {
             sm.save();
         }
-        // キャッシュをクリアしてリロード
-        location.reload(true);
+
+        this.showToast('キャッシュをクリア中...');
+
+        try {
+            // Service Workerのキャッシュをクリア
+            if ('caches' in window) {
+                const names = await caches.keys();
+                await Promise.all(names.map(name => caches.delete(name)));
+                console.log('All caches cleared');
+            }
+
+            // Service Workerを更新
+            if ('serviceWorker' in navigator) {
+                const registration = await navigator.serviceWorker.getRegistration();
+                if (registration) {
+                    await registration.update();
+                    if (registration.waiting) {
+                        registration.waiting.postMessage('skipWaiting');
+                    }
+                }
+            }
+        } catch (e) {
+            console.log('Cache clear error:', e);
+        }
+
+        // 少し待ってからリロード（キャッシュバスター付き）
+        setTimeout(() => {
+            window.location.href = window.location.href.split('?')[0] + '?v=' + Date.now();
+        }, 500);
     }
 
     // ========================================
