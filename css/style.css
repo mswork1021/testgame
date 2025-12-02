@@ -2330,9 +2330,30 @@ button:focus {
    スキルツリー
    ======================================== */
 .skill-tree-header {
-    margin-top: var(--spacing-md);
-    border-top: 2px solid var(--accent-red);
-    padding-top: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+}
+
+.skill-tree-info-box {
+    background: rgba(100, 100, 100, 0.2);
+    border: 1px solid #555;
+    padding: var(--spacing-sm);
+    text-align: center;
+    font-size: 12px;
+    color: #aaa;
+}
+
+.skill-tree-info-box.active {
+    background: rgba(231, 76, 60, 0.1);
+    border-color: var(--accent-red);
+    color: #fff;
+}
+
+.skill-tree-info-box p {
+    margin: 2px 0;
+}
+
+.skill-tree-info-box strong {
+    color: var(--accent-gold);
 }
 
 .skill-points-display {

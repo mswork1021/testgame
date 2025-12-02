@@ -93,6 +93,14 @@ class SaveManager {
             }
         }
 
+        // 新しく追加されたフィールドのデフォルト値を確保
+        // （savedStateに存在しない場合、defaultStateの値を使用）
+        for (const key in defaultState) {
+            if (!(key in savedState)) {
+                merged[key] = defaultState[key];
+            }
+        }
+
         return merged;
     }
 

@@ -1415,13 +1415,32 @@ class UI {
     renderSkillTree() {
         if (!this.elements.skillTreeContainer) return;
 
+        // セーフティチェック
+        if (!this.game.state.skillTreeLevels) this.game.state.skillTreeLevels = {};
+
         // スキルポイント表示
         const availableSP = this.game.getAvailableSkillPoints();
+        const totalSP = this.game.state.skillPoints || 0;
         if (this.elements.skillPoints) {
             this.elements.skillPoints.textContent = availableSP;
         }
 
         let html = '';
+
+        // SP説明ヘッダー
+        html += `<div class="skill-tree-header">`;
+        if (totalSP === 0) {
+            html += `<div class="skill-tree-info-box">
+                <p>💡 スキルポイント(SP)は<strong>転生</strong>で獲得できます</p>
+                <p style="font-size:11px;color:#888;">ステージ100ごとに+1SP (例: ステージ300で転生 → 3SP)</p>
+            </div>`;
+        } else {
+            html += `<div class="skill-tree-info-box active">
+                <p>✨ 利用可能SP: <strong>${availableSP}</strong> / 累計: ${totalSP}</p>
+                <p style="font-size:11px;color:#888;">スキルをタップして強化しよう！</p>
+            </div>`;
+        }
+        html += `</div>`;
 
         // カテゴリごとにスキルを表示
         GameData.SKILL_TREE.CATEGORIES.forEach(category => {
@@ -1500,7 +1519,9 @@ class UI {
 
     renderMonsterCollection() {
         const allMonsters = [...GameData.MONSTERS, ...GameData.BOSSES];
-        const discovered = [...this.game.state.discoveredMonsters, ...this.game.state.discoveredBosses];
+        const discoveredMonsters = this.game.state.discoveredMonsters || [];
+        const discoveredBosses = this.game.state.discoveredBosses || [];
+        const discovered = [...discoveredMonsters, ...discoveredBosses];
 
         // 進捗表示
         if (this.elements.collectionProgress) {
@@ -1542,7 +1563,7 @@ class UI {
             });
         });
 
-        const obtained = this.game.state.obtainedEquipment;
+        const obtained = this.game.state.obtainedEquipment || {};
         const obtainedCount = Object.keys(obtained).length;
 
         // 進捗表示
@@ -1574,6 +1595,10 @@ class UI {
     // ========================================
     renderAchievements() {
         if (!this.elements.achievementsList) return;
+
+        // セーフティチェック
+        if (!this.game.state.unlockedAchievements) this.game.state.unlockedAchievements = [];
+        if (!this.game.state.claimedAchievements) this.game.state.claimedAchievements = [];
 
         const unlockedCount = this.game.state.unlockedAchievements.length;
         const totalCount = GameData.ACHIEVEMENTS.length;

@@ -1069,6 +1069,7 @@ class Game {
     // 図鑑
     // ========================================
     discoverMonster(monsterName) {
+        if (!this.state.discoveredMonsters) this.state.discoveredMonsters = [];
         if (!this.state.discoveredMonsters.includes(monsterName)) {
             this.state.discoveredMonsters.push(monsterName);
             this.checkAchievements();
@@ -1078,6 +1079,7 @@ class Game {
     }
 
     discoverBoss(bossName) {
+        if (!this.state.discoveredBosses) this.state.discoveredBosses = [];
         if (!this.state.discoveredBosses.includes(bossName)) {
             this.state.discoveredBosses.push(bossName);
             return true;
@@ -1086,6 +1088,7 @@ class Game {
     }
 
     recordEquipment(equipment) {
+        if (!this.state.obtainedEquipment) this.state.obtainedEquipment = {};
         const key = `${equipment.name}_${equipment.rarity}`;
         if (!this.state.obtainedEquipment[key]) {
             this.state.obtainedEquipment[key] = {
@@ -1102,17 +1105,24 @@ class Game {
     }
 
     getDiscoveredMonsterCount() {
-        return this.state.discoveredMonsters.length + this.state.discoveredBosses.length;
+        const monsters = this.state.discoveredMonsters || [];
+        const bosses = this.state.discoveredBosses || [];
+        return monsters.length + bosses.length;
     }
 
     hasObtainedRarity(rarity) {
-        return Object.values(this.state.obtainedEquipment).some(eq => eq.rarity === rarity);
+        const equipment = this.state.obtainedEquipment || {};
+        return Object.values(equipment).some(eq => eq.rarity === rarity);
     }
 
     // ========================================
     // 実績
     // ========================================
     checkAchievements() {
+        // セーフティチェック
+        if (!this.state.unlockedAchievements) this.state.unlockedAchievements = [];
+        if (!this.state.claimedAchievements) this.state.claimedAchievements = [];
+
         const newlyUnlocked = [];
 
         GameData.ACHIEVEMENTS.forEach(achievement => {
