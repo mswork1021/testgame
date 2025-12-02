@@ -181,15 +181,38 @@ class Game {
             const monsterData = availableMonsters[Math.floor(Math.random() * availableMonsters.length)];
             const hp = this.getBaseMonsterHp();
 
+            // レアモンスター判定 (5%の確率)
+            const isRare = Math.random() < 0.05;
+
             this.currentMonster = {
-                name: monsterData.name,
+                name: isRare ? `✨${monsterData.name}✨` : monsterData.name,
                 svg: monsterData.svg,
-                color: monsterData.color,
+                color: isRare ? '#ffd700' : monsterData.color, // レアは金色
                 maxHp: hp,
                 currentHp: hp,
-                isBoss: false
+                isBoss: false,
+                isRare: isRare,
+                monsterType: monsterData.name, // 元のタイプを保存
+                traits: this.getMonsterTraits(monsterData.name) // 特性を付与
             };
         }
+    }
+
+    // モンスター特性を取得
+    getMonsterTraits(monsterName) {
+        const traits = {
+            'スライム': { goldBonus: 1.5, dropBonus: 1.0, desc: 'ゴールド+50%' },
+            'ゴースト': { goldBonus: 1.0, dropBonus: 2.0, desc: 'ドロップ率2倍' },
+            'コウモリ': { goldBonus: 1.2, dropBonus: 1.2, desc: 'バランス型' },
+            'マッシュルーム': { goldBonus: 1.0, dropBonus: 2.5, desc: 'ドロップ率2.5倍' },
+            'オバケツリー': { goldBonus: 2.0, dropBonus: 1.0, desc: 'ゴールド2倍' },
+            'ウルフ': { goldBonus: 1.3, dropBonus: 1.5, desc: 'やや高報酬' },
+            'ミミック': { goldBonus: 1.5, dropBonus: 3.0, desc: '宝箱！ドロップ3倍' },
+            'ゴーレム': { goldBonus: 2.0, dropBonus: 1.5, desc: '高報酬' },
+            'ワイバーン': { goldBonus: 1.5, dropBonus: 2.0, desc: '竜の財宝' },
+            'デーモン': { goldBonus: 2.5, dropBonus: 2.0, desc: '魔王の宝' }
+        };
+        return traits[monsterName] || { goldBonus: 1.0, dropBonus: 1.0, desc: '' };
     }
 
     // 現在のワールドを取得
@@ -424,18 +447,23 @@ class Game {
             this.state.totalMonstersKilled++;
             console.log(`[DEBUG] モンスター撃破 #${this.state.monstersKilled}`);
 
-            // ゴールド報酬
+            // モンスター特性を取得
+            const traits = monster.traits || { goldBonus: 1.0, dropBonus: 1.0 };
+            const rareMultiplier = monster.isRare ? 2.0 : 1.0; // レアは2倍
+
+            // ゴールド報酬（特性とレアボーナス適用）
             let goldReward = Math.floor(monster.maxHp * GameData.BALANCE.GOLD_PER_HP_RATIO);
             if (monster.isBoss) {
                 goldReward *= GameData.BALANCE.BOSS_GOLD_MULTIPLIER;
             }
-            goldReward = Math.floor(goldReward * this.getGoldMultiplier());
+            goldReward = Math.floor(goldReward * this.getGoldMultiplier() * traits.goldBonus * rareMultiplier);
             this.state.gold += goldReward;
             this.state.totalGoldEarned += goldReward;
 
-            // ドロップチェック（エラーでも続行）
+            // ドロップチェック（特性とレアボーナス適用）
             try {
-                this.checkEquipmentDrop(monster.isBoss);
+                const dropMultiplier = traits.dropBonus * (monster.isRare ? 3.0 : 1.0);
+                this.checkEquipmentDrop(monster.isBoss, dropMultiplier);
             } catch (e) {
                 console.error('[DEBUG] ドロップエラー:', e);
             }
@@ -518,10 +546,13 @@ class Game {
     // ========================================
     // 装備ドロップ
     // ========================================
-    checkEquipmentDrop(isBoss) {
-        const dropChance = isBoss
+    checkEquipmentDrop(isBoss, dropMultiplier = 1.0) {
+        let dropChance = isBoss
             ? GameData.BALANCE.BOSS_EQUIPMENT_DROP_CHANCE
             : GameData.BALANCE.EQUIPMENT_DROP_CHANCE;
+
+        // ドロップ倍率を適用
+        dropChance *= dropMultiplier;
 
         if (Math.random() * 100 >= dropChance) return;
 

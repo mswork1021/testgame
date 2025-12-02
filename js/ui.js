@@ -330,9 +330,21 @@ class UI {
             const monster = this.game.currentMonster;
             // SVGモンスターを表示
             this.elements.monsterEmoji.innerHTML = monster.svg;
-            this.elements.monsterName.textContent = monster.name;
-            this.elements.monsterName.className = monster.isBoss ? 'boss-name' : '';
-            this.elements.monster.className = 'monster' + (monster.isBoss ? ' boss' : '');
+
+            // モンスター名と特性表示
+            let nameText = monster.name;
+            if (monster.traits && monster.traits.desc && !monster.isBoss) {
+                nameText += ` <span class="monster-trait">${monster.traits.desc}</span>`;
+            }
+            this.elements.monsterName.innerHTML = nameText;
+
+            // クラス設定（ボス、レア）
+            let monsterClass = 'monster';
+            if (monster.isBoss) monsterClass += ' boss';
+            if (monster.isRare) monsterClass += ' rare';
+            this.elements.monster.className = monsterClass;
+            this.elements.monsterName.className = monster.isBoss ? 'boss-name' : (monster.isRare ? 'rare-name' : '');
+
             // モンスターの色でグロウエフェクト
             this.elements.monster.style.setProperty('--monster-color', monster.color);
 
