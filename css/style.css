@@ -623,6 +623,7 @@ body {
     padding: 5px 15px;
     background: rgba(0,0,0,0.6);
     border-left: 4px solid var(--accent-red);
+    z-index: 100;
 }
 
 .combo-display.hot {
