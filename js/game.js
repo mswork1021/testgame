@@ -232,13 +232,17 @@ class Game {
     dealDamage(amount, showNumber = false, isCritical = false) {
         if (!this.currentMonster) return;
 
+        // モンスターが既に死んでいる場合は処理しない（二重killMonster防止）
+        const wasAlive = this.currentMonster.currentHp > 0;
+
         this.currentMonster.currentHp -= amount;
 
         if (showNumber && this.onDamageDealt) {
             this.onDamageDealt(amount, isCritical);
         }
 
-        if (this.currentMonster.currentHp <= 0) {
+        // HPが正から0以下に変わった時だけkillMonsterを呼ぶ
+        if (wasAlive && this.currentMonster.currentHp <= 0) {
             this.killMonster();
         }
     }

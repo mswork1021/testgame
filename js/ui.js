@@ -227,11 +227,11 @@ class UI {
             this.updateComboDisplay();
         }, 1000);
 
-        // モンスターヒットアニメーション
+        // モンスターヒットアニメーション（アニメーション時間に合わせる）
         this.elements.monster.classList.add('hit');
         setTimeout(() => {
             this.elements.monster.classList.remove('hit');
-        }, 80);
+        }, 150);
 
         // タップ位置にエフェクト表示
         this.showTapEffect(e);
