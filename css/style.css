@@ -1730,3 +1730,255 @@ button:focus {
     font-size: 9px;
     color: var(--text-muted);
 }
+
+/* ========================================
+   ストーリーモード
+   ======================================== */
+.story-modal {
+    max-width: 400px;
+    min-height: 300px;
+}
+
+.story-header {
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 2px solid var(--accent-red);
+}
+
+.story-header h2 {
+    font-size: 20px;
+    text-align: center;
+}
+
+.story-scene {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.story-character {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm);
+    background: rgba(255,0,64,0.1);
+    border-left: 4px solid var(--accent-red);
+}
+
+.character-emoji {
+    font-size: 40px;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.3);
+    border-radius: 50%;
+}
+
+.character-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 2px;
+    color: var(--accent-gold);
+}
+
+.story-text {
+    padding: var(--spacing-md);
+    background: rgba(0,0,0,0.5);
+    border: 2px solid #333;
+    font-size: 14px;
+    line-height: 1.8;
+    min-height: 80px;
+    animation: textFade 0.3s ease;
+}
+
+@keyframes textFade {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+.story-controls {
+    display: flex;
+    justify-content: center;
+}
+
+.story-controls .btn-primary {
+    min-width: 120px;
+}
+
+/* ストーリーリスト */
+.story-list-modal {
+    max-width: 380px;
+    max-height: 80vh;
+}
+
+.story-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 2px solid var(--accent-red);
+}
+
+.story-chapter-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    max-height: 55vh;
+    overflow-y: auto;
+    padding-right: var(--spacing-xs);
+}
+
+.story-chapter-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: linear-gradient(90deg, rgba(42,42,42,0.9) 0%, rgba(26,26,26,0.9) 100%);
+    border-left: 4px solid var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    transform: skewX(-2deg);
+    position: relative;
+}
+
+.story-chapter-item > * {
+    transform: skewX(2deg);
+}
+
+.story-chapter-item:hover:not(.locked) {
+    transform: skewX(-2deg) translateX(5px);
+    border-left-color: var(--accent-gold);
+}
+
+.story-chapter-item.completed {
+    border-left-color: var(--accent-green);
+}
+
+.story-chapter-item.completed::after {
+    content: '✓';
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    color: var(--accent-green);
+    font-size: 16px;
+    font-weight: bold;
+    transform: skewX(2deg);
+}
+
+.story-chapter-item.available {
+    border-left-color: var(--accent-gold);
+    animation: chapterGlow 2s ease-in-out infinite;
+}
+
+@keyframes chapterGlow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,215,0,0); }
+    50% { box-shadow: 0 0 10px 2px rgba(255,215,0,0.3); }
+}
+
+.story-chapter-item.available::after {
+    content: 'NEW';
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 10px;
+    color: var(--accent-gold);
+    letter-spacing: 2px;
+    transform: skewX(2deg);
+}
+
+.story-chapter-item.locked {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.story-chapter-item.locked::after {
+    content: '🔒';
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    transform: translateY(-50%) skewX(2deg);
+    font-size: 18px;
+}
+
+.chapter-number {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,0,64,0.2);
+    border: 2px solid var(--accent-red);
+    color: var(--accent-red);
+}
+
+.chapter-info {
+    flex: 1;
+}
+
+.chapter-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    letter-spacing: 1px;
+    color: var(--accent-white);
+    margin-bottom: 2px;
+}
+
+.chapter-unlock {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.chapter-reward {
+    font-size: 11px;
+    color: var(--accent-gold);
+    margin-top: 2px;
+}
+
+.story-progress-display {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    color: var(--accent-gold);
+    letter-spacing: 2px;
+}
+
+/* ストーリー報酬表示 */
+.story-reward-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
+    border: 3px solid var(--accent-gold);
+    padding: var(--spacing-lg);
+    text-align: center;
+    z-index: 1001;
+    animation: rewardPop 0.5s ease;
+    min-width: 250px;
+}
+
+@keyframes rewardPop {
+    0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+    50% { transform: translate(-50%, -50%) scale(1.1); }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+.story-reward-popup h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    color: var(--accent-gold);
+    margin-bottom: var(--spacing-md);
+    letter-spacing: 3px;
+}
+
+.story-reward-popup .reward-content {
+    font-size: 24px;
+    margin-bottom: var(--spacing-md);
+}

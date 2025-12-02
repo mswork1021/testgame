@@ -48,7 +48,10 @@ class Game {
 
             // デイリーボーナス
             lastDailyClaimDate: null,
-            loginStreak: 0
+            loginStreak: 0,
+
+            // ストーリーモード
+            completedChapters: []
         };
 
         // 現在のモンスター

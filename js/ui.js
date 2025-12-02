@@ -84,6 +84,21 @@ class UI {
         this.elements.currentWorldName = document.getElementById('current-world-name');
         this.elements.currentWorldStage = document.getElementById('current-world-stage');
         this.elements.worldList = document.getElementById('world-list');
+
+        // ストーリーモード
+        this.elements.storyModal = document.getElementById('story-modal');
+        this.elements.storyChapterTitle = document.getElementById('story-chapter-title');
+        this.elements.storyCharacterEmoji = document.getElementById('story-character-emoji');
+        this.elements.storyCharacterName = document.getElementById('story-character-name');
+        this.elements.storyText = document.getElementById('story-text');
+        this.elements.storyNextBtn = document.getElementById('story-next-btn');
+        this.elements.storyProgress = document.getElementById('story-progress');
+        this.elements.storyTotal = document.getElementById('story-total');
+        this.elements.storyChapterListPanel = document.getElementById('story-chapter-list-panel');
+
+        // ストーリーモード状態
+        this.currentChapter = null;
+        this.currentSceneIndex = 0;
     }
 
     bindEvents() {
@@ -163,6 +178,9 @@ class UI {
         // ワールドマップ
         addTouchAndClick(this.elements.worldMapBtn, () => this.openWorldMap());
         addTouchAndClick(this.elements.closeWorldMap, () => this.closeWorldMap());
+
+        // ストーリーモード
+        addTouchAndClick(this.elements.storyNextBtn, () => this.advanceStory());
     }
 
     setupGameCallbacks() {
@@ -619,6 +637,7 @@ class UI {
         if (tabId === 'heroes') this.renderHeroes();
         if (tabId === 'equipment') this.renderInventory();
         if (tabId === 'artifacts') this.renderArtifacts();
+        if (tabId === 'story') this.renderStoryPanel();
     }
 
     // ========================================
@@ -920,6 +939,204 @@ class UI {
         }
         this.closeWorldMap();
         this.updateDisplay();
+    }
+
+    // ========================================
+    // ストーリーモード
+    // ========================================
+    initStoryState() {
+        if (!this.game.state.completedChapters) {
+            this.game.state.completedChapters = [];
+        }
+    }
+
+    isChapterUnlocked(chapter) {
+        const maxStage = this.game.state.maxStageReached || this.game.state.currentStage;
+        return maxStage >= chapter.unlockStage;
+    }
+
+    isChapterCompleted(chapter) {
+        this.initStoryState();
+        return this.game.state.completedChapters.includes(chapter.id);
+    }
+
+    getCompletedChapterCount() {
+        this.initStoryState();
+        return this.game.state.completedChapters.length;
+    }
+
+    renderStoryPanel() {
+        this.initStoryState();
+
+        const maxStage = this.game.state.maxStageReached || this.game.state.currentStage;
+
+        // 進捗表示更新
+        this.elements.storyProgress.textContent = this.getCompletedChapterCount();
+        this.elements.storyTotal.textContent = GameData.STORY_CHAPTERS.length;
+
+        let html = '';
+
+        GameData.STORY_CHAPTERS.forEach((chapter, index) => {
+            const isUnlocked = this.isChapterUnlocked(chapter);
+            const isCompleted = this.isChapterCompleted(chapter);
+            const isAvailable = isUnlocked && !isCompleted;
+
+            let statusClass = 'locked';
+            if (isCompleted) {
+                statusClass = 'completed';
+            } else if (isAvailable) {
+                statusClass = 'available';
+            }
+
+            html += `
+                <div class="story-chapter-item ${statusClass}" data-chapter-id="${chapter.id}">
+                    <div class="chapter-number">${index + 1}</div>
+                    <div class="chapter-info">
+                        <div class="chapter-title">${chapter.title}</div>
+                        <div class="chapter-unlock">解放条件: ステージ${chapter.unlockStage}</div>
+                        ${!isCompleted && isUnlocked ? `<div class="chapter-reward">報酬: ${chapter.reward.label}</div>` : ''}
+                    </div>
+                </div>
+            `;
+        });
+
+        this.elements.storyChapterListPanel.innerHTML = html;
+
+        // イベントバインド
+        const addTouchAndClick = (el, handler) => {
+            el.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                handler();
+            });
+            el.addEventListener('click', (e) => {
+                if (!e.defaultPrevented) handler();
+            });
+        };
+
+        this.elements.storyChapterListPanel.querySelectorAll('.story-chapter-item:not(.locked)').forEach(el => {
+            addTouchAndClick(el, () => {
+                const chapterId = el.dataset.chapterId;
+                const chapter = GameData.STORY_CHAPTERS.find(c => c.id === chapterId);
+                if (chapter) {
+                    this.startChapter(chapter);
+                }
+            });
+        });
+    }
+
+    startChapter(chapter) {
+        this.currentChapter = chapter;
+        this.currentSceneIndex = 0;
+
+        // チャプタータイトル設定
+        this.elements.storyChapterTitle.textContent = chapter.title;
+
+        // 最初のシーンを表示
+        this.showCurrentScene();
+
+        // モーダル表示
+        this.elements.storyModal.classList.remove('hidden');
+    }
+
+    showCurrentScene() {
+        if (!this.currentChapter) return;
+
+        const scene = this.currentChapter.scenes[this.currentSceneIndex];
+        if (!scene) return;
+
+        // キャラクター情報更新
+        this.elements.storyCharacterEmoji.textContent = scene.emoji;
+        this.elements.storyCharacterName.textContent = scene.name;
+
+        // テキストをアニメーション付きで更新
+        this.elements.storyText.style.animation = 'none';
+        this.elements.storyText.offsetHeight; // Reflow
+        this.elements.storyText.style.animation = 'textFade 0.3s ease';
+        this.elements.storyText.textContent = scene.text;
+
+        // ボタンテキスト更新
+        if (this.currentSceneIndex >= this.currentChapter.scenes.length - 1) {
+            this.elements.storyNextBtn.textContent = '完了';
+        } else {
+            this.elements.storyNextBtn.textContent = '次へ ▶';
+        }
+    }
+
+    advanceStory() {
+        if (!this.currentChapter) return;
+
+        this.currentSceneIndex++;
+
+        if (this.currentSceneIndex >= this.currentChapter.scenes.length) {
+            // チャプター完了
+            this.completeChapter();
+        } else {
+            this.showCurrentScene();
+        }
+    }
+
+    completeChapter() {
+        this.initStoryState();
+
+        const chapter = this.currentChapter;
+        const isAlreadyCompleted = this.isChapterCompleted(chapter);
+
+        // 完了済みでなければ報酬付与
+        if (!isAlreadyCompleted) {
+            this.game.state.completedChapters.push(chapter.id);
+
+            // 報酬付与
+            switch (chapter.reward.type) {
+                case 'gold':
+                    this.game.state.gold += chapter.reward.amount;
+                    break;
+                case 'gems':
+                    this.game.state.gems += chapter.reward.amount;
+                    break;
+            }
+
+            // 報酬ポップアップ表示
+            this.showStoryReward(chapter.reward);
+        }
+
+        // モーダルを閉じる
+        this.elements.storyModal.classList.add('hidden');
+
+        // ストーリーパネル更新
+        this.renderStoryPanel();
+        this.updateDisplay();
+
+        // 状態リセット
+        this.currentChapter = null;
+        this.currentSceneIndex = 0;
+    }
+
+    showStoryReward(reward) {
+        const popup = document.createElement('div');
+        popup.className = 'story-reward-popup';
+        popup.innerHTML = `
+            <h3>チャプター完了！</h3>
+            <div class="reward-content">${reward.label} 獲得！</div>
+            <button class="btn-primary">OK</button>
+        `;
+
+        document.body.appendChild(popup);
+
+        const closeBtn = popup.querySelector('.btn-primary');
+        const closeReward = () => {
+            popup.remove();
+        };
+
+        closeBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            closeReward();
+        });
+        closeBtn.addEventListener('click', (e) => {
+            if (!e.defaultPrevented) closeReward();
+        });
+
+        // 3秒後に自動で閉じる
+        setTimeout(closeReward, 3000);
     }
 }
 

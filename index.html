@@ -75,9 +75,9 @@
                 <span class="nav-icon">✨</span>
                 <span class="nav-label">スキル</span>
             </button>
-            <button class="nav-btn" data-tab="artifacts">
-                <span class="nav-icon">🏺</span>
-                <span class="nav-label">遺物</span>
+            <button class="nav-btn" data-tab="story">
+                <span class="nav-icon">📖</span>
+                <span class="nav-label">物語</span>
             </button>
             <button class="nav-btn" data-tab="rebirth">
                 <span class="nav-icon">🔄</span>
@@ -127,13 +127,13 @@
                 <div id="skills-list" class="skills-grid"></div>
             </div>
 
-            <!-- アーティファクトタブ -->
-            <div id="artifacts-panel" class="tab-panel">
+            <!-- ストーリータブ -->
+            <div id="story-panel" class="tab-panel">
                 <div class="panel-header">
-                    <h2>アーティファクト</h2>
-                    <div class="souls-display">👻 <span id="artifact-souls">0</span></div>
+                    <h2>📖 ストーリー</h2>
+                    <div class="story-progress-display">進捗: <span id="story-progress">0</span>/<span id="story-total">8</span></div>
                 </div>
-                <div id="artifacts-list" class="upgrade-list"></div>
+                <div id="story-chapter-list-panel" class="story-chapter-list"></div>
             </div>
 
             <!-- 転生タブ -->
@@ -202,6 +202,36 @@
                     <span id="current-world-stage">ステージ 1-50</span>
                 </div>
                 <div id="world-list" class="world-list"></div>
+            </div>
+        </div>
+
+        <!-- ストーリーモーダル -->
+        <div id="story-modal" class="modal hidden">
+            <div class="modal-content story-modal">
+                <div class="story-header">
+                    <h2 id="story-chapter-title">第1章：冒険の始まり</h2>
+                </div>
+                <div class="story-scene">
+                    <div class="story-character">
+                        <span id="story-character-emoji" class="character-emoji">🧚</span>
+                        <span id="story-character-name" class="character-name">ガイド妖精</span>
+                    </div>
+                    <div id="story-text" class="story-text">ようこそ、勇者様！</div>
+                </div>
+                <div class="story-controls">
+                    <button id="story-next-btn" class="btn-primary">次へ ▶</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ストーリーリストモーダル -->
+        <div id="story-list-modal" class="modal hidden">
+            <div class="modal-content story-list-modal">
+                <div class="story-list-header">
+                    <h2>📖 ストーリー</h2>
+                    <button id="close-story-list" class="close-btn">✕</button>
+                </div>
+                <div id="story-chapter-list" class="story-chapter-list"></div>
             </div>
         </div>
     </div>
