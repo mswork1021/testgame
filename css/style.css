@@ -613,41 +613,44 @@ body {
 /* ========================================
    装備パネル
    ======================================== */
-#equipment-panel {
-    display: flex;
-    flex-direction: column;
+#equipment-panel.active {
+    display: block;
+    overflow-y: auto;
 }
 
 .equipment-slots {
     display: flex;
-    justify-content: space-around;
-    margin-bottom: var(--spacing-md);
-    flex-shrink: 0;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-sm);
+    gap: var(--spacing-xs);
 }
 
 .equip-slot {
     text-align: center;
-    padding: var(--spacing-sm);
+    padding: var(--spacing-xs);
     background: var(--bg-primary);
-    border-radius: 8px;
-    min-width: 80px;
+    border-radius: 6px;
+    flex: 1;
 }
 
 .slot-icon {
-    font-size: 24px;
+    font-size: 18px;
 }
 
 .slot-label {
-    font-size: 12px;
+    font-size: 10px;
     color: var(--text-secondary);
-    margin: var(--spacing-xs) 0;
+    margin: 2px 0;
 }
 
 .slot-item {
-    font-size: 11px;
-    padding: var(--spacing-xs);
+    font-size: 10px;
+    padding: 2px 4px;
     border-radius: 4px;
     background: var(--bg-tertiary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .slot-item.empty {
@@ -662,10 +665,9 @@ body {
 .slot-item.legendary { border: 2px solid var(--rarity-legendary); }
 
 #equipment-panel h3 {
-    font-size: 14px;
-    margin-bottom: var(--spacing-sm);
+    font-size: 12px;
+    margin-bottom: var(--spacing-xs);
     color: var(--text-secondary);
-    flex-shrink: 0;
 }
 
 h3 {
@@ -676,13 +678,9 @@ h3 {
 
 .inventory-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: var(--spacing-sm);
-    flex: 1;
-    overflow-y: auto;
-    min-height: 0;
+    grid-template-columns: repeat(5, 1fr);
+    gap: var(--spacing-xs);
     padding-bottom: var(--spacing-md);
-    -webkit-overflow-scrolling: touch;
 }
 
 .inventory-item {
@@ -690,9 +688,9 @@ h3 {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 20px;
     background: var(--bg-primary);
-    border-radius: 8px;
+    border-radius: 6px;
     cursor: pointer;
     transition: transform 0.2s ease;
 }

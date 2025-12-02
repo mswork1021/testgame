@@ -98,47 +98,60 @@ class UI {
             }
         });
 
-        // タブ切り替え
+        // タブ切り替え（タッチとクリック両方対応）
         document.querySelectorAll('.nav-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
+            // タッチイベント（モバイル向け）
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
                 this.switchTab(btn.dataset.tab);
             });
-        });
-
-        // 転生ボタン
-        this.elements.rebirthBtn.addEventListener('click', () => {
-            this.onRebirth();
-        });
-
-        // 装備スロットクリック
-        ['weapon', 'armor', 'accessory'].forEach(slot => {
-            const element = this.elements[`${slot}Slot`];
-            element.addEventListener('click', () => {
-                this.onEquipSlotClick(slot);
+            // クリックイベント（PC向け）
+            btn.addEventListener('click', (e) => {
+                if (!e.defaultPrevented) {
+                    this.switchTab(btn.dataset.tab);
+                }
             });
         });
 
-        // モーダルボタン
-        this.elements.claimOffline.addEventListener('click', () => {
-            this.claimOfflineReward(1);
+        // 転生ボタン（タッチとクリック両方対応）
+        const handleRebirth = () => this.onRebirth();
+        this.elements.rebirthBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            handleRebirth();
+        });
+        this.elements.rebirthBtn.addEventListener('click', (e) => {
+            if (!e.defaultPrevented) handleRebirth();
         });
 
-        this.elements.claimOfflineDouble.addEventListener('click', () => {
-            this.claimOfflineReward(2);
+        // 装備スロットクリック（タッチとクリック両方対応）
+        ['weapon', 'armor', 'accessory'].forEach(slot => {
+            const element = this.elements[`${slot}Slot`];
+            const handleSlot = () => this.onEquipSlotClick(slot);
+            element.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                handleSlot();
+            });
+            element.addEventListener('click', (e) => {
+                if (!e.defaultPrevented) handleSlot();
+            });
         });
 
-        this.elements.equipBtn.addEventListener('click', () => {
-            this.onEquipItem();
-        });
+        // モーダルボタン（タッチとクリック両方対応）
+        const addTouchAndClick = (el, handler) => {
+            el.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                handler();
+            });
+            el.addEventListener('click', (e) => {
+                if (!e.defaultPrevented) handler();
+            });
+        };
 
-        this.elements.closeEquipModal.addEventListener('click', () => {
-            this.closeEquipmentModal();
-        });
-
-        // デイリーボーナス
-        this.elements.claimDaily.addEventListener('click', () => {
-            this.claimDailyBonus();
-        });
+        addTouchAndClick(this.elements.claimOffline, () => this.claimOfflineReward(1));
+        addTouchAndClick(this.elements.claimOfflineDouble, () => this.claimOfflineReward(2));
+        addTouchAndClick(this.elements.equipBtn, () => this.onEquipItem());
+        addTouchAndClick(this.elements.closeEquipModal, () => this.closeEquipmentModal());
+        addTouchAndClick(this.elements.claimDaily, () => this.claimDailyBonus());
     }
 
     setupGameCallbacks() {
@@ -419,9 +432,10 @@ class UI {
 
         this.elements.heroesList.innerHTML = html;
 
-        // ボタンイベント
+        // ボタンイベント（タッチとクリック両方対応）
         this.elements.heroesList.querySelectorAll('.upgrade-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
+            const handleUpgrade = () => {
+                if (btn.disabled) return;
                 const type = btn.dataset.type;
                 const id = btn.dataset.id;
 
@@ -433,6 +447,13 @@ class UI {
 
                 this.renderHeroes();
                 this.renderHeroesDisplay();
+            };
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                handleUpgrade();
+            });
+            btn.addEventListener('click', (e) => {
+                if (!e.defaultPrevented) handleUpgrade();
             });
         });
     }
@@ -457,9 +478,9 @@ class UI {
 
         this.elements.skillsList.innerHTML = html;
 
-        // イベント
+        // イベント（タッチとクリック両方対応）
         this.elements.skillsList.querySelectorAll('.skill-item').forEach(el => {
-            el.addEventListener('click', () => {
+            const handleSkill = () => {
                 const skillId = el.dataset.skill;
                 if (this.game.useSkill(skillId)) {
                     // オートタップスキルの特殊処理
@@ -474,6 +495,13 @@ class UI {
                     this.showToast(`${skill.name}発動！`);
                     this.renderSkills();
                 }
+            };
+            el.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                handleSkill();
+            });
+            el.addEventListener('click', (e) => {
+                if (!e.defaultPrevented) handleSkill();
             });
         });
     }
@@ -528,12 +556,20 @@ class UI {
 
         this.elements.artifactsList.innerHTML = html;
 
-        // イベント
+        // イベント（タッチとクリック両方対応）
         this.elements.artifactsList.querySelectorAll('.upgrade-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
+            const handleUpgrade = () => {
+                if (btn.disabled) return;
                 if (this.game.upgradeArtifact(btn.dataset.id)) {
                     this.renderArtifacts();
                 }
+            };
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                handleUpgrade();
+            });
+            btn.addEventListener('click', (e) => {
+                if (!e.defaultPrevented) handleUpgrade();
             });
         });
     }
@@ -570,11 +606,18 @@ class UI {
 
         this.elements.inventoryList.innerHTML = html;
 
-        // イベント
+        // イベント（タッチとクリック両方対応）
         this.elements.inventoryList.querySelectorAll('.inventory-item').forEach(el => {
-            el.addEventListener('click', () => {
+            const handleClick = () => {
                 const index = parseInt(el.dataset.index);
                 this.openEquipmentModal(this.game.state.inventory[index]);
+            };
+            el.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                handleClick();
+            });
+            el.addEventListener('click', (e) => {
+                if (!e.defaultPrevented) handleClick();
             });
         });
     }
