@@ -231,9 +231,8 @@ class Game {
 
     dealDamage(amount, showNumber = false, isCritical = false) {
         if (!this.currentMonster) return;
-
-        // モンスターが既に死んでいる場合は処理しない（二重killMonster防止）
-        const wasAlive = this.currentMonster.currentHp > 0;
+        // 既に死亡処理中のモンスターには追加ダメージを与えない
+        if (this.currentMonster.isDying) return;
 
         this.currentMonster.currentHp -= amount;
 
@@ -241,8 +240,9 @@ class Game {
             this.onDamageDealt(amount, isCritical);
         }
 
-        // HPが正から0以下に変わった時だけkillMonsterを呼ぶ
-        if (wasAlive && this.currentMonster.currentHp <= 0) {
+        if (this.currentMonster.currentHp <= 0) {
+            // 死亡フラグを立てて二重処理を防止
+            this.currentMonster.isDying = true;
             this.killMonster();
         }
     }
