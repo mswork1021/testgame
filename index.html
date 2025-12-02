@@ -29,6 +29,9 @@
                 </div>
             </div>
             <div class="stage-info">
+                <button id="world-map-btn" class="world-map-button">
+                    <span class="world-icon">🗺️</span>
+                </button>
                 <span id="stage-display">ステージ 1-1</span>
                 <div class="progress-bar">
                     <div id="stage-progress" class="progress-fill"></div>
@@ -184,6 +187,21 @@
                 <p class="login-streak">連続ログイン: <span id="login-streak">1</span>日目</p>
                 <div class="daily-rewards-grid" id="daily-rewards-grid"></div>
                 <button id="claim-daily" class="btn-primary btn-glow">報酬を受け取る</button>
+            </div>
+        </div>
+
+        <!-- ワールドマップモーダル -->
+        <div id="world-map-modal" class="modal hidden">
+            <div class="modal-content world-map-modal">
+                <div class="world-map-header">
+                    <h2>🗺️ ワールドマップ</h2>
+                    <button id="close-world-map" class="close-btn">✕</button>
+                </div>
+                <div class="current-world-info">
+                    <span id="current-world-name">緑の草原</span>
+                    <span id="current-world-stage">ステージ 1-50</span>
+                </div>
+                <div id="world-list" class="world-list"></div>
             </div>
         </div>
     </div>

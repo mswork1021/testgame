@@ -76,6 +76,14 @@ class UI {
         this.elements.loginStreak = document.getElementById('login-streak');
         this.elements.dailyRewardsGrid = document.getElementById('daily-rewards-grid');
         this.elements.claimDaily = document.getElementById('claim-daily');
+
+        // ワールドマップ
+        this.elements.worldMapBtn = document.getElementById('world-map-btn');
+        this.elements.worldMapModal = document.getElementById('world-map-modal');
+        this.elements.closeWorldMap = document.getElementById('close-world-map');
+        this.elements.currentWorldName = document.getElementById('current-world-name');
+        this.elements.currentWorldStage = document.getElementById('current-world-stage');
+        this.elements.worldList = document.getElementById('world-list');
     }
 
     bindEvents() {
@@ -151,6 +159,10 @@ class UI {
         addTouchAndClick(this.elements.equipBtn, () => this.onEquipItem());
         addTouchAndClick(this.elements.closeEquipModal, () => this.closeEquipmentModal());
         addTouchAndClick(this.elements.claimDaily, () => this.claimDailyBonus());
+
+        // ワールドマップ
+        addTouchAndClick(this.elements.worldMapBtn, () => this.openWorldMap());
+        addTouchAndClick(this.elements.closeWorldMap, () => this.closeWorldMap());
     }
 
     setupGameCallbacks() {
@@ -788,6 +800,126 @@ class UI {
             this.updateDisplay();
             this.renderInventory();
         }
+    }
+
+    // ========================================
+    // ワールドマップ
+    // ========================================
+    getCurrentWorld() {
+        const stage = this.game.state.currentStage;
+        for (const world of GameData.WORLDS) {
+            if (stage >= world.stageRange[0] && stage <= world.stageRange[1]) {
+                return world;
+            }
+        }
+        // デフォルトで最後のワールド
+        return GameData.WORLDS[GameData.WORLDS.length - 1];
+    }
+
+    getWorldProgress(world) {
+        const stage = this.game.state.currentStage;
+        const [min, max] = world.stageRange;
+
+        if (stage < min) return 0;
+        if (stage > max) return 100;
+
+        return Math.floor(((stage - min) / (max - min)) * 100);
+    }
+
+    isWorldUnlocked(world) {
+        const maxStage = this.game.state.maxStageReached || this.game.state.currentStage;
+        return maxStage >= world.unlockStage;
+    }
+
+    openWorldMap() {
+        const currentWorld = this.getCurrentWorld();
+
+        // 現在のワールド情報を更新
+        this.elements.currentWorldName.textContent = `${currentWorld.icon} ${currentWorld.name}`;
+        this.elements.currentWorldStage.textContent = `ステージ ${currentWorld.stageRange[0]}-${currentWorld.stageRange[1]}`;
+
+        // ワールドリストをレンダリング
+        this.renderWorldList();
+
+        // モーダルを表示
+        this.elements.worldMapModal.classList.remove('hidden');
+    }
+
+    closeWorldMap() {
+        this.elements.worldMapModal.classList.add('hidden');
+    }
+
+    renderWorldList() {
+        const currentWorld = this.getCurrentWorld();
+
+        let html = '';
+
+        GameData.WORLDS.forEach(world => {
+            const isUnlocked = this.isWorldUnlocked(world);
+            const isCurrent = world.id === currentWorld.id;
+            const progress = this.getWorldProgress(world);
+
+            let statusClass = 'locked';
+            if (isCurrent) {
+                statusClass = 'current';
+            } else if (isUnlocked) {
+                statusClass = 'unlocked';
+            }
+
+            html += `
+                <div class="world-item ${statusClass}" data-world-id="${world.id}" style="--world-color: ${world.color}">
+                    <div class="world-icon-large">${world.icon}</div>
+                    <div class="world-info">
+                        <div class="world-name">${world.name}</div>
+                        <div class="world-description">${world.description}</div>
+                        <div class="world-stages">ステージ ${world.stageRange[0]} - ${world.stageRange[1]}</div>
+                    </div>
+                    ${isUnlocked ? `
+                    <div class="world-progress">
+                        <div class="world-progress-bar">
+                            <div class="world-progress-fill" style="width: ${progress}%"></div>
+                        </div>
+                        <div class="world-progress-text">${progress}%</div>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+        });
+
+        this.elements.worldList.innerHTML = html;
+
+        // イベントバインド
+        const addTouchAndClick = (el, handler) => {
+            el.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                handler();
+            });
+            el.addEventListener('click', (e) => {
+                if (!e.defaultPrevented) handler();
+            });
+        };
+
+        this.elements.worldList.querySelectorAll('.world-item:not(.locked)').forEach(el => {
+            addTouchAndClick(el, () => {
+                const worldId = el.dataset.worldId;
+                const world = GameData.WORLDS.find(w => w.id === worldId);
+                if (world) {
+                    this.travelToWorld(world);
+                }
+            });
+        });
+    }
+
+    travelToWorld(world) {
+        // ワールドの開始ステージに移動
+        if (this.game.state.currentStage !== world.stageRange[0]) {
+            this.game.state.currentStage = world.stageRange[0];
+            this.game.state.monstersKilled = 0;
+            this.game.spawnMonster();
+            this.showToast(`${world.icon} ${world.name}へ移動しました！`);
+        }
+        this.closeWorldMap();
+        this.updateDisplay();
     }
 }
 

@@ -1500,3 +1500,233 @@ button:focus {
     letter-spacing: 5px;
     text-transform: uppercase;
 }
+
+/* ========================================
+   ワールドマップ
+   ======================================== */
+.world-map-button {
+    position: absolute;
+    right: var(--spacing-md);
+    top: 50%;
+    transform: translateY(-50%);
+    background: linear-gradient(180deg, var(--accent-red) 0%, var(--accent-red-dark) 100%);
+    border: 2px solid rgba(255,255,255,0.3);
+    padding: 6px 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 5;
+}
+
+.world-map-button:hover {
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 0 20px rgba(255,0,64,0.6);
+}
+
+.world-map-button:active {
+    transform: translateY(-50%) scale(0.95);
+}
+
+.world-icon {
+    font-size: 18px;
+}
+
+.world-map-modal {
+    max-width: 380px;
+    max-height: 80vh;
+    overflow: hidden;
+}
+
+.world-map-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 2px solid var(--accent-red);
+}
+
+.world-map-header h2 {
+    font-size: 24px;
+}
+
+.close-btn {
+    background: transparent;
+    border: 2px solid var(--text-muted);
+    color: var(--text-muted);
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.close-btn:hover {
+    border-color: var(--accent-red);
+    color: var(--accent-red);
+}
+
+.current-world-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: rgba(255,0,64,0.1);
+    border-left: 4px solid var(--accent-red);
+    margin-bottom: var(--spacing-md);
+}
+
+#current-world-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 2px;
+    color: var(--accent-white);
+}
+
+#current-world-stage {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.world-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    max-height: 50vh;
+    overflow-y: auto;
+    padding-right: var(--spacing-xs);
+}
+
+.world-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: linear-gradient(90deg, rgba(42,42,42,0.9) 0%, rgba(26,26,26,0.9) 100%);
+    border-left: 4px solid var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    transform: skewX(-2deg);
+    position: relative;
+    overflow: hidden;
+}
+
+.world-item > * {
+    transform: skewX(2deg);
+}
+
+.world-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    transform: skewX(2deg);
+}
+
+.world-item:hover:not(.locked) {
+    transform: skewX(-2deg) translateX(5px);
+}
+
+.world-item:hover:not(.locked)::before {
+    opacity: 0.1;
+}
+
+.world-item.current {
+    border-left-color: var(--accent-red);
+    background: linear-gradient(90deg, rgba(255,0,64,0.15) 0%, rgba(42,42,42,0.9) 100%);
+}
+
+.world-item.current::after {
+    content: 'NOW';
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 10px;
+    color: var(--accent-red);
+    letter-spacing: 2px;
+    transform: skewX(2deg);
+}
+
+.world-item.unlocked {
+    border-left-color: var(--accent-green);
+}
+
+.world-item.locked {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.world-item.locked::after {
+    content: '🔒';
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    transform: translateY(-50%) skewX(2deg);
+    font-size: 20px;
+}
+
+.world-icon-large {
+    font-size: 36px;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.3);
+    border-radius: 8px;
+}
+
+.world-info {
+    flex: 1;
+}
+
+.world-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 2px;
+    color: var(--accent-white);
+    margin-bottom: 2px;
+}
+
+.world-description {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.world-stages {
+    font-size: 10px;
+    color: var(--accent-gold);
+    letter-spacing: 1px;
+}
+
+.world-progress {
+    width: 60px;
+    text-align: right;
+}
+
+.world-progress-bar {
+    height: 6px;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    margin-bottom: 4px;
+    overflow: hidden;
+}
+
+.world-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-red) 0%, var(--accent-gold) 100%);
+    transition: width 0.3s ease;
+}
+
+.world-progress-text {
+    font-size: 9px;
+    color: var(--text-muted);
+}

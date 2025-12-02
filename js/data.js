@@ -585,6 +585,70 @@ const GameData = {
         BOSS_EQUIPMENT_DROP_CHANCE: 25
     },
 
+    // ワールドマップ定義
+    WORLDS: [
+        {
+            id: 'greenfield',
+            name: '緑の草原',
+            description: '冒険の始まり。穏やかな草原が広がる',
+            stageRange: [1, 50],
+            unlockStage: 1,
+            icon: '🌿',
+            color: '#4ade80',
+            bgGradient: 'linear-gradient(180deg, #86efac 0%, #4ade80 50%, #22c55e 100%)',
+            monsters: ['スライム', 'ゴースト', 'コウモリ'],
+            boss: 'キングスライム'
+        },
+        {
+            id: 'darkforest',
+            name: '暗黒の森',
+            description: '不気味な木々が生い茂る危険な森',
+            stageRange: [51, 100],
+            unlockStage: 51,
+            icon: '🌲',
+            color: '#166534',
+            bgGradient: 'linear-gradient(180deg, #14532d 0%, #166534 50%, #15803d 100%)',
+            monsters: ['マッシュルーム', 'オバケツリー', 'ウルフ'],
+            boss: 'ゴーストロード'
+        },
+        {
+            id: 'dungeon',
+            name: '古代遺跡',
+            description: '忘れられた古代文明の遺跡',
+            stageRange: [101, 200],
+            unlockStage: 101,
+            icon: '🏛️',
+            color: '#78716c',
+            bgGradient: 'linear-gradient(180deg, #57534e 0%, #78716c 50%, #a8a29e 100%)',
+            monsters: ['ミミック', 'ゴーレム'],
+            boss: 'ヴァンパイア'
+        },
+        {
+            id: 'volcano',
+            name: '灼熱の火山',
+            description: '溶岩が流れる危険な活火山',
+            stageRange: [201, 350],
+            unlockStage: 201,
+            icon: '🌋',
+            color: '#dc2626',
+            bgGradient: 'linear-gradient(180deg, #7f1d1d 0%, #dc2626 50%, #f97316 100%)',
+            monsters: ['ワイバーン', 'デーモン'],
+            boss: 'リッチ'
+        },
+        {
+            id: 'skycastle',
+            name: '天空城',
+            description: '雲の上に浮かぶ神秘の城',
+            stageRange: [351, 500],
+            unlockStage: 351,
+            icon: '🏰',
+            color: '#8b5cf6',
+            bgGradient: 'linear-gradient(180deg, #4c1d95 0%, #8b5cf6 50%, #a78bfa 100%)',
+            monsters: ['デーモン', 'ワイバーン', 'ゴーレム'],
+            boss: 'エンシェントドラゴン'
+        }
+    ],
+
     // デイリーログインボーナス
     DAILY_REWARDS: [
         { day: 1, type: 'gold', amount: 100, emoji: '💰', label: '100G' },
