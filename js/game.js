@@ -359,11 +359,11 @@ class Game {
     // モンスター撃破
     // ========================================
     killMonster() {
-        // 二重呼び出し防止
-        if (this.isProcessingKill) return;
-        this.isProcessingKill = true;
-
         const monster = this.currentMonster;
+
+        // モンスターが存在しない、または既に撃破処理済みの場合はスキップ
+        if (!monster || monster._killed) return;
+        monster._killed = true; // 撃破フラグを設定して二重処理を防止
         this.state.monstersKilled++;
         this.state.totalMonstersKilled++;
 
@@ -393,9 +393,6 @@ class Game {
         } else {
             this.spawnMonster();
         }
-
-        // ロック解除
-        this.isProcessingKill = false;
     }
 
     getGoldMultiplier() {
