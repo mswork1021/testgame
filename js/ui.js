@@ -285,10 +285,13 @@ class UI {
         // モンスター情報
         if (this.game.currentMonster) {
             const monster = this.game.currentMonster;
-            this.elements.monsterEmoji.textContent = monster.emoji;
+            // SVGモンスターを表示
+            this.elements.monsterEmoji.innerHTML = monster.svg;
             this.elements.monsterName.textContent = monster.name;
             this.elements.monsterName.className = monster.isBoss ? 'boss-name' : '';
             this.elements.monster.className = 'monster' + (monster.isBoss ? ' boss' : '');
+            // モンスターの色でグロウエフェクト
+            this.elements.monster.style.setProperty('--monster-color', monster.color);
 
             const hpPercent = Math.max(0, (monster.currentHp / monster.maxHp) * 100);
             this.elements.monsterHpFill.style.width = hpPercent + '%';

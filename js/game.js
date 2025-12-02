@@ -159,7 +159,8 @@ class Game {
 
             this.currentMonster = {
                 name: bossData.name,
-                emoji: bossData.emoji,
+                svg: bossData.svg,
+                color: bossData.color,
                 maxHp: baseHp,
                 currentHp: baseHp,
                 isBoss: true
@@ -174,7 +175,8 @@ class Game {
 
             this.currentMonster = {
                 name: monsterData.name,
-                emoji: monsterData.emoji,
+                svg: monsterData.svg,
+                color: monsterData.color,
                 maxHp: hp,
                 currentHp: hp,
                 isBoss: false

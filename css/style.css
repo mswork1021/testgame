@@ -206,11 +206,13 @@ body {
 
 /* モンスターフレーム */
 #monster {
-    font-size: 90px;
     transition: transform 0.08s ease;
     filter: drop-shadow(0 8px 16px rgba(0,0,0,0.6));
     position: relative;
     z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* モンスター背景サークル */
@@ -246,7 +248,6 @@ body {
 }
 
 #monster.boss {
-    font-size: 110px;
     animation: bossFloat 2s ease-in-out infinite, bossGlow 1s ease-in-out infinite;
 }
 
@@ -999,4 +1000,73 @@ h3 {
 @keyframes btnGlow {
     0%, 100% { box-shadow: 0 0 10px rgba(46, 204, 113, 0.5); }
     50% { box-shadow: 0 0 20px rgba(46, 204, 113, 0.8), 0 0 30px rgba(46, 204, 113, 0.4); }
+}
+
+/* ========================================
+   SVGモンスター
+   ======================================== */
+.monster-svg {
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.monster-svg svg {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
+    transition: transform 0.1s ease;
+}
+
+#monster {
+    --monster-color: #7ed56f;
+    font-size: unset;
+}
+
+#monster::before {
+    background: radial-gradient(circle,
+        color-mix(in srgb, var(--monster-color) 30%, transparent) 0%,
+        transparent 70%);
+}
+
+#monster.boss .monster-svg {
+    width: 150px;
+    height: 150px;
+}
+
+#monster.boss::before {
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle,
+        color-mix(in srgb, var(--monster-color) 40%, transparent) 0%,
+        rgba(231, 76, 60, 0.2) 50%,
+        transparent 70%);
+}
+
+/* モンスターアイドルアニメーション */
+.monster-svg svg {
+    animation: monsterIdle 2s ease-in-out infinite;
+}
+
+@keyframes monsterIdle {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-5px) scale(1.02); }
+}
+
+/* ヒット時のSVGエフェクト */
+#monster.hit .monster-svg svg {
+    animation: none;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4)) brightness(1.5) saturate(1.3);
+}
+
+/* ボスのSVGアニメーション */
+#monster.boss .monster-svg svg {
+    animation: bossIdle 2s ease-in-out infinite;
+}
+
+@keyframes bossIdle {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-10px) scale(1.05); }
 }
