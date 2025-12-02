@@ -75,9 +75,9 @@
                 <span class="nav-icon">✨</span>
                 <span class="nav-label">スキル</span>
             </button>
-            <button class="nav-btn" data-tab="story">
-                <span class="nav-icon">📖</span>
-                <span class="nav-label">物語</span>
+            <button class="nav-btn" data-tab="collection">
+                <span class="nav-icon">📚</span>
+                <span class="nav-label">図鑑</span>
             </button>
             <button class="nav-btn" data-tab="rebirth">
                 <span class="nav-icon">🔄</span>
@@ -128,18 +128,30 @@
             <!-- スキルタブ -->
             <div id="skills-panel" class="tab-panel">
                 <div class="panel-header">
-                    <h2>スキル</h2>
+                    <h2>アクティブスキル</h2>
                 </div>
                 <div id="skills-list" class="skills-grid"></div>
+
+                <div class="panel-header skill-tree-header">
+                    <h2>🌳 スキルツリー</h2>
+                    <div class="skill-points-display">SP: <span id="skill-points">0</span></div>
+                </div>
+                <div id="skill-tree-container" class="skill-tree-grid"></div>
             </div>
 
-            <!-- ストーリータブ -->
-            <div id="story-panel" class="tab-panel">
+            <!-- 図鑑タブ -->
+            <div id="collection-panel" class="tab-panel">
                 <div class="panel-header">
-                    <h2>📖 ストーリー</h2>
-                    <div class="story-progress-display">進捗: <span id="story-progress">0</span>/<span id="story-total">8</span></div>
+                    <h2>📚 図鑑</h2>
+                    <div class="collection-progress-display">
+                        <span id="collection-progress">0</span>/<span id="collection-total">0</span>
+                    </div>
                 </div>
-                <div id="story-chapter-list-panel" class="story-chapter-list"></div>
+                <div class="collection-tabs">
+                    <button class="collection-tab active" data-collection="monsters">🐾 モンスター</button>
+                    <button class="collection-tab" data-collection="equipment">⚔️ 装備</button>
+                </div>
+                <div id="collection-content" class="collection-grid"></div>
             </div>
 
             <!-- 転生タブ -->
@@ -157,6 +169,15 @@
                         転生する<br>
                         <small>(ステージ100以上で解放)</small>
                     </button>
+                </div>
+
+                <!-- 実績セクション -->
+                <div class="achievements-section">
+                    <div class="panel-header">
+                        <h3>🏆 実績</h3>
+                        <div class="achievement-count"><span id="unlocked-achievements">0</span>/<span id="total-achievements">0</span></div>
+                    </div>
+                    <div id="achievements-list" class="achievements-grid"></div>
                 </div>
 
                 <div class="settings-section">
@@ -260,6 +281,6 @@
     <script src="js/ui.js"></script>
     <script src="js/save.js"></script>
     <script src="js/main.js"></script>
-    <div id="debug-version" style="position:fixed;bottom:5px;left:5px;font-size:10px;color:#666;z-index:9999;">v2.20</div>
+    <div id="debug-version" style="position:fixed;bottom:5px;left:5px;font-size:10px;color:#666;z-index:9999;">v2.21</div>
 </body>
 </html>

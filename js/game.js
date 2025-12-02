@@ -51,7 +51,20 @@ class Game {
             loginStreak: 0,
 
             // ストーリーモード
-            completedChapters: []
+            completedChapters: [],
+
+            // スキルツリー
+            skillTreeLevels: {},
+            skillPoints: 0,
+
+            // 図鑑
+            discoveredMonsters: [],
+            discoveredBosses: [],
+            obtainedEquipment: {},
+
+            // 実績
+            unlockedAchievements: [],
+            claimedAchievements: []
         };
 
         // 現在のモンスター
@@ -170,6 +183,9 @@ class Game {
                 isBoss: true
             };
 
+            // 図鑑に記録
+            this.discoverBoss(bossData.name);
+
             // ボスタイマー開始
             this.bossTimeLeft = this.getBossTimeLimit();
         } else {
@@ -195,6 +211,9 @@ class Game {
                 monsterType: monsterData.name, // 元のタイプを保存
                 traits: this.getMonsterTraits(monsterData.name) // 特性を付与
             };
+
+            // 図鑑に記録
+            this.discoverMonster(monsterData.name);
         }
     }
 
@@ -268,6 +287,10 @@ class Game {
             timeLimit += timeCrystal.effect.baseValue * this.state.artifactLevels.timeCrystal;
         }
 
+        // スキルツリー: ボス戦時間
+        timeLimit += this.getSkillTreeEffect('bossTime');
+        timeLimit += this.getSkillTreeEffect('bossTimeFlat');
+
         return timeLimit;
     }
 
@@ -340,6 +363,12 @@ class Game {
             multiplier += (infinityStone.effect.baseValue * this.state.artifactLevels.infinityStone) / 100;
         }
 
+        // スキルツリー: タップダメージ%
+        multiplier += this.getSkillTreeEffect('tapDamagePercent') / 100;
+
+        // スキルツリー: 全攻撃力%
+        multiplier += this.getSkillTreeEffect('allDamagePercent') / 100;
+
         // スキルエフェクト
         const tapMultiplier = this.getActiveEffectValue('tapMultiplier');
         if (tapMultiplier > 1) {
@@ -373,6 +402,12 @@ class Game {
             multiplier += (infinityStone.effect.baseValue * this.state.artifactLevels.infinityStone) / 100;
         }
 
+        // スキルツリー: DPS%
+        multiplier += this.getSkillTreeEffect('dpsPercent') / 100;
+
+        // スキルツリー: 全攻撃力%
+        multiplier += this.getSkillTreeEffect('allDamagePercent') / 100;
+
         return Math.floor(baseDps * multiplier);
     }
 
@@ -397,6 +432,9 @@ class Game {
             chance += this.state.equipment.accessory.value;
         }
 
+        // スキルツリー: クリティカル率
+        chance += this.getSkillTreeEffect('critChance');
+
         // スキルエフェクト
         const skillCrit = this.getActiveEffectValue('criticalChance');
         if (skillCrit > 0) {
@@ -419,6 +457,9 @@ class Game {
         if (this.state.equipment.accessory && this.state.equipment.accessory.stat === 'critDamage') {
             damage += this.state.equipment.accessory.value;
         }
+
+        // スキルツリー: クリティカルダメージ
+        damage += this.getSkillTreeEffect('critDamage');
 
         return damage;
     }
@@ -446,6 +487,9 @@ class Game {
             this.state.monstersKilled++;
             this.state.totalMonstersKilled++;
             console.log(`[DEBUG] モンスター撃破 #${this.state.monstersKilled}`);
+
+            // 実績チェック
+            this.checkAchievements();
 
             // モンスター特性を取得
             const traits = monster.traits || { goldBonus: 1.0, dropBonus: 1.0 };
@@ -506,6 +550,9 @@ class Game {
         if (this.state.equipment.accessory && this.state.equipment.accessory.stat === 'goldBonus') {
             multiplier += this.state.equipment.accessory.value / 100;
         }
+
+        // スキルツリー: ゴールド%
+        multiplier += this.getSkillTreeEffect('goldPercent') / 100;
 
         // スキルエフェクト
         const goldMultiplier = this.getActiveEffectValue('goldMultiplier');
@@ -574,6 +621,9 @@ class Game {
         // 装備生成
         const equipment = this.generateEquipment(template, rarity);
         this.state.inventory.push(equipment);
+
+        // 図鑑に記録
+        this.recordEquipment(equipment);
 
         if (this.onLoot) {
             this.onLoot(equipment);
@@ -802,6 +852,12 @@ class Game {
             souls = Math.floor(souls * (1 + soulVessel.effect.baseValue * this.state.artifactLevels.soulVessel / 100));
         }
 
+        // スキルツリー: ソウルボーナス
+        const soulBonus = this.getSkillTreeEffect('soulBonus');
+        if (soulBonus > 0) {
+            souls = Math.floor(souls * (1 + soulBonus / 100));
+        }
+
         return souls;
     }
 
@@ -937,6 +993,215 @@ class Game {
         this.state.loginStreak = streak;
 
         return { reward, streak };
+    }
+
+    // ========================================
+    // スキルツリー
+    // ========================================
+    getSkillTreeLevel(skillId) {
+        return this.state.skillTreeLevels[skillId] || 0;
+    }
+
+    getAvailableSkillPoints() {
+        // 転生回数がスキルポイント
+        const totalPoints = this.state.rebirthCount;
+        // 使用済みポイントを計算
+        let usedPoints = 0;
+        GameData.SKILL_TREE.SKILLS.forEach(skill => {
+            const level = this.getSkillTreeLevel(skill.id);
+            usedPoints += level * skill.costPerLevel;
+        });
+        return totalPoints - usedPoints;
+    }
+
+    canUpgradeSkillTree(skillId) {
+        const skill = GameData.SKILL_TREE.SKILLS.find(s => s.id === skillId);
+        if (!skill) return false;
+
+        const currentLevel = this.getSkillTreeLevel(skillId);
+        if (currentLevel >= skill.maxLevel) return false;
+
+        // スキルポイントチェック
+        if (this.getAvailableSkillPoints() < skill.costPerLevel) return false;
+
+        // 前提スキルチェック
+        if (skill.requires) {
+            const reqLevel = this.getSkillTreeLevel(skill.requires);
+            if (reqLevel < skill.requiresLevel) return false;
+        }
+
+        return true;
+    }
+
+    upgradeSkillTree(skillId) {
+        if (!this.canUpgradeSkillTree(skillId)) return false;
+
+        this.state.skillTreeLevels[skillId] = this.getSkillTreeLevel(skillId) + 1;
+        return true;
+    }
+
+    getSkillTreeEffect(effectType) {
+        let value = 0;
+        GameData.SKILL_TREE.SKILLS.forEach(skill => {
+            if (skill.effect.type === effectType) {
+                const level = this.getSkillTreeLevel(skill.id);
+                value += level * skill.effect.valuePerLevel;
+            }
+        });
+        return value;
+    }
+
+    resetSkillTree() {
+        this.state.skillTreeLevels = {};
+    }
+
+    // ========================================
+    // 図鑑
+    // ========================================
+    discoverMonster(monsterName) {
+        if (!this.state.discoveredMonsters.includes(monsterName)) {
+            this.state.discoveredMonsters.push(monsterName);
+            this.checkAchievements();
+            return true;
+        }
+        return false;
+    }
+
+    discoverBoss(bossName) {
+        if (!this.state.discoveredBosses.includes(bossName)) {
+            this.state.discoveredBosses.push(bossName);
+            return true;
+        }
+        return false;
+    }
+
+    recordEquipment(equipment) {
+        const key = `${equipment.name}_${equipment.rarity}`;
+        if (!this.state.obtainedEquipment[key]) {
+            this.state.obtainedEquipment[key] = {
+                name: equipment.name,
+                emoji: equipment.emoji,
+                rarity: equipment.rarity,
+                type: equipment.type,
+                obtainedAt: Date.now()
+            };
+            this.checkAchievements();
+            return true;
+        }
+        return false;
+    }
+
+    getDiscoveredMonsterCount() {
+        return this.state.discoveredMonsters.length + this.state.discoveredBosses.length;
+    }
+
+    hasObtainedRarity(rarity) {
+        return Object.values(this.state.obtainedEquipment).some(eq => eq.rarity === rarity);
+    }
+
+    // ========================================
+    // 実績
+    // ========================================
+    checkAchievements() {
+        const newlyUnlocked = [];
+
+        GameData.ACHIEVEMENTS.forEach(achievement => {
+            if (this.state.unlockedAchievements.includes(achievement.id)) return;
+
+            let met = false;
+            const req = achievement.requirement;
+
+            switch (req.type) {
+                case 'totalTaps':
+                    met = this.state.totalTaps >= req.value;
+                    break;
+                case 'totalMonstersKilled':
+                    met = this.state.totalMonstersKilled >= req.value;
+                    break;
+                case 'maxStageReached':
+                    met = this.state.maxStageReached >= req.value;
+                    break;
+                case 'rebirthCount':
+                    met = this.state.rebirthCount >= req.value;
+                    break;
+                case 'totalGoldEarned':
+                    met = this.state.totalGoldEarned >= req.value;
+                    break;
+                case 'discoveredMonsters':
+                    met = this.getDiscoveredMonsterCount() >= req.value;
+                    break;
+                case 'hasRarity':
+                    met = this.hasObtainedRarity(req.value);
+                    break;
+            }
+
+            if (met) {
+                this.state.unlockedAchievements.push(achievement.id);
+                newlyUnlocked.push(achievement);
+            }
+        });
+
+        return newlyUnlocked;
+    }
+
+    claimAchievement(achievementId) {
+        if (!this.state.unlockedAchievements.includes(achievementId)) return null;
+        if (this.state.claimedAchievements.includes(achievementId)) return null;
+
+        const achievement = GameData.ACHIEVEMENTS.find(a => a.id === achievementId);
+        if (!achievement) return null;
+
+        // 報酬付与
+        switch (achievement.reward.type) {
+            case 'gold':
+                this.state.gold += achievement.reward.amount;
+                break;
+            case 'gems':
+                this.state.gems += achievement.reward.amount;
+                break;
+        }
+
+        this.state.claimedAchievements.push(achievementId);
+        return achievement;
+    }
+
+    getAchievementProgress(achievement) {
+        const req = achievement.requirement;
+        let current = 0;
+        let target = req.value;
+
+        switch (req.type) {
+            case 'totalTaps':
+                current = this.state.totalTaps;
+                break;
+            case 'totalMonstersKilled':
+                current = this.state.totalMonstersKilled;
+                break;
+            case 'maxStageReached':
+                current = this.state.maxStageReached;
+                break;
+            case 'rebirthCount':
+                current = this.state.rebirthCount;
+                break;
+            case 'totalGoldEarned':
+                current = this.state.totalGoldEarned;
+                break;
+            case 'discoveredMonsters':
+                current = this.getDiscoveredMonsterCount();
+                break;
+            case 'hasRarity':
+                current = this.hasObtainedRarity(req.value) ? 1 : 0;
+                target = 1;
+                break;
+        }
+
+        return { current, target, percent: Math.min(100, (current / target) * 100) };
+    }
+
+    getUnclaimedAchievementCount() {
+        return this.state.unlockedAchievements.filter(
+            id => !this.state.claimedAchievements.includes(id)
+        ).length;
     }
 }
 

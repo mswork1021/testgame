@@ -2325,3 +2325,344 @@ button:focus {
     font-size: 24px;
     margin-bottom: var(--spacing-md);
 }
+
+/* ========================================
+   スキルツリー
+   ======================================== */
+.skill-tree-header {
+    margin-top: var(--spacing-md);
+    border-top: 2px solid var(--accent-red);
+    padding-top: var(--spacing-sm);
+}
+
+.skill-points-display {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    color: var(--accent-gold);
+    letter-spacing: 2px;
+}
+
+.skill-tree-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    overflow-y: auto;
+}
+
+.skill-tree-category {
+    background: rgba(0,0,0,0.3);
+    border: 2px solid #333;
+    padding: var(--spacing-sm);
+}
+
+.skill-tree-category-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+    padding-bottom: var(--spacing-xs);
+    border-bottom: 1px solid #444;
+}
+
+.skill-tree-category-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    letter-spacing: 1px;
+}
+
+.skill-tree-skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+}
+
+.skill-tree-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: 4px 8px;
+    background: rgba(42,42,42,0.9);
+    border: 2px solid #444;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex: 1;
+    min-width: 140px;
+}
+
+.skill-tree-item:hover:not(.locked) {
+    border-color: var(--accent-gold);
+    transform: translateY(-2px);
+}
+
+.skill-tree-item.maxed {
+    border-color: var(--accent-green);
+    background: rgba(0,255,136,0.1);
+}
+
+.skill-tree-item.can-upgrade {
+    border-color: var(--accent-gold);
+    animation: skillGlow 1.5s ease-in-out infinite;
+}
+
+@keyframes skillGlow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,215,0,0); }
+    50% { box-shadow: 0 0 8px 2px rgba(255,215,0,0.3); }
+}
+
+.skill-tree-item.locked {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.skill-tree-icon {
+    font-size: 18px;
+}
+
+.skill-tree-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.skill-tree-name {
+    font-size: 11px;
+    font-weight: bold;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.skill-tree-level {
+    font-size: 10px;
+    color: var(--accent-gold);
+}
+
+.skill-tree-effect {
+    font-size: 9px;
+    color: var(--text-secondary);
+}
+
+/* ========================================
+   図鑑（コレクション）
+   ======================================== */
+.collection-progress-display {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    color: var(--accent-gold);
+    letter-spacing: 2px;
+}
+
+.collection-tabs {
+    display: flex;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: rgba(0,0,0,0.3);
+    border-bottom: 2px solid #333;
+}
+
+.collection-tab {
+    flex: 1;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: transparent;
+    border: 2px solid #444;
+    color: var(--text-muted);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.collection-tab.active {
+    border-color: var(--accent-red);
+    color: var(--text-primary);
+    background: rgba(255,0,64,0.1);
+}
+
+.collection-tab:hover:not(.active) {
+    border-color: var(--accent-gold);
+    color: var(--text-primary);
+}
+
+.collection-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm);
+    overflow-y: auto;
+    flex: 1;
+}
+
+.collection-item {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(42,42,42,0.9);
+    border: 2px solid #444;
+    padding: var(--spacing-xs);
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.collection-item.discovered {
+    border-color: var(--accent-green);
+}
+
+.collection-item.undiscovered {
+    opacity: 0.3;
+}
+
+.collection-item.undiscovered .collection-icon {
+    filter: brightness(0);
+}
+
+.collection-icon {
+    font-size: 28px;
+    margin-bottom: 2px;
+}
+
+.collection-icon.svg-icon {
+    width: 40px;
+    height: 40px;
+}
+
+.collection-icon.svg-icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.collection-name {
+    font-size: 9px;
+    color: var(--text-secondary);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+}
+
+.collection-item.rarity-common { border-color: var(--rarity-common); }
+.collection-item.rarity-uncommon { border-color: var(--rarity-uncommon); }
+.collection-item.rarity-rare { border-color: var(--rarity-rare); }
+.collection-item.rarity-epic { border-color: var(--rarity-epic); }
+.collection-item.rarity-legendary { border-color: var(--rarity-legendary); }
+
+/* ========================================
+   実績システム
+   ======================================== */
+.achievements-section {
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-sm);
+    border-top: 2px solid var(--accent-red);
+}
+
+.achievements-section .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+}
+
+.achievement-count {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    color: var(--accent-gold);
+    letter-spacing: 2px;
+}
+
+.achievements-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: var(--spacing-xs);
+}
+
+.achievement-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background: rgba(42,42,42,0.9);
+    border: 2px solid #444;
+    transition: all 0.2s ease;
+}
+
+.achievement-item.unlocked {
+    border-color: var(--accent-gold);
+    background: rgba(255,215,0,0.05);
+}
+
+.achievement-item.claimed {
+    border-color: var(--accent-green);
+    opacity: 0.6;
+}
+
+.achievement-item.unlocked:not(.claimed) {
+    cursor: pointer;
+    animation: achievementPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes achievementPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,215,0,0); }
+    50% { box-shadow: 0 0 10px 2px rgba(255,215,0,0.3); }
+}
+
+.achievement-icon {
+    font-size: 24px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.3);
+    border-radius: 4px;
+}
+
+.achievement-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.achievement-name {
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+
+.achievement-desc {
+    font-size: 10px;
+    color: var(--text-secondary);
+}
+
+.achievement-progress {
+    width: 100%;
+    height: 4px;
+    background: #1a1a1a;
+    margin-top: 4px;
+    overflow: hidden;
+}
+
+.achievement-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-red) 0%, var(--accent-gold) 100%);
+    transition: width 0.3s ease;
+}
+
+.achievement-reward {
+    font-size: 11px;
+    color: var(--accent-gold);
+    text-align: right;
+    white-space: nowrap;
+}
+
+.achievement-item.claimed .achievement-reward {
+    color: var(--accent-green);
+}
+
+.achievement-item.claimed .achievement-reward::after {
+    content: ' ✓';
+}

@@ -107,6 +107,21 @@ class UI {
         // ストーリーモード状態
         this.currentChapter = null;
         this.currentSceneIndex = 0;
+
+        // スキルツリー
+        this.elements.skillPoints = document.getElementById('skill-points');
+        this.elements.skillTreeContainer = document.getElementById('skill-tree-container');
+
+        // 図鑑
+        this.elements.collectionProgress = document.getElementById('collection-progress');
+        this.elements.collectionTotal = document.getElementById('collection-total');
+        this.elements.collectionContent = document.getElementById('collection-content');
+        this.currentCollectionTab = 'monsters';
+
+        // 実績
+        this.elements.unlockedAchievements = document.getElementById('unlocked-achievements');
+        this.elements.totalAchievements = document.getElementById('total-achievements');
+        this.elements.achievementsList = document.getElementById('achievements-list');
     }
 
     bindEvents() {
@@ -208,6 +223,16 @@ class UI {
         if (this.elements.sellCommonBtn) {
             addTouchAndClick(this.elements.sellCommonBtn, () => this.sellCommonItems());
         }
+
+        // 図鑑タブ
+        document.querySelectorAll('.collection-tab').forEach(tab => {
+            addTouchAndClick(tab, () => {
+                document.querySelectorAll('.collection-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                this.currentCollectionTab = tab.dataset.collection;
+                this.renderCollection();
+            });
+        });
     }
 
     setupGameCallbacks() {
@@ -801,8 +826,9 @@ class UI {
         // 必要に応じて再レンダリング
         if (tabId === 'heroes') this.renderHeroes();
         if (tabId === 'equipment') this.renderInventory();
-        if (tabId === 'artifacts') this.renderArtifacts();
-        if (tabId === 'story') this.renderStoryPanel();
+        if (tabId === 'skills') this.renderSkillTree();
+        if (tabId === 'collection') this.renderCollection();
+        if (tabId === 'rebirth') this.renderAchievements();
     }
 
     // ========================================
@@ -1373,6 +1399,249 @@ class UI {
 
         // 3秒後に自動で閉じる
         setTimeout(closeReward, 3000);
+    }
+
+    // ========================================
+    // スキルツリー
+    // ========================================
+    renderSkillTree() {
+        if (!this.elements.skillTreeContainer) return;
+
+        // スキルポイント表示
+        const availableSP = this.game.getAvailableSkillPoints();
+        if (this.elements.skillPoints) {
+            this.elements.skillPoints.textContent = availableSP;
+        }
+
+        let html = '';
+
+        // カテゴリごとにスキルを表示
+        GameData.SKILL_TREE.CATEGORIES.forEach(category => {
+            const categorySkills = GameData.SKILL_TREE.SKILLS.filter(s => s.category === category.id);
+
+            html += `
+                <div class="skill-tree-category">
+                    <div class="skill-tree-category-header">
+                        <span>${category.emoji}</span>
+                        <span class="skill-tree-category-name" style="color: ${category.color}">${category.name}</span>
+                    </div>
+                    <div class="skill-tree-skills">
+            `;
+
+            categorySkills.forEach(skill => {
+                const level = this.game.getSkillTreeLevel(skill.id);
+                const canUpgrade = this.game.canUpgradeSkillTree(skill.id);
+                const isMaxed = level >= skill.maxLevel;
+                const isLocked = skill.requires && this.game.getSkillTreeLevel(skill.requires) < skill.requiresLevel;
+
+                let statusClass = '';
+                if (isMaxed) statusClass = 'maxed';
+                else if (canUpgrade) statusClass = 'can-upgrade';
+                else if (isLocked) statusClass = 'locked';
+
+                const currentValue = level * skill.effect.valuePerLevel;
+                const effectText = skill.description.replace('{value}', currentValue);
+
+                let lockInfo = '';
+                if (isLocked) {
+                    const reqSkill = GameData.SKILL_TREE.SKILLS.find(s => s.id === skill.requires);
+                    lockInfo = ` (要: ${reqSkill.name} Lv${skill.requiresLevel})`;
+                }
+
+                html += `
+                    <div class="skill-tree-item ${statusClass}" data-skill="${skill.id}">
+                        <span class="skill-tree-icon">${skill.emoji}</span>
+                        <div class="skill-tree-info">
+                            <div class="skill-tree-name">${skill.name}${lockInfo}</div>
+                            <div class="skill-tree-level">Lv ${level}/${skill.maxLevel}</div>
+                            <div class="skill-tree-effect">${effectText}</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div></div>';
+        });
+
+        this.elements.skillTreeContainer.innerHTML = html;
+
+        // クリックイベント
+        this.elements.skillTreeContainer.querySelectorAll('.skill-tree-item:not(.locked):not(.maxed)').forEach(item => {
+            item.addEventListener('click', () => {
+                const skillId = item.dataset.skill;
+                if (this.game.upgradeSkillTree(skillId)) {
+                    this.renderSkillTree();
+                    this.showToast('スキル強化！');
+                }
+            });
+        });
+    }
+
+    // ========================================
+    // 図鑑
+    // ========================================
+    renderCollection() {
+        if (!this.elements.collectionContent) return;
+
+        if (this.currentCollectionTab === 'monsters') {
+            this.renderMonsterCollection();
+        } else {
+            this.renderEquipmentCollection();
+        }
+    }
+
+    renderMonsterCollection() {
+        const allMonsters = [...GameData.MONSTERS, ...GameData.BOSSES];
+        const discovered = [...this.game.state.discoveredMonsters, ...this.game.state.discoveredBosses];
+
+        // 進捗表示
+        if (this.elements.collectionProgress) {
+            this.elements.collectionProgress.textContent = discovered.length;
+        }
+        if (this.elements.collectionTotal) {
+            this.elements.collectionTotal.textContent = allMonsters.length;
+        }
+
+        let html = '';
+        allMonsters.forEach(monster => {
+            const isDiscovered = discovered.includes(monster.name);
+            const isBoss = GameData.BOSSES.some(b => b.name === monster.name);
+
+            html += `
+                <div class="collection-item ${isDiscovered ? 'discovered' : 'undiscovered'} ${isBoss ? 'boss' : ''}">
+                    <div class="collection-icon svg-icon">${monster.svg}</div>
+                    <div class="collection-name">${isDiscovered ? monster.name : '???'}</div>
+                </div>
+            `;
+        });
+
+        this.elements.collectionContent.innerHTML = html;
+    }
+
+    renderEquipmentCollection() {
+        const allEquipment = [];
+
+        // 全装備テンプレートを取得
+        Object.keys(GameData.EQUIPMENT).forEach(type => {
+            GameData.EQUIPMENT[type].forEach(equip => {
+                Object.keys(GameData.RARITY).forEach(rarity => {
+                    allEquipment.push({
+                        ...equip,
+                        rarity: rarity,
+                        key: `${equip.name}_${rarity}`
+                    });
+                });
+            });
+        });
+
+        const obtained = this.game.state.obtainedEquipment;
+        const obtainedCount = Object.keys(obtained).length;
+
+        // 進捗表示
+        if (this.elements.collectionProgress) {
+            this.elements.collectionProgress.textContent = obtainedCount;
+        }
+        if (this.elements.collectionTotal) {
+            this.elements.collectionTotal.textContent = allEquipment.length;
+        }
+
+        let html = '';
+        allEquipment.forEach(equip => {
+            const isObtained = obtained[equip.key];
+            const rarityClass = equip.rarity.toLowerCase();
+
+            html += `
+                <div class="collection-item ${isObtained ? 'discovered' : 'undiscovered'} rarity-${rarityClass}">
+                    <div class="collection-icon">${equip.emoji}</div>
+                    <div class="collection-name">${isObtained ? equip.name : '???'}</div>
+                </div>
+            `;
+        });
+
+        this.elements.collectionContent.innerHTML = html;
+    }
+
+    // ========================================
+    // 実績
+    // ========================================
+    renderAchievements() {
+        if (!this.elements.achievementsList) return;
+
+        const unlockedCount = this.game.state.unlockedAchievements.length;
+        const totalCount = GameData.ACHIEVEMENTS.length;
+
+        if (this.elements.unlockedAchievements) {
+            this.elements.unlockedAchievements.textContent = unlockedCount;
+        }
+        if (this.elements.totalAchievements) {
+            this.elements.totalAchievements.textContent = totalCount;
+        }
+
+        let html = '';
+
+        // 未受取 > 未達成 の順でソート
+        const sortedAchievements = [...GameData.ACHIEVEMENTS].sort((a, b) => {
+            const aUnlocked = this.game.state.unlockedAchievements.includes(a.id);
+            const bUnlocked = this.game.state.unlockedAchievements.includes(b.id);
+            const aClaimed = this.game.state.claimedAchievements.includes(a.id);
+            const bClaimed = this.game.state.claimedAchievements.includes(b.id);
+
+            // 未受取を最初に
+            if (aUnlocked && !aClaimed && !(bUnlocked && !bClaimed)) return -1;
+            if (bUnlocked && !bClaimed && !(aUnlocked && !aClaimed)) return 1;
+            // 受取済みを最後に
+            if (aClaimed && !bClaimed) return 1;
+            if (bClaimed && !aClaimed) return -1;
+            return 0;
+        });
+
+        sortedAchievements.forEach(achievement => {
+            const isUnlocked = this.game.state.unlockedAchievements.includes(achievement.id);
+            const isClaimed = this.game.state.claimedAchievements.includes(achievement.id);
+            const progress = this.game.getAchievementProgress(achievement);
+
+            let statusClass = '';
+            if (isClaimed) statusClass = 'claimed';
+            else if (isUnlocked) statusClass = 'unlocked';
+
+            const rewardText = achievement.reward.type === 'gold'
+                ? `💰${achievement.reward.amount}`
+                : `💎${achievement.reward.amount}`;
+
+            html += `
+                <div class="achievement-item ${statusClass}" data-achievement="${achievement.id}">
+                    <div class="achievement-icon">${achievement.emoji}</div>
+                    <div class="achievement-info">
+                        <div class="achievement-name">${achievement.name}</div>
+                        <div class="achievement-desc">${achievement.description}</div>
+                        ${!isUnlocked ? `
+                            <div class="achievement-progress">
+                                <div class="achievement-progress-fill" style="width: ${progress.percent}%"></div>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="achievement-reward">${rewardText}</div>
+                </div>
+            `;
+        });
+
+        this.elements.achievementsList.innerHTML = html;
+
+        // 未受取の実績をクリックで報酬受け取り
+        this.elements.achievementsList.querySelectorAll('.achievement-item.unlocked:not(.claimed)').forEach(item => {
+            item.addEventListener('click', () => {
+                const achievementId = item.dataset.achievement;
+                const claimed = this.game.claimAchievement(achievementId);
+                if (claimed) {
+                    const rewardText = claimed.reward.type === 'gold'
+                        ? `💰${claimed.reward.amount}G`
+                        : `💎${claimed.reward.amount}ジェム`;
+                    this.showToast(`🏆 ${claimed.name} - ${rewardText} 獲得！`);
+                    this.renderAchievements();
+                    this.updateResources();
+                }
+            });
+        });
     }
 }
 

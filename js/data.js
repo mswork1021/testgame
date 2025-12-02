@@ -900,6 +900,369 @@ const GameData = {
         { day: 5, type: 'gold', amount: 1000, emoji: '💰', label: '1000G' },
         { day: 6, type: 'gems', amount: 10, emoji: '💎', label: '10ジェム' },
         { day: 7, type: 'equipment', rarity: 'RARE', emoji: '🎁', label: 'レア装備' }
+    ],
+
+    // スキルツリー（パッシブスキル）
+    SKILL_TREE: {
+        // スキルポイント: 転生1回につき1ポイント
+        CATEGORIES: [
+            {
+                id: 'attack',
+                name: '攻撃',
+                emoji: '⚔️',
+                color: '#e74c3c'
+            },
+            {
+                id: 'defense',
+                name: '防御',
+                emoji: '🛡️',
+                color: '#3498db'
+            },
+            {
+                id: 'wealth',
+                name: '財宝',
+                emoji: '💰',
+                color: '#f1c40f'
+            }
+        ],
+        SKILLS: [
+            // 攻撃系
+            {
+                id: 'sharpBlade',
+                category: 'attack',
+                name: '鋭利な刃',
+                emoji: '🗡️',
+                description: 'タップダメージ +{value}%',
+                maxLevel: 10,
+                costPerLevel: 1,
+                effect: { type: 'tapDamagePercent', valuePerLevel: 5 }
+            },
+            {
+                id: 'criticalEye',
+                category: 'attack',
+                name: '心眼',
+                emoji: '👁️',
+                description: 'クリティカル率 +{value}%',
+                maxLevel: 10,
+                costPerLevel: 1,
+                effect: { type: 'critChance', valuePerLevel: 2 },
+                requires: 'sharpBlade',
+                requiresLevel: 3
+            },
+            {
+                id: 'deadlyBlow',
+                category: 'attack',
+                name: '必殺の一撃',
+                emoji: '💀',
+                description: 'クリティカルダメージ +{value}%',
+                maxLevel: 10,
+                costPerLevel: 2,
+                effect: { type: 'critDamage', valuePerLevel: 15 },
+                requires: 'criticalEye',
+                requiresLevel: 5
+            },
+            {
+                id: 'berserk',
+                category: 'attack',
+                name: 'バーサーク',
+                emoji: '😤',
+                description: '全攻撃力 +{value}%',
+                maxLevel: 5,
+                costPerLevel: 3,
+                effect: { type: 'allDamagePercent', valuePerLevel: 10 },
+                requires: 'deadlyBlow',
+                requiresLevel: 5
+            },
+            // 防御系
+            {
+                id: 'toughness',
+                category: 'defense',
+                name: '頑強',
+                emoji: '💪',
+                description: 'ボス戦時間 +{value}秒',
+                maxLevel: 10,
+                costPerLevel: 1,
+                effect: { type: 'bossTime', valuePerLevel: 1 }
+            },
+            {
+                id: 'secondWind',
+                category: 'defense',
+                name: '起死回生',
+                emoji: '🌬️',
+                description: 'ボス失敗時ステージ維持率 +{value}%',
+                maxLevel: 5,
+                costPerLevel: 2,
+                effect: { type: 'bossFailProtect', valuePerLevel: 20 },
+                requires: 'toughness',
+                requiresLevel: 3
+            },
+            {
+                id: 'autoProgress',
+                category: 'defense',
+                name: '自動進行',
+                emoji: '🏃',
+                description: 'オート戦闘効率 +{value}%',
+                maxLevel: 10,
+                costPerLevel: 1,
+                effect: { type: 'dpsPercent', valuePerLevel: 5 },
+                requires: 'toughness',
+                requiresLevel: 5
+            },
+            {
+                id: 'immortal',
+                category: 'defense',
+                name: '不死身',
+                emoji: '💫',
+                description: 'ボス戦開始時追加時間 +{value}秒',
+                maxLevel: 5,
+                costPerLevel: 3,
+                effect: { type: 'bossTimeFlat', valuePerLevel: 3 },
+                requires: 'secondWind',
+                requiresLevel: 3
+            },
+            // 財宝系
+            {
+                id: 'greed',
+                category: 'wealth',
+                name: '強欲',
+                emoji: '🤑',
+                description: 'ゴールド獲得 +{value}%',
+                maxLevel: 10,
+                costPerLevel: 1,
+                effect: { type: 'goldPercent', valuePerLevel: 5 }
+            },
+            {
+                id: 'treasureHunter',
+                category: 'wealth',
+                name: 'トレジャーハンター',
+                emoji: '🔍',
+                description: '装備ドロップ率 +{value}%',
+                maxLevel: 10,
+                costPerLevel: 1,
+                effect: { type: 'dropRate', valuePerLevel: 3 },
+                requires: 'greed',
+                requiresLevel: 3
+            },
+            {
+                id: 'luckyFind',
+                category: 'wealth',
+                name: '幸運の発見',
+                emoji: '🍀',
+                description: 'レア装備出現率 +{value}%',
+                maxLevel: 5,
+                costPerLevel: 2,
+                effect: { type: 'rareDropRate', valuePerLevel: 5 },
+                requires: 'treasureHunter',
+                requiresLevel: 5
+            },
+            {
+                id: 'soulMaster',
+                category: 'wealth',
+                name: 'ソウルマスター',
+                emoji: '👻',
+                description: '転生時ソウル +{value}%',
+                maxLevel: 5,
+                costPerLevel: 3,
+                effect: { type: 'soulBonus', valuePerLevel: 10 },
+                requires: 'luckyFind',
+                requiresLevel: 3
+            }
+        ]
+    },
+
+    // 実績システム
+    ACHIEVEMENTS: [
+        // タップ系
+        {
+            id: 'tapper1',
+            name: 'タップ初心者',
+            description: '100回タップする',
+            emoji: '👆',
+            requirement: { type: 'totalTaps', value: 100 },
+            reward: { type: 'gems', amount: 1 }
+        },
+        {
+            id: 'tapper2',
+            name: 'タップ見習い',
+            description: '1,000回タップする',
+            emoji: '👆',
+            requirement: { type: 'totalTaps', value: 1000 },
+            reward: { type: 'gems', amount: 5 }
+        },
+        {
+            id: 'tapper3',
+            name: 'タップマスター',
+            description: '10,000回タップする',
+            emoji: '🏆',
+            requirement: { type: 'totalTaps', value: 10000 },
+            reward: { type: 'gems', amount: 10 }
+        },
+        {
+            id: 'tapper4',
+            name: 'タップレジェンド',
+            description: '100,000回タップする',
+            emoji: '👑',
+            requirement: { type: 'totalTaps', value: 100000 },
+            reward: { type: 'gems', amount: 50 }
+        },
+        // モンスター討伐系
+        {
+            id: 'hunter1',
+            name: 'モンスターハンター',
+            description: '100体のモンスターを倒す',
+            emoji: '🐾',
+            requirement: { type: 'totalMonstersKilled', value: 100 },
+            reward: { type: 'gold', amount: 500 }
+        },
+        {
+            id: 'hunter2',
+            name: '熟練ハンター',
+            description: '1,000体のモンスターを倒す',
+            emoji: '🗡️',
+            requirement: { type: 'totalMonstersKilled', value: 1000 },
+            reward: { type: 'gems', amount: 5 }
+        },
+        {
+            id: 'hunter3',
+            name: '伝説のハンター',
+            description: '10,000体のモンスターを倒す',
+            emoji: '⚔️',
+            requirement: { type: 'totalMonstersKilled', value: 10000 },
+            reward: { type: 'gems', amount: 20 }
+        },
+        // ステージ系
+        {
+            id: 'stage1',
+            name: '冒険者',
+            description: 'ステージ10に到達',
+            emoji: '🚶',
+            requirement: { type: 'maxStageReached', value: 10 },
+            reward: { type: 'gold', amount: 100 }
+        },
+        {
+            id: 'stage2',
+            name: '探検家',
+            description: 'ステージ50に到達',
+            emoji: '🧭',
+            requirement: { type: 'maxStageReached', value: 50 },
+            reward: { type: 'gems', amount: 5 }
+        },
+        {
+            id: 'stage3',
+            name: '勇者',
+            description: 'ステージ100に到達',
+            emoji: '⚔️',
+            requirement: { type: 'maxStageReached', value: 100 },
+            reward: { type: 'gems', amount: 10 }
+        },
+        {
+            id: 'stage4',
+            name: '英雄',
+            description: 'ステージ200に到達',
+            emoji: '🦸',
+            requirement: { type: 'maxStageReached', value: 200 },
+            reward: { type: 'gems', amount: 20 }
+        },
+        {
+            id: 'stage5',
+            name: '伝説',
+            description: 'ステージ500に到達',
+            emoji: '👑',
+            requirement: { type: 'maxStageReached', value: 500 },
+            reward: { type: 'gems', amount: 50 }
+        },
+        // 転生系
+        {
+            id: 'rebirth1',
+            name: '転生者',
+            description: '初めての転生',
+            emoji: '🔄',
+            requirement: { type: 'rebirthCount', value: 1 },
+            reward: { type: 'gems', amount: 10 }
+        },
+        {
+            id: 'rebirth2',
+            name: '輪廻',
+            description: '5回転生する',
+            emoji: '♻️',
+            requirement: { type: 'rebirthCount', value: 5 },
+            reward: { type: 'gems', amount: 25 }
+        },
+        {
+            id: 'rebirth3',
+            name: '永劫回帰',
+            description: '10回転生する',
+            emoji: '🌀',
+            requirement: { type: 'rebirthCount', value: 10 },
+            reward: { type: 'gems', amount: 50 }
+        },
+        // ゴールド系
+        {
+            id: 'gold1',
+            name: '小金持ち',
+            description: '10,000ゴールド累計獲得',
+            emoji: '💰',
+            requirement: { type: 'totalGoldEarned', value: 10000 },
+            reward: { type: 'gold', amount: 1000 }
+        },
+        {
+            id: 'gold2',
+            name: '富豪',
+            description: '100,000ゴールド累計獲得',
+            emoji: '💎',
+            requirement: { type: 'totalGoldEarned', value: 100000 },
+            reward: { type: 'gems', amount: 10 }
+        },
+        {
+            id: 'gold3',
+            name: '大富豪',
+            description: '1,000,000ゴールド累計獲得',
+            emoji: '👑',
+            requirement: { type: 'totalGoldEarned', value: 1000000 },
+            reward: { type: 'gems', amount: 30 }
+        },
+        // 図鑑系
+        {
+            id: 'collector1',
+            name: 'コレクター',
+            description: '5種類のモンスターを発見',
+            emoji: '📚',
+            requirement: { type: 'discoveredMonsters', value: 5 },
+            reward: { type: 'gems', amount: 3 }
+        },
+        {
+            id: 'collector2',
+            name: 'モンスター博士',
+            description: '全てのモンスターを発見',
+            emoji: '🎓',
+            requirement: { type: 'discoveredMonsters', value: 15 },
+            reward: { type: 'gems', amount: 20 }
+        },
+        // 装備系
+        {
+            id: 'equip1',
+            name: '装備コレクター',
+            description: 'レア装備を入手',
+            emoji: '🔵',
+            requirement: { type: 'hasRarity', value: 'RARE' },
+            reward: { type: 'gold', amount: 500 }
+        },
+        {
+            id: 'equip2',
+            name: 'エピックハンター',
+            description: 'エピック装備を入手',
+            emoji: '🟣',
+            requirement: { type: 'hasRarity', value: 'EPIC' },
+            reward: { type: 'gems', amount: 10 }
+        },
+        {
+            id: 'equip3',
+            name: 'レジェンドハンター',
+            description: 'レジェンダリー装備を入手',
+            emoji: '🟡',
+            requirement: { type: 'hasRarity', value: 'LEGENDARY' },
+            reward: { type: 'gems', amount: 25 }
+        }
     ]
 };
 
