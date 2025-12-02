@@ -1,0 +1,27 @@
+{
+    "name": "Tap Quest - タップクエスト",
+    "short_name": "TapQuest",
+    "description": "タップで冒険！モンスターを倒してヒーローを強化する放置系クリッカーRPG",
+    "start_url": "/",
+    "display": "standalone",
+    "orientation": "portrait",
+    "background_color": "#1a1a2e",
+    "theme_color": "#1a1a2e",
+    "icons": [
+        {
+            "src": "assets/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "assets/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": ["games", "entertainment"],
+    "lang": "ja",
+    "dir": "ltr"
+}

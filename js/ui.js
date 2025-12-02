@@ -1,0 +1,636 @@
+/* ========================================
+   Tap Quest - UI管理
+   ======================================== */
+
+class UI {
+    constructor(game) {
+        this.game = game;
+        this.elements = {};
+        this.currentTab = 'heroes';
+        this.selectedItem = null;
+    }
+
+    // ========================================
+    // 初期化
+    // ========================================
+    init() {
+        this.cacheElements();
+        this.bindEvents();
+        this.setupGameCallbacks();
+        this.renderAll();
+    }
+
+    cacheElements() {
+        // ヘッダー
+        this.elements.goldDisplay = document.getElementById('gold-display');
+        this.elements.soulsDisplay = document.getElementById('souls-display');
+        this.elements.gemsDisplay = document.getElementById('gems-display');
+        this.elements.stageDisplay = document.getElementById('stage-display');
+        this.elements.stageProgress = document.getElementById('stage-progress');
+
+        // バトルエリア
+        this.elements.bossTimer = document.getElementById('boss-timer');
+        this.elements.bossTimeLeft = document.getElementById('boss-time-left');
+        this.elements.battleArea = document.getElementById('battle-area');
+        this.elements.monster = document.getElementById('monster');
+        this.elements.monsterEmoji = document.getElementById('monster-emoji');
+        this.elements.monsterName = document.getElementById('monster-name');
+        this.elements.monsterHpFill = document.getElementById('monster-hp-fill');
+        this.elements.monsterHpText = document.getElementById('monster-hp-text');
+        this.elements.damageNumbers = document.getElementById('damage-numbers');
+        this.elements.lootPopup = document.getElementById('loot-popup');
+
+        // パネル
+        this.elements.heroesList = document.getElementById('heroes-list');
+        this.elements.totalDps = document.getElementById('total-dps');
+        this.elements.inventoryList = document.getElementById('inventory-list');
+        this.elements.skillsList = document.getElementById('skills-list');
+        this.elements.artifactsList = document.getElementById('artifacts-list');
+        this.elements.artifactSouls = document.getElementById('artifact-souls');
+
+        // 転生パネル
+        this.elements.currentStageRebirth = document.getElementById('current-stage-rebirth');
+        this.elements.rebirthCount = document.getElementById('rebirth-count');
+        this.elements.pendingSouls = document.getElementById('pending-souls');
+        this.elements.rebirthBtn = document.getElementById('rebirth-btn');
+
+        // 装備スロット
+        this.elements.weaponSlot = document.getElementById('weapon-slot');
+        this.elements.armorSlot = document.getElementById('armor-slot');
+        this.elements.accessorySlot = document.getElementById('accessory-slot');
+
+        // モーダル
+        this.elements.offlineModal = document.getElementById('offline-modal');
+        this.elements.offlineGold = document.getElementById('offline-gold');
+        this.elements.claimOffline = document.getElementById('claim-offline');
+        this.elements.claimOfflineDouble = document.getElementById('claim-offline-double');
+
+        this.elements.equipmentModal = document.getElementById('equipment-modal');
+        this.elements.equipModalTitle = document.getElementById('equip-modal-title');
+        this.elements.equipModalStats = document.getElementById('equip-modal-stats');
+        this.elements.equipBtn = document.getElementById('equip-btn');
+        this.elements.closeEquipModal = document.getElementById('close-equip-modal');
+    }
+
+    bindEvents() {
+        // タップイベント
+        this.elements.battleArea.addEventListener('click', (e) => {
+            this.onTap(e);
+        });
+
+        // タブ切り替え
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.switchTab(btn.dataset.tab);
+            });
+        });
+
+        // 転生ボタン
+        this.elements.rebirthBtn.addEventListener('click', () => {
+            this.onRebirth();
+        });
+
+        // 装備スロットクリック
+        ['weapon', 'armor', 'accessory'].forEach(slot => {
+            const element = this.elements[`${slot}Slot`];
+            element.addEventListener('click', () => {
+                this.onEquipSlotClick(slot);
+            });
+        });
+
+        // モーダルボタン
+        this.elements.claimOffline.addEventListener('click', () => {
+            this.claimOfflineReward(1);
+        });
+
+        this.elements.claimOfflineDouble.addEventListener('click', () => {
+            this.claimOfflineReward(2);
+        });
+
+        this.elements.equipBtn.addEventListener('click', () => {
+            this.onEquipItem();
+        });
+
+        this.elements.closeEquipModal.addEventListener('click', () => {
+            this.closeEquipmentModal();
+        });
+    }
+
+    setupGameCallbacks() {
+        // 更新コールバック
+        this.game.onUpdate = () => {
+            this.updateDisplay();
+        };
+
+        // ダメージ表示
+        this.game.onDamageDealt = (amount, isCritical) => {
+            this.showDamageNumber(amount, isCritical);
+        };
+
+        // モンスター撃破
+        this.game.onMonsterKill = (monster, gold) => {
+            this.onMonsterKill(monster, gold);
+        };
+
+        // ボス戦失敗
+        this.game.onBossFailed = () => {
+            this.showToast('ボス戦に失敗...1ステージ戻ります');
+        };
+
+        // ドロップ
+        this.game.onLoot = (item) => {
+            this.showLootPopup(item);
+        };
+    }
+
+    // ========================================
+    // タップ処理
+    // ========================================
+    onTap(e) {
+        this.game.tap();
+
+        // モンスターヒットアニメーション
+        this.elements.monster.classList.add('hit');
+        setTimeout(() => {
+            this.elements.monster.classList.remove('hit');
+        }, 100);
+    }
+
+    showDamageNumber(amount, isCritical) {
+        const damageEl = document.createElement('div');
+        damageEl.className = 'damage-number' + (isCritical ? ' critical' : '');
+        damageEl.textContent = this.formatNumber(amount);
+
+        // ランダムな位置
+        const battleRect = this.elements.battleArea.getBoundingClientRect();
+        const x = 30 + Math.random() * 40; // 30-70%
+        const y = 20 + Math.random() * 30; // 20-50%
+
+        damageEl.style.left = x + '%';
+        damageEl.style.top = y + '%';
+
+        this.elements.damageNumbers.appendChild(damageEl);
+
+        // アニメーション後に削除
+        setTimeout(() => {
+            damageEl.remove();
+        }, 1000);
+    }
+
+    // ========================================
+    // 表示更新
+    // ========================================
+    updateDisplay() {
+        // リソース
+        this.elements.goldDisplay.textContent = this.formatNumber(this.game.state.gold);
+        this.elements.soulsDisplay.textContent = this.formatNumber(this.game.state.souls);
+        this.elements.gemsDisplay.textContent = this.formatNumber(this.game.state.gems);
+
+        // ステージ
+        const isBoss = this.game.isBossFight;
+        const stageText = isBoss
+            ? `⚔️ BOSS - ステージ ${this.game.state.currentStage}`
+            : `ステージ ${this.game.state.currentStage}`;
+        this.elements.stageDisplay.textContent = stageText;
+
+        // 進捗バー
+        const progress = (this.game.state.monstersKilled / GameData.BALANCE.MONSTERS_PER_STAGE) * 100;
+        this.elements.stageProgress.style.width = progress + '%';
+
+        // モンスター情報
+        if (this.game.currentMonster) {
+            const monster = this.game.currentMonster;
+            this.elements.monsterEmoji.textContent = monster.emoji;
+            this.elements.monsterName.textContent = monster.name;
+            this.elements.monsterName.className = monster.isBoss ? 'boss-name' : '';
+            this.elements.monster.className = 'monster' + (monster.isBoss ? ' boss' : '');
+
+            const hpPercent = Math.max(0, (monster.currentHp / monster.maxHp) * 100);
+            this.elements.monsterHpFill.style.width = hpPercent + '%';
+            this.elements.monsterHpText.textContent =
+                this.formatNumber(Math.max(0, Math.ceil(monster.currentHp))) + '/' +
+                this.formatNumber(monster.maxHp);
+        }
+
+        // ボスタイマー
+        if (this.game.isBossFight && this.game.bossTimeLeft > 0) {
+            this.elements.bossTimer.classList.remove('hidden');
+            this.elements.bossTimeLeft.textContent = Math.ceil(this.game.bossTimeLeft);
+        } else {
+            this.elements.bossTimer.classList.add('hidden');
+        }
+
+        // DPS
+        this.elements.totalDps.textContent = this.formatNumber(this.game.getTotalDPS());
+
+        // 転生パネル
+        this.elements.currentStageRebirth.textContent = this.game.state.currentStage;
+        this.elements.rebirthCount.textContent = this.game.state.rebirthCount;
+        this.elements.pendingSouls.textContent = this.formatNumber(this.game.getPendingSouls());
+        this.elements.rebirthBtn.disabled = !this.game.canRebirth();
+
+        // アーティファクトソウル
+        this.elements.artifactSouls.textContent = this.formatNumber(this.game.state.souls);
+
+        // スキルクールダウン更新
+        this.updateSkillCooldowns();
+    }
+
+    // ========================================
+    // レンダリング
+    // ========================================
+    renderAll() {
+        this.renderHeroes();
+        this.renderSkills();
+        this.renderArtifacts();
+        this.renderEquipment();
+        this.renderInventory();
+        this.updateDisplay();
+    }
+
+    renderHeroes() {
+        let html = '<h3 style="margin-bottom: 8px; color: #b8b8b8;">タップダメージ強化</h3>';
+
+        // ヒーロー
+        GameData.HEROES.forEach(hero => {
+            const level = this.game.state.heroLevels[hero.id] || 0;
+            const cost = this.game.getHeroCost(hero.id);
+            const damage = hero.baseDamage * level;
+            const canAfford = this.game.state.gold >= cost;
+
+            html += `
+                <div class="upgrade-item">
+                    <div class="upgrade-icon">${hero.emoji}</div>
+                    <div class="upgrade-info">
+                        <div class="upgrade-name">${hero.name} Lv.${level}</div>
+                        <div class="upgrade-stats">ダメージ +${this.formatNumber(damage)}</div>
+                    </div>
+                    <button class="upgrade-btn" data-type="hero" data-id="${hero.id}" ${!canAfford ? 'disabled' : ''}>
+                        💰${this.formatNumber(cost)}
+                    </button>
+                </div>
+            `;
+        });
+
+        html += '<h3 style="margin: 16px 0 8px; color: #b8b8b8;">自動攻撃仲間</h3>';
+
+        // 仲間
+        GameData.COMPANIONS.forEach(comp => {
+            const level = this.game.state.companionLevels[comp.id] || 0;
+            const cost = this.game.getCompanionCost(comp.id);
+            const dps = comp.baseDps * level;
+            const canAfford = this.game.state.gold >= cost;
+
+            html += `
+                <div class="upgrade-item">
+                    <div class="upgrade-icon">${comp.emoji}</div>
+                    <div class="upgrade-info">
+                        <div class="upgrade-name">${comp.name} Lv.${level}</div>
+                        <div class="upgrade-stats">DPS +${this.formatNumber(dps)}</div>
+                    </div>
+                    <button class="upgrade-btn" data-type="companion" data-id="${comp.id}" ${!canAfford ? 'disabled' : ''}>
+                        💰${this.formatNumber(cost)}
+                    </button>
+                </div>
+            `;
+        });
+
+        this.elements.heroesList.innerHTML = html;
+
+        // ボタンイベント
+        this.elements.heroesList.querySelectorAll('.upgrade-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const type = btn.dataset.type;
+                const id = btn.dataset.id;
+
+                if (type === 'hero') {
+                    this.game.upgradeHero(id);
+                } else {
+                    this.game.upgradeCompanion(id);
+                }
+
+                this.renderHeroes();
+            });
+        });
+    }
+
+    renderSkills() {
+        let html = '';
+
+        GameData.SKILLS.forEach(skill => {
+            const unlocked = this.game.isSkillUnlocked(skill.id);
+            const cooldown = this.game.getSkillCooldownRemaining(skill.id);
+            const onCooldown = cooldown > 0;
+
+            html += `
+                <div class="skill-item ${!unlocked ? 'locked' : ''} ${onCooldown ? 'on-cooldown' : ''}"
+                     data-skill="${skill.id}">
+                    <div class="skill-icon">${skill.emoji}</div>
+                    <div class="skill-name">${unlocked ? skill.name : `Stage ${skill.unlockStage}`}</div>
+                    ${onCooldown ? `<div class="skill-cooldown">${cooldown}s</div>` : ''}
+                </div>
+            `;
+        });
+
+        this.elements.skillsList.innerHTML = html;
+
+        // イベント
+        this.elements.skillsList.querySelectorAll('.skill-item').forEach(el => {
+            el.addEventListener('click', () => {
+                const skillId = el.dataset.skill;
+                if (this.game.useSkill(skillId)) {
+                    // オートタップスキルの特殊処理
+                    const skill = GameData.SKILLS.find(s => s.id === skillId);
+                    if (skill.effect.type === 'autoTap') {
+                        this.game.startAutoTap(skill.effect.value);
+                        setTimeout(() => {
+                            this.game.stopAutoTap();
+                        }, skill.duration * 1000);
+                    }
+
+                    this.showToast(`${skill.name}発動！`);
+                    this.renderSkills();
+                }
+            });
+        });
+    }
+
+    updateSkillCooldowns() {
+        this.elements.skillsList.querySelectorAll('.skill-item').forEach(el => {
+            const skillId = el.dataset.skill;
+            const cooldown = this.game.getSkillCooldownRemaining(skillId);
+            const cooldownEl = el.querySelector('.skill-cooldown');
+
+            if (cooldown > 0) {
+                el.classList.add('on-cooldown');
+                if (cooldownEl) {
+                    cooldownEl.textContent = cooldown + 's';
+                } else {
+                    const newCooldownEl = document.createElement('div');
+                    newCooldownEl.className = 'skill-cooldown';
+                    newCooldownEl.textContent = cooldown + 's';
+                    el.appendChild(newCooldownEl);
+                }
+            } else {
+                el.classList.remove('on-cooldown');
+                if (cooldownEl) {
+                    cooldownEl.remove();
+                }
+            }
+        });
+    }
+
+    renderArtifacts() {
+        let html = '';
+
+        GameData.ARTIFACTS.forEach(artifact => {
+            const level = this.game.state.artifactLevels[artifact.id] || 0;
+            const cost = this.game.getArtifactCost(artifact.id);
+            const value = artifact.effect.baseValue * level;
+            const canAfford = this.game.state.souls >= cost;
+
+            html += `
+                <div class="upgrade-item">
+                    <div class="upgrade-icon">${artifact.emoji}</div>
+                    <div class="upgrade-info">
+                        <div class="upgrade-name">${artifact.name} Lv.${level}</div>
+                        <div class="upgrade-stats">${artifact.description.replace('{value}', value)}</div>
+                    </div>
+                    <button class="upgrade-btn" data-id="${artifact.id}" ${!canAfford ? 'disabled' : ''}>
+                        👻${this.formatNumber(cost)}
+                    </button>
+                </div>
+            `;
+        });
+
+        this.elements.artifactsList.innerHTML = html;
+
+        // イベント
+        this.elements.artifactsList.querySelectorAll('.upgrade-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (this.game.upgradeArtifact(btn.dataset.id)) {
+                    this.renderArtifacts();
+                }
+            });
+        });
+    }
+
+    renderEquipment() {
+        ['weapon', 'armor', 'accessory'].forEach(slot => {
+            const item = this.game.state.equipment[slot];
+            const element = this.elements[`${slot}Slot`];
+
+            if (item) {
+                element.innerHTML = `${item.emoji} ${item.name}`;
+                element.className = `slot-item ${item.rarityClass}`;
+            } else {
+                element.innerHTML = 'なし';
+                element.className = 'slot-item empty';
+            }
+        });
+    }
+
+    renderInventory() {
+        let html = '';
+
+        this.game.state.inventory.forEach((item, index) => {
+            html += `
+                <div class="inventory-item ${item.rarityClass}" data-index="${index}">
+                    ${item.emoji}
+                </div>
+            `;
+        });
+
+        if (this.game.state.inventory.length === 0) {
+            html = '<div style="grid-column: 1/-1; text-align: center; color: #666; padding: 20px;">アイテムなし</div>';
+        }
+
+        this.elements.inventoryList.innerHTML = html;
+
+        // イベント
+        this.elements.inventoryList.querySelectorAll('.inventory-item').forEach(el => {
+            el.addEventListener('click', () => {
+                const index = parseInt(el.dataset.index);
+                this.openEquipmentModal(this.game.state.inventory[index]);
+            });
+        });
+    }
+
+    // ========================================
+    // タブ切り替え
+    // ========================================
+    switchTab(tabId) {
+        this.currentTab = tabId;
+
+        // ナビボタン更新
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === tabId);
+        });
+
+        // パネル更新
+        document.querySelectorAll('.tab-panel').forEach(panel => {
+            panel.classList.toggle('active', panel.id === tabId + '-panel');
+        });
+
+        // 必要に応じて再レンダリング
+        if (tabId === 'heroes') this.renderHeroes();
+        if (tabId === 'equipment') this.renderInventory();
+        if (tabId === 'artifacts') this.renderArtifacts();
+    }
+
+    // ========================================
+    // 装備モーダル
+    // ========================================
+    openEquipmentModal(item) {
+        this.selectedItem = item;
+
+        this.elements.equipModalTitle.textContent = `${item.emoji} ${item.name}`;
+        this.elements.equipModalTitle.style.color = GameData.RARITY[item.rarity].color;
+
+        let statsHtml = `<p style="color: ${GameData.RARITY[item.rarity].color}">${item.rarityName}</p>`;
+        statsHtml += `<p>タイプ: ${item.type === 'weapon' ? '武器' : item.type === 'armor' ? '防具' : 'アクセサリー'}</p>`;
+        statsHtml += `<p>効果: ${this.getStatLabel(item.stat)} +${item.value}</p>`;
+
+        this.elements.equipModalStats.innerHTML = statsHtml;
+        this.elements.equipmentModal.classList.remove('hidden');
+    }
+
+    closeEquipmentModal() {
+        this.elements.equipmentModal.classList.add('hidden');
+        this.selectedItem = null;
+    }
+
+    onEquipItem() {
+        if (this.selectedItem) {
+            this.game.equipItem(this.selectedItem);
+            this.closeEquipmentModal();
+            this.renderEquipment();
+            this.renderInventory();
+        }
+    }
+
+    onEquipSlotClick(slot) {
+        const item = this.game.state.equipment[slot];
+        if (item) {
+            this.game.unequipItem(slot);
+            this.renderEquipment();
+            this.renderInventory();
+        }
+    }
+
+    getStatLabel(stat) {
+        const labels = {
+            tapDamage: 'タップダメージ',
+            bossTime: 'ボス戦時間(秒)',
+            goldBonus: 'ゴールド獲得(%)',
+            critChance: 'クリティカル率(%)',
+            critDamage: 'クリティカルダメージ(%)',
+            allStats: '全ステータス(%)'
+        };
+        return labels[stat] || stat;
+    }
+
+    // ========================================
+    // 転生
+    // ========================================
+    onRebirth() {
+        if (!this.game.canRebirth()) return;
+
+        const souls = this.game.getPendingSouls();
+        if (confirm(`転生しますか？\n\n獲得ソウル: ${this.formatNumber(souls)}\n\n※ゴールド、ヒーロー、仲間がリセットされます`)) {
+            const gained = this.game.rebirth();
+            this.showToast(`転生完了！👻${this.formatNumber(gained)}ソウル獲得！`);
+            this.renderAll();
+        }
+    }
+
+    // ========================================
+    // モンスター撃破
+    // ========================================
+    onMonsterKill(monster, gold) {
+        // ゴールド獲得表示は不要（damageNumbersと被るため）
+        this.updateDisplay();
+    }
+
+    showLootPopup(item) {
+        const rarity = GameData.RARITY[item.rarity];
+        this.elements.lootPopup.innerHTML = `
+            <span style="color: ${rarity.color}">${item.emoji} ${item.rarityName} ${item.name} ドロップ！</span>
+        `;
+        this.elements.lootPopup.classList.remove('hidden');
+
+        setTimeout(() => {
+            this.elements.lootPopup.classList.add('hidden');
+        }, 2000);
+
+        this.renderInventory();
+    }
+
+    // ========================================
+    // オフライン報酬
+    // ========================================
+    showOfflineReward(gold) {
+        this.offlineGoldAmount = gold;
+        this.elements.offlineGold.textContent = this.formatNumber(gold);
+        this.elements.offlineModal.classList.remove('hidden');
+    }
+
+    claimOfflineReward(multiplier) {
+        const gold = this.offlineGoldAmount * multiplier;
+        this.game.state.gold += gold;
+
+        if (multiplier > 1) {
+            this.showToast(`広告視聴で${this.formatNumber(gold)}ゴールド獲得！`);
+        }
+
+        this.elements.offlineModal.classList.add('hidden');
+        this.updateDisplay();
+    }
+
+    // ========================================
+    // ユーティリティ
+    // ========================================
+    formatNumber(num) {
+        if (num < 1000) return Math.floor(num).toString();
+        if (num < 1000000) return (num / 1000).toFixed(1) + 'K';
+        if (num < 1000000000) return (num / 1000000).toFixed(2) + 'M';
+        if (num < 1000000000000) return (num / 1000000000).toFixed(2) + 'B';
+        return (num / 1000000000000).toFixed(2) + 'T';
+    }
+
+    showToast(message) {
+        // 簡易トースト通知
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            z-index: 9999;
+            animation: fadeInOut 2s ease;
+        `;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        setTimeout(() => toast.remove(), 2000);
+    }
+}
+
+// CSSアニメーション追加
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes fadeInOut {
+        0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+        20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+    }
+`;
+document.head.appendChild(style);
+
+// グローバルにエクスポート
+window.UI = UI;

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1a1a2e">
+    <title>Tap Quest - タップクエスト</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="game-container">
+        <!-- ヘッダー：リソース表示 -->
+        <header id="header">
+            <div class="resource-bar">
+                <div class="resource gold">
+                    <span class="icon">💰</span>
+                    <span id="gold-display">0</span>
+                </div>
+                <div class="resource souls">
+                    <span class="icon">👻</span>
+                    <span id="souls-display">0</span>
+                </div>
+                <div class="resource gems">
+                    <span class="icon">💎</span>
+                    <span id="gems-display">0</span>
+                </div>
+            </div>
+            <div class="stage-info">
+                <span id="stage-display">ステージ 1-1</span>
+                <div class="progress-bar">
+                    <div id="stage-progress" class="progress-fill"></div>
+                </div>
+            </div>
+        </header>
+
+        <!-- メインバトルエリア -->
+        <main id="battle-area">
+            <div id="boss-timer" class="hidden">
+                <span class="timer-icon">⏱️</span>
+                <span id="boss-time-left">30</span>
+            </div>
+
+            <div id="monster-container">
+                <div id="monster-hp-bar">
+                    <div id="monster-hp-fill"></div>
+                    <span id="monster-hp-text">100/100</span>
+                </div>
+                <div id="monster" class="monster">
+                    <span id="monster-emoji">🐗</span>
+                </div>
+                <div id="monster-name">イノシシ</div>
+            </div>
+
+            <div id="damage-numbers"></div>
+            <div id="loot-popup" class="hidden"></div>
+        </main>
+
+        <!-- 下部ナビゲーション -->
+        <nav id="bottom-nav">
+            <button class="nav-btn active" data-tab="heroes">
+                <span class="nav-icon">⚔️</span>
+                <span class="nav-label">ヒーロー</span>
+            </button>
+            <button class="nav-btn" data-tab="equipment">
+                <span class="nav-icon">🛡️</span>
+                <span class="nav-label">装備</span>
+            </button>
+            <button class="nav-btn" data-tab="skills">
+                <span class="nav-icon">✨</span>
+                <span class="nav-label">スキル</span>
+            </button>
+            <button class="nav-btn" data-tab="artifacts">
+                <span class="nav-icon">🏺</span>
+                <span class="nav-label">遺物</span>
+            </button>
+            <button class="nav-btn" data-tab="rebirth">
+                <span class="nav-icon">🔄</span>
+                <span class="nav-label">転生</span>
+            </button>
+        </nav>
+
+        <!-- タブパネル -->
+        <div id="tab-panels">
+            <!-- ヒーロータブ -->
+            <div id="heroes-panel" class="tab-panel active">
+                <div class="panel-header">
+                    <h2>ヒーロー強化</h2>
+                    <div class="dps-display">DPS: <span id="total-dps">0</span></div>
+                </div>
+                <div id="heroes-list" class="upgrade-list"></div>
+            </div>
+
+            <!-- 装備タブ -->
+            <div id="equipment-panel" class="tab-panel">
+                <div class="panel-header">
+                    <h2>装備</h2>
+                </div>
+                <div class="equipment-slots">
+                    <div class="equip-slot" data-slot="weapon">
+                        <div class="slot-icon">⚔️</div>
+                        <div class="slot-label">武器</div>
+                        <div id="weapon-slot" class="slot-item empty">なし</div>
+                    </div>
+                    <div class="equip-slot" data-slot="armor">
+                        <div class="slot-icon">🛡️</div>
+                        <div class="slot-label">防具</div>
+                        <div id="armor-slot" class="slot-item empty">なし</div>
+                    </div>
+                    <div class="equip-slot" data-slot="accessory">
+                        <div class="slot-icon">💍</div>
+                        <div class="slot-label">アクセ</div>
+                        <div id="accessory-slot" class="slot-item empty">なし</div>
+                    </div>
+                </div>
+                <h3>所持アイテム</h3>
+                <div id="inventory-list" class="inventory-grid"></div>
+            </div>
+
+            <!-- スキルタブ -->
+            <div id="skills-panel" class="tab-panel">
+                <div class="panel-header">
+                    <h2>スキル</h2>
+                </div>
+                <div id="skills-list" class="skills-grid"></div>
+            </div>
+
+            <!-- アーティファクトタブ -->
+            <div id="artifacts-panel" class="tab-panel">
+                <div class="panel-header">
+                    <h2>アーティファクト</h2>
+                    <div class="souls-display">👻 <span id="artifact-souls">0</span></div>
+                </div>
+                <div id="artifacts-list" class="upgrade-list"></div>
+            </div>
+
+            <!-- 転生タブ -->
+            <div id="rebirth-panel" class="tab-panel">
+                <div class="panel-header">
+                    <h2>転生</h2>
+                </div>
+                <div class="rebirth-info">
+                    <div class="rebirth-stats">
+                        <p>現在のステージ: <span id="current-stage-rebirth">1</span></p>
+                        <p>転生回数: <span id="rebirth-count">0</span></p>
+                        <p>獲得予定ソウル: <span id="pending-souls">0</span></p>
+                    </div>
+                    <button id="rebirth-btn" class="rebirth-button" disabled>
+                        転生する<br>
+                        <small>(ステージ100以上で解放)</small>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- オフライン報酬モーダル -->
+        <div id="offline-modal" class="modal hidden">
+            <div class="modal-content">
+                <h2>おかえりなさい！</h2>
+                <p>離れている間に...</p>
+                <div class="offline-rewards">
+                    <p>💰 <span id="offline-gold">0</span> ゴールド獲得！</p>
+                </div>
+                <button id="claim-offline" class="btn-primary">受け取る</button>
+                <button id="claim-offline-double" class="btn-secondary">広告を見て2倍</button>
+            </div>
+        </div>
+
+        <!-- 装備詳細モーダル -->
+        <div id="equipment-modal" class="modal hidden">
+            <div class="modal-content">
+                <h2 id="equip-modal-title">装備名</h2>
+                <div id="equip-modal-stats"></div>
+                <div class="modal-buttons">
+                    <button id="equip-btn" class="btn-primary">装備する</button>
+                    <button id="close-equip-modal" class="btn-secondary">閉じる</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/data.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/save.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
