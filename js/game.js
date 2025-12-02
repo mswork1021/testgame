@@ -230,15 +230,18 @@ class Game {
     }
 
     dealDamage(amount, showNumber = false, isCritical = false) {
-        if (!this.currentMonster) return;
+        const monster = this.currentMonster;
+        if (!monster) return;
 
-        this.currentMonster.currentHp -= amount;
+        monster.currentHp -= amount;
 
         if (showNumber && this.onDamageDealt) {
             this.onDamageDealt(amount, isCritical);
         }
 
-        if (this.currentMonster.currentHp <= 0) {
+        // モンスターが死亡したら撃破処理（ただし既に処理中でなければ）
+        if (monster.currentHp <= 0 && !monster._dead) {
+            monster._dead = true;
             this.killMonster();
         }
     }
@@ -360,10 +363,9 @@ class Game {
     // ========================================
     killMonster() {
         const monster = this.currentMonster;
+        if (!monster) return;
 
-        // モンスターが存在しない、または既に撃破処理済みの場合はスキップ
-        if (!monster || monster._killed) return;
-        monster._killed = true; // 撃破フラグを設定して二重処理を防止
+        // 統計更新
         this.state.monstersKilled++;
         this.state.totalMonstersKilled++;
 
@@ -387,7 +389,10 @@ class Game {
             this.onMonsterKill(monster, goldReward);
         }
 
-        // ステージ進行（ボスは1体で次のステージへ）
+        // 次のモンスターを生成（現在のモンスターを先にクリアしてから）
+        this.currentMonster = null;
+
+        // ステージ進行判定
         if (monster.isBoss || this.state.monstersKilled >= GameData.BALANCE.MONSTERS_PER_STAGE) {
             this.advanceStage();
         } else {
