@@ -247,7 +247,7 @@ body {
 #boss-timer {
     position: absolute;
     top: var(--spacing-sm);
-    right: var(--spacing-md);
+    left: var(--spacing-md);
     background: linear-gradient(135deg, var(--accent-red) 0%, var(--accent-red-dark) 100%);
     padding: 8px 16px;
     font-family: 'Bebas Neue', sans-serif;
@@ -610,7 +610,7 @@ body {
 /* コンボ表示 - Persona Style */
 .combo-display {
     position: absolute;
-    top: 15px;
+    top: 50px;
     right: 15px;
     font-family: 'Bebas Neue', sans-serif;
     font-size: 28px;
