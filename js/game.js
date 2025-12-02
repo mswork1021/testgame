@@ -152,6 +152,7 @@ class Game {
     // モンスター管理
     // ========================================
     spawnMonster() {
+        console.log(`[DEBUG] spawnMonster 開始 (ステージ ${this.state.currentStage})`);
         const isBoss = this.state.currentStage % GameData.BALANCE.BOSS_EVERY_STAGES === 0;
         this.isBossFight = isBoss;
 
@@ -231,17 +232,22 @@ class Game {
 
     dealDamage(amount, showNumber = false, isCritical = false) {
         const monster = this.currentMonster;
-        if (!monster) return;
+        if (!monster) {
+            console.log('[DEBUG] dealDamage: モンスターなし');
+            return;
+        }
 
+        const hpBefore = monster.currentHp;
         monster.currentHp -= amount;
+        console.log(`[DEBUG] ダメージ: ${amount}, HP: ${hpBefore} → ${monster.currentHp}`);
 
         if (showNumber && this.onDamageDealt) {
             this.onDamageDealt(amount, isCritical);
         }
 
-        // モンスターが死亡したら撃破処理（ただし既に処理中でなければ）
-        if (monster.currentHp <= 0 && !monster._dead) {
-            monster._dead = true;
+        // モンスターが死亡したら撃破処理
+        if (monster.currentHp <= 0) {
+            console.log('[DEBUG] HP <= 0 検出、killMonster呼び出し');
             this.killMonster();
         }
     }
@@ -362,12 +368,17 @@ class Game {
     // モンスター撃破
     // ========================================
     killMonster() {
+        console.log('[DEBUG] killMonster 開始');
         const monster = this.currentMonster;
-        if (!monster) return;
+        if (!monster) {
+            console.log('[DEBUG] killMonster: モンスターなし、中断');
+            return;
+        }
 
         // 統計更新
         this.state.monstersKilled++;
         this.state.totalMonstersKilled++;
+        console.log(`[DEBUG] モンスター撃破 #${this.state.monstersKilled}`);
 
         // ゴールド報酬
         let goldReward = Math.floor(monster.maxHp * GameData.BALANCE.GOLD_PER_HP_RATIO);
@@ -389,15 +400,14 @@ class Game {
             this.onMonsterKill(monster, goldReward);
         }
 
-        // 次のモンスターを生成（現在のモンスターを先にクリアしてから）
-        this.currentMonster = null;
-
-        // ステージ進行判定
+        // 次のモンスターを生成
+        console.log('[DEBUG] 次のモンスター生成へ...');
         if (monster.isBoss || this.state.monstersKilled >= GameData.BALANCE.MONSTERS_PER_STAGE) {
             this.advanceStage();
         } else {
             this.spawnMonster();
         }
+        console.log('[DEBUG] killMonster 完了');
     }
 
     getGoldMultiplier() {
