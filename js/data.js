@@ -322,7 +322,18 @@ const GameData = {
         // ドロップ率
         EQUIPMENT_DROP_CHANCE: 5,
         BOSS_EQUIPMENT_DROP_CHANCE: 25
-    }
+    },
+
+    // デイリーログインボーナス
+    DAILY_REWARDS: [
+        { day: 1, type: 'gold', amount: 100, emoji: '💰', label: '100G' },
+        { day: 2, type: 'gold', amount: 300, emoji: '💰', label: '300G' },
+        { day: 3, type: 'gems', amount: 5, emoji: '💎', label: '5ジェム' },
+        { day: 4, type: 'gold', amount: 500, emoji: '💰', label: '500G' },
+        { day: 5, type: 'gold', amount: 1000, emoji: '💰', label: '1000G' },
+        { day: 6, type: 'gems', amount: 10, emoji: '💎', label: '10ジェム' },
+        { day: 7, type: 'equipment', rarity: 'RARE', emoji: '🎁', label: 'レア装備' }
+    ]
 };
 
 // グローバルにエクスポート

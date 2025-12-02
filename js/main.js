@@ -41,6 +41,13 @@
         // セーブマネージャー初期化
         saveManager.init();
 
+        // デイリーボーナスチェック（少し遅延して表示）
+        setTimeout(() => {
+            if (game.canClaimDailyBonus()) {
+                ui.showDailyBonus();
+            }
+        }, 500);
+
         // モンスター再生成（ロード後）
         if (saveData) {
             game.spawnMonster();

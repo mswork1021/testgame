@@ -44,7 +44,11 @@ class Game {
 
             // 時間
             lastSaveTime: Date.now(),
-            lastOnlineTime: Date.now()
+            lastOnlineTime: Date.now(),
+
+            // デイリーボーナス
+            lastDailyClaimDate: null,
+            loginStreak: 0
         };
 
         // 現在のモンスター
@@ -750,6 +754,79 @@ class Game {
             clearInterval(this.autoTapInterval);
             this.autoTapInterval = null;
         }
+    }
+
+    // ========================================
+    // デイリーログインボーナス
+    // ========================================
+    getDateString(date) {
+        return date.toISOString().split('T')[0];
+    }
+
+    canClaimDailyBonus() {
+        const today = this.getDateString(new Date());
+        return this.state.lastDailyClaimDate !== today;
+    }
+
+    checkLoginStreak() {
+        if (!this.state.lastDailyClaimDate) {
+            return 1;
+        }
+
+        const lastDate = new Date(this.state.lastDailyClaimDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        lastDate.setHours(0, 0, 0, 0);
+
+        const diffDays = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 1) {
+            // 連続ログイン
+            return this.state.loginStreak + 1;
+        } else if (diffDays === 0) {
+            // 同じ日
+            return this.state.loginStreak;
+        } else {
+            // 連続が途切れた
+            return 1;
+        }
+    }
+
+    getDailyReward() {
+        const streak = this.checkLoginStreak();
+        const dayIndex = ((streak - 1) % 7);
+        return GameData.DAILY_REWARDS[dayIndex];
+    }
+
+    claimDailyBonus() {
+        if (!this.canClaimDailyBonus()) return null;
+
+        const streak = this.checkLoginStreak();
+        const reward = this.getDailyReward();
+
+        // 報酬付与
+        switch (reward.type) {
+            case 'gold':
+                this.state.gold += reward.amount;
+                break;
+            case 'gems':
+                this.state.gems += reward.amount;
+                break;
+            case 'equipment':
+                const types = ['WEAPONS', 'ARMORS', 'ACCESSORIES'];
+                const typeKey = types[Math.floor(Math.random() * types.length)];
+                const templates = GameData.EQUIPMENT[typeKey];
+                const template = templates[Math.floor(Math.random() * templates.length)];
+                const equipment = this.generateEquipment(template, reward.rarity);
+                this.state.inventory.push(equipment);
+                break;
+        }
+
+        // 状態更新
+        this.state.lastDailyClaimDate = this.getDateString(new Date());
+        this.state.loginStreak = streak;
+
+        return { reward, streak };
     }
 }
 

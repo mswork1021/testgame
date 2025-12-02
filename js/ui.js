@@ -70,12 +70,31 @@ class UI {
         this.elements.equipModalStats = document.getElementById('equip-modal-stats');
         this.elements.equipBtn = document.getElementById('equip-btn');
         this.elements.closeEquipModal = document.getElementById('close-equip-modal');
+
+        // デイリーボーナス
+        this.elements.dailyModal = document.getElementById('daily-modal');
+        this.elements.loginStreak = document.getElementById('login-streak');
+        this.elements.dailyRewardsGrid = document.getElementById('daily-rewards-grid');
+        this.elements.claimDaily = document.getElementById('claim-daily');
     }
 
     bindEvents() {
-        // タップイベント
+        // タップイベント（高速連打対応）
+        // touchstartを使用してスマホでの遅延を解消
+        this.elements.battleArea.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            // マルチタッチ対応：全てのタッチポイントを処理
+            for (let i = 0; i < e.touches.length; i++) {
+                this.onTap(e.touches[i]);
+            }
+        }, { passive: false });
+
+        // PC用クリックイベント
         this.elements.battleArea.addEventListener('click', (e) => {
-            this.onTap(e);
+            // タッチデバイスでなければクリックで処理
+            if (!('ontouchstart' in window)) {
+                this.onTap(e);
+            }
         });
 
         // タブ切り替え
@@ -114,6 +133,11 @@ class UI {
         this.elements.closeEquipModal.addEventListener('click', () => {
             this.closeEquipmentModal();
         });
+
+        // デイリーボーナス
+        this.elements.claimDaily.addEventListener('click', () => {
+            this.claimDailyBonus();
+        });
     }
 
     setupGameCallbacks() {
@@ -149,22 +173,83 @@ class UI {
     onTap(e) {
         this.game.tap();
 
+        // コンボカウント更新
+        this.comboCount = (this.comboCount || 0) + 1;
+        this.updateComboDisplay();
+
+        // コンボリセットタイマー
+        clearTimeout(this.comboTimer);
+        this.comboTimer = setTimeout(() => {
+            this.comboCount = 0;
+            this.updateComboDisplay();
+        }, 1000);
+
         // モンスターヒットアニメーション
         this.elements.monster.classList.add('hit');
         setTimeout(() => {
             this.elements.monster.classList.remove('hit');
+        }, 80);
+
+        // タップ位置にエフェクト表示
+        this.showTapEffect(e);
+
+        // 画面シェイク（クリティカル時）
+        if (this.lastWasCritical) {
+            this.shakeScreen();
+        }
+    }
+
+    showTapEffect(e) {
+        const effect = document.createElement('div');
+        effect.className = 'tap-effect';
+
+        // タップ位置を取得
+        const rect = this.elements.battleArea.getBoundingClientRect();
+        const x = (e.clientX || e.pageX) - rect.left;
+        const y = (e.clientY || e.pageY) - rect.top;
+
+        effect.style.left = x + 'px';
+        effect.style.top = y + 'px';
+
+        this.elements.battleArea.appendChild(effect);
+        setTimeout(() => effect.remove(), 400);
+    }
+
+    updateComboDisplay() {
+        let comboEl = document.getElementById('combo-display');
+
+        if (this.comboCount > 1) {
+            if (!comboEl) {
+                comboEl = document.createElement('div');
+                comboEl.id = 'combo-display';
+                this.elements.battleArea.appendChild(comboEl);
+            }
+            comboEl.textContent = `${this.comboCount} COMBO!`;
+            comboEl.className = 'combo-display';
+            if (this.comboCount >= 10) comboEl.classList.add('hot');
+            if (this.comboCount >= 30) comboEl.classList.add('fire');
+        } else if (comboEl) {
+            comboEl.remove();
+        }
+    }
+
+    shakeScreen() {
+        this.elements.battleArea.classList.add('shake');
+        setTimeout(() => {
+            this.elements.battleArea.classList.remove('shake');
         }, 100);
     }
 
     showDamageNumber(amount, isCritical) {
+        this.lastWasCritical = isCritical;
+
         const damageEl = document.createElement('div');
         damageEl.className = 'damage-number' + (isCritical ? ' critical' : '');
         damageEl.textContent = this.formatNumber(amount);
 
         // ランダムな位置
-        const battleRect = this.elements.battleArea.getBoundingClientRect();
-        const x = 30 + Math.random() * 40; // 30-70%
-        const y = 20 + Math.random() * 30; // 20-50%
+        const x = 25 + Math.random() * 50; // 25-75%
+        const y = 15 + Math.random() * 35; // 15-50%
 
         damageEl.style.left = x + '%';
         damageEl.style.top = y + '%';
@@ -174,7 +259,7 @@ class UI {
         // アニメーション後に削除
         setTimeout(() => {
             damageEl.remove();
-        }, 1000);
+        }, 800);
     }
 
     // ========================================
@@ -617,6 +702,46 @@ class UI {
         document.body.appendChild(toast);
 
         setTimeout(() => toast.remove(), 2000);
+    }
+
+    // ========================================
+    // デイリーボーナス
+    // ========================================
+    showDailyBonus() {
+        if (!this.game.canClaimDailyBonus()) return;
+
+        const streak = this.game.checkLoginStreak();
+        this.elements.loginStreak.textContent = streak;
+
+        // 報酬グリッド表示
+        let html = '';
+        GameData.DAILY_REWARDS.forEach((reward, index) => {
+            const dayNum = index + 1;
+            const isToday = ((streak - 1) % 7) === index;
+            const isPast = ((streak - 1) % 7) > index;
+
+            html += `
+                <div class="daily-reward-item ${isToday ? 'today' : ''} ${isPast ? 'claimed' : ''}">
+                    <div class="day-label">Day ${dayNum}</div>
+                    <div class="reward-icon">${reward.emoji}</div>
+                    <div class="reward-label">${reward.label}</div>
+                    ${isPast ? '<div class="claimed-check">✓</div>' : ''}
+                </div>
+            `;
+        });
+        this.elements.dailyRewardsGrid.innerHTML = html;
+
+        this.elements.dailyModal.classList.remove('hidden');
+    }
+
+    claimDailyBonus() {
+        const result = this.game.claimDailyBonus();
+        if (result) {
+            this.elements.dailyModal.classList.add('hidden');
+            this.showToast(`${result.reward.emoji} ${result.reward.label}を獲得！`);
+            this.updateDisplay();
+            this.renderInventory();
+        }
     }
 }
 
