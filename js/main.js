@@ -14,50 +14,59 @@
     // 初期化
     // ========================================
     function init() {
-        console.log('Tap Quest 起動中...');
+        try {
+            console.log('Tap Quest 起動中...');
 
-        // ゲームインスタンス作成
-        game = new Game();
-        ui = new UI(game);
-        saveManager = new SaveManager(game);
+            // ゲームインスタンス作成
+            game = new Game();
+            ui = new UI(game);
+            saveManager = new SaveManager(game);
 
-        // ゲーム初期化
-        game.init();
+            // ゲーム初期化
+            console.log('game.init()...');
+            game.init();
 
-        // セーブデータロード
-        const saveData = saveManager.load();
+            // セーブデータロード
+            console.log('saveManager.load()...');
+            const saveData = saveManager.load();
 
-        // UI初期化
-        ui.init();
+            // UI初期化
+            console.log('ui.init()...');
+            ui.init();
 
-        // オフライン報酬チェック
-        if (saveData) {
-            const offline = saveManager.calculateOfflineTime();
-            if (offline.gold > 0) {
-                ui.showOfflineReward(offline.gold);
+            // オフライン報酬チェック
+            if (saveData) {
+                const offline = saveManager.calculateOfflineTime();
+                if (offline.gold > 0) {
+                    ui.showOfflineReward(offline.gold);
+                }
             }
-        }
 
-        // セーブマネージャー初期化
-        saveManager.init();
+            // セーブマネージャー初期化
+            saveManager.init();
 
-        // デイリーボーナスチェック（少し遅延して表示）
-        setTimeout(() => {
-            if (game.canClaimDailyBonus()) {
-                ui.showDailyBonus();
+            // デイリーボーナスチェック（少し遅延して表示）
+            setTimeout(() => {
+                if (game.canClaimDailyBonus()) {
+                    ui.showDailyBonus();
+                }
+            }, 500);
+
+            // モンスター再生成（ロード後）
+            if (saveData) {
+                console.log('Re-spawning monster after load...');
+                game.spawnMonster();
+                ui.updateDisplay();
             }
-        }, 500);
 
-        // モンスター再生成（ロード後）
-        if (saveData) {
-            game.spawnMonster();
-            ui.updateDisplay();
+            // 最終オンライン時間更新
+            game.state.lastOnlineTime = Date.now();
+
+            console.log('Tap Quest 起動完了！');
+        } catch (e) {
+            console.error('Tap Quest 初期化エラー:', e);
+            alert('ゲームの初期化に失敗しました。コンソールを確認してください。');
         }
-
-        // 最終オンライン時間更新
-        game.state.lastOnlineTime = Date.now();
-
-        console.log('Tap Quest 起動完了！');
 
         // デバッグ用にグローバルに公開
         window.TapQuest = {

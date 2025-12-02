@@ -267,31 +267,37 @@ class UI {
     // タップ処理
     // ========================================
     onTap(e) {
-        this.game.tap();
+        try {
+            this.game.tap();
 
-        // コンボカウント更新
-        this.comboCount = (this.comboCount || 0) + 1;
-        this.updateComboDisplay();
-
-        // コンボリセットタイマー
-        clearTimeout(this.comboTimer);
-        this.comboTimer = setTimeout(() => {
-            this.comboCount = 0;
+            // コンボカウント更新
+            this.comboCount = (this.comboCount || 0) + 1;
             this.updateComboDisplay();
-        }, 1000);
 
-        // モンスターヒットアニメーション（アニメーション時間に合わせる）
-        this.elements.monster.classList.add('hit');
-        setTimeout(() => {
-            this.elements.monster.classList.remove('hit');
-        }, 150);
+            // コンボリセットタイマー
+            clearTimeout(this.comboTimer);
+            this.comboTimer = setTimeout(() => {
+                this.comboCount = 0;
+                this.updateComboDisplay();
+            }, 1000);
 
-        // タップ位置にエフェクト表示
-        this.showTapEffect(e);
+            // モンスターヒットアニメーション（アニメーション時間に合わせる）
+            if (this.elements.monster) {
+                this.elements.monster.classList.add('hit');
+                setTimeout(() => {
+                    this.elements.monster.classList.remove('hit');
+                }, 150);
+            }
 
-        // 画面シェイク（クリティカル時）
-        if (this.lastWasCritical) {
-            this.shakeScreen();
+            // タップ位置にエフェクト表示
+            this.showTapEffect(e);
+
+            // 画面シェイク（クリティカル時）
+            if (this.lastWasCritical) {
+                this.shakeScreen();
+            }
+        } catch(err) {
+            console.error('onTap error:', err);
         }
     }
 
@@ -446,15 +452,15 @@ class UI {
     // レンダリング
     // ========================================
     renderAll() {
-        this.renderHeroes();
-        this.renderSkills();
-        this.renderSkillTree();
-        this.renderArtifacts();
-        this.renderEquipment();
-        this.renderInventory();
-        this.renderCollection();
-        this.renderAchievements();
-        this.updateDisplay();
+        try { this.renderHeroes(); } catch(e) { console.error('renderHeroes error:', e); }
+        try { this.renderSkills(); } catch(e) { console.error('renderSkills error:', e); }
+        try { this.renderSkillTree(); } catch(e) { console.error('renderSkillTree error:', e); }
+        try { this.renderArtifacts(); } catch(e) { console.error('renderArtifacts error:', e); }
+        try { this.renderEquipment(); } catch(e) { console.error('renderEquipment error:', e); }
+        try { this.renderInventory(); } catch(e) { console.error('renderInventory error:', e); }
+        try { this.renderCollection(); } catch(e) { console.error('renderCollection error:', e); }
+        try { this.renderAchievements(); } catch(e) { console.error('renderAchievements error:', e); }
+        try { this.updateDisplay(); } catch(e) { console.error('updateDisplay error:', e); }
     }
 
     // ヒーローボタンの状態だけを更新（軽量）
@@ -492,6 +498,8 @@ class UI {
     }
 
     renderHeroes() {
+        if (!this.elements.heroesList) return;
+
         let html = '<h3 style="margin-bottom: 8px; color: #b8b8b8;">タップダメージ強化</h3>';
 
         // ヒーロー
@@ -566,6 +574,8 @@ class UI {
     }
 
     renderSkills() {
+        if (!this.elements.skillsList) return;
+
         let html = '';
 
         GameData.SKILLS.forEach(skill => {
@@ -614,6 +624,7 @@ class UI {
     }
 
     updateSkillCooldowns() {
+        if (!this.elements.skillsList) return;
         this.elements.skillsList.querySelectorAll('.skill-item').forEach(el => {
             const skillId = el.dataset.skill;
             const cooldown = this.game.getSkillCooldownRemaining(skillId);
