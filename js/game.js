@@ -173,8 +173,12 @@ class Game {
             // ボスタイマー開始
             this.bossTimeLeft = this.getBossTimeLimit();
         } else {
-            const monsterIndex = (this.state.currentStage - 1) % GameData.MONSTERS.length;
-            const monsterData = GameData.MONSTERS[monsterIndex];
+            // 現在のワールドを取得
+            const currentWorld = this.getCurrentWorld();
+
+            // ワールドに対応するモンスターからランダムに選択
+            const availableMonsters = this.getAvailableMonstersForWorld(currentWorld);
+            const monsterData = availableMonsters[Math.floor(Math.random() * availableMonsters.length)];
             const hp = this.getBaseMonsterHp();
 
             this.currentMonster = {
@@ -186,6 +190,34 @@ class Game {
                 isBoss: false
             };
         }
+    }
+
+    // 現在のワールドを取得
+    getCurrentWorld() {
+        const stage = this.state.currentStage;
+        for (const world of GameData.WORLDS) {
+            if (stage >= world.stageRange[0] && stage <= world.stageRange[1]) {
+                return world;
+            }
+        }
+        // デフォルトで最後のワールド
+        return GameData.WORLDS[GameData.WORLDS.length - 1];
+    }
+
+    // ワールドで出現可能なモンスターを取得
+    getAvailableMonstersForWorld(world) {
+        // ワールドのmonsters配列に含まれる名前でフィルタリング
+        const worldMonsterNames = world.monsters || [];
+        const available = GameData.MONSTERS.filter(m => worldMonsterNames.includes(m.name));
+
+        // もし見つからなければ、ステージ範囲に基づいてモンスターを選択
+        if (available.length === 0) {
+            const startIndex = Math.floor((world.stageRange[0] - 1) / 50) * 3;
+            const endIndex = Math.min(startIndex + 4, GameData.MONSTERS.length);
+            return GameData.MONSTERS.slice(startIndex, endIndex);
+        }
+
+        return available;
     }
 
     getBaseMonsterHp() {
