@@ -380,8 +380,8 @@ class Game {
             this.onMonsterKill(monster, goldReward);
         }
 
-        // ステージ進行
-        if (this.state.monstersKilled >= GameData.BALANCE.MONSTERS_PER_STAGE) {
+        // ステージ進行（ボスは1体で次のステージへ）
+        if (monster.isBoss || this.state.monstersKilled >= GameData.BALANCE.MONSTERS_PER_STAGE) {
             this.advanceStage();
         } else {
             this.spawnMonster();
