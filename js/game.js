@@ -237,17 +237,21 @@ class Game {
             return;
         }
 
+        // 既に死亡処理済みのモンスターには何もしない
+        if (monster._processed) {
+            return;
+        }
+
         const hpBefore = monster.currentHp;
         monster.currentHp -= amount;
-        console.log(`[DEBUG] ダメージ: ${amount}, HP: ${hpBefore} → ${monster.currentHp}`);
 
         if (showNumber && this.onDamageDealt) {
             this.onDamageDealt(amount, isCritical);
         }
 
         // モンスターが死亡したら撃破処理
-        if (monster.currentHp <= 0) {
-            console.log('[DEBUG] HP <= 0 検出、killMonster呼び出し');
+        if (monster.currentHp <= 0 && !monster._processed) {
+            console.log(`[DEBUG] HP: ${hpBefore} → ${monster.currentHp}, killMonster呼び出し`);
             this.killMonster();
         }
     }
@@ -375,39 +379,58 @@ class Game {
             return;
         }
 
-        // 統計更新
-        this.state.monstersKilled++;
-        this.state.totalMonstersKilled++;
-        console.log(`[DEBUG] モンスター撃破 #${this.state.monstersKilled}`);
+        // 既に処理済みならスキップ
+        if (monster._processed) {
+            console.log('[DEBUG] killMonster: 処理済み、スキップ');
+            return;
+        }
+        monster._processed = true;
 
-        // ゴールド報酬
-        let goldReward = Math.floor(monster.maxHp * GameData.BALANCE.GOLD_PER_HP_RATIO);
-        if (monster.isBoss) {
-            goldReward *= GameData.BALANCE.BOSS_GOLD_MULTIPLIER;
+        try {
+            // 統計更新
+            this.state.monstersKilled++;
+            this.state.totalMonstersKilled++;
+            console.log(`[DEBUG] モンスター撃破 #${this.state.monstersKilled}`);
+
+            // ゴールド報酬
+            let goldReward = Math.floor(monster.maxHp * GameData.BALANCE.GOLD_PER_HP_RATIO);
+            if (monster.isBoss) {
+                goldReward *= GameData.BALANCE.BOSS_GOLD_MULTIPLIER;
+            }
+            goldReward = Math.floor(goldReward * this.getGoldMultiplier());
+            this.state.gold += goldReward;
+            this.state.totalGoldEarned += goldReward;
+
+            // ドロップチェック（エラーでも続行）
+            try {
+                this.checkEquipmentDrop(monster.isBoss);
+            } catch (e) {
+                console.error('[DEBUG] ドロップエラー:', e);
+            }
+
+            // コールバック（エラーでも続行）
+            try {
+                if (this.onMonsterKill) {
+                    this.onMonsterKill(monster, goldReward);
+                }
+            } catch (e) {
+                console.error('[DEBUG] コールバックエラー:', e);
+            }
+        } catch (e) {
+            console.error('[DEBUG] killMonster エラー:', e);
         }
 
-        // ゴールドボーナス適用
-        goldReward = Math.floor(goldReward * this.getGoldMultiplier());
-
-        this.state.gold += goldReward;
-        this.state.totalGoldEarned += goldReward;
-
-        // ドロップチェック
-        this.checkEquipmentDrop(monster.isBoss);
-
-        // コールバック
-        if (this.onMonsterKill) {
-            this.onMonsterKill(monster, goldReward);
-        }
-
-        // 次のモンスターを生成
+        // 【重要】必ず次のモンスターを生成
         console.log('[DEBUG] 次のモンスター生成へ...');
+        this.currentMonster = null; // 古いモンスターをクリア
+
         if (monster.isBoss || this.state.monstersKilled >= GameData.BALANCE.MONSTERS_PER_STAGE) {
             this.advanceStage();
         } else {
             this.spawnMonster();
         }
-        console.log('[DEBUG] killMonster 完了');
+
+        console.log(`[DEBUG] killMonster 完了, 新モンスターHP: ${this.currentMonster ? this.currentMonster.currentHp : 'なし'}`);
     }
 
     getGoldMultiplier() {
