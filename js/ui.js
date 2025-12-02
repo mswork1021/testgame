@@ -412,15 +412,18 @@ class UI {
             }
 
             const canAfford = this.game.state.gold >= cost;
-            btn.disabled = !canAfford;
 
-            // クラスも更新して視覚的に反映
+            // disabled属性を直接操作
             if (canAfford) {
-                btn.classList.add('can-afford');
-                btn.classList.remove('cannot-afford');
+                btn.removeAttribute('disabled');
+                btn.style.background = 'linear-gradient(180deg, #ff0040 0%, #cc0033 100%)';
+                btn.style.opacity = '1';
+                btn.style.cursor = 'pointer';
             } else {
-                btn.classList.remove('can-afford');
-                btn.classList.add('cannot-afford');
+                btn.setAttribute('disabled', 'disabled');
+                btn.style.background = 'linear-gradient(180deg, #444 0%, #333 100%)';
+                btn.style.opacity = '0.7';
+                btn.style.cursor = 'not-allowed';
             }
         });
     }
