@@ -864,7 +864,8 @@ class UI {
     // セーブ・リセット
     // ========================================
     onManualSave() {
-        if (window.saveManager && window.saveManager.save()) {
+        const sm = window.TapQuest && window.TapQuest.saveManager;
+        if (sm && sm.save()) {
             this.showToast('💾 セーブしました！');
         } else {
             this.showToast('⚠️ セーブに失敗しました');
@@ -874,8 +875,9 @@ class UI {
     onDataReset() {
         if (confirm('本当にデータをリセットしますか？\n\nすべての進行状況が失われます。\nこの操作は取り消せません。')) {
             if (confirm('最終確認：本当にリセットしますか？')) {
-                if (window.saveManager) {
-                    window.saveManager.deleteSave();
+                const sm = window.TapQuest && window.TapQuest.saveManager;
+                if (sm) {
+                    sm.deleteSave();
                 }
                 location.reload();
             }
