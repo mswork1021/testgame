@@ -378,8 +378,10 @@ class UI {
         // スキルクールダウン更新
         this.updateSkillCooldowns();
 
-        // ヒーローボタン状態を更新（ゴールドが変わった時に反映）
-        this.updateHeroButtons();
+        // ヒーロータブがアクティブなら再描画
+        if (this.currentTab === 'heroes') {
+            this.renderHeroes();
+        }
     }
 
     // ========================================
