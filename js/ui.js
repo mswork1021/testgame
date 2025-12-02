@@ -396,9 +396,13 @@ class UI {
 
     // ヒーローボタンの状態だけを更新（軽量）
     updateHeroButtons() {
-        this.elements.heroesList.querySelectorAll('.upgrade-btn').forEach(btn => {
+        if (!this.elements.heroesList) return;
+
+        const buttons = this.elements.heroesList.querySelectorAll('.upgrade-btn');
+        buttons.forEach(btn => {
             const type = btn.dataset.type;
             const id = btn.dataset.id;
+            if (!type || !id) return;
 
             let cost;
             if (type === 'hero') {
@@ -409,7 +413,15 @@ class UI {
 
             const canAfford = this.game.state.gold >= cost;
             btn.disabled = !canAfford;
-            btn.textContent = `💰${this.formatNumber(cost)}`;
+
+            // クラスも更新して視覚的に反映
+            if (canAfford) {
+                btn.classList.add('can-afford');
+                btn.classList.remove('cannot-afford');
+            } else {
+                btn.classList.remove('can-afford');
+                btn.classList.add('cannot-afford');
+            }
         });
     }
 
