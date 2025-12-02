@@ -57,9 +57,10 @@ class UI {
         this.elements.pendingSouls = document.getElementById('pending-souls');
         this.elements.rebirthBtn = document.getElementById('rebirth-btn');
 
-        // セーブ・リセットボタン
+        // セーブ・リセット・更新ボタン
         this.elements.saveBtn = document.getElementById('save-btn');
         this.elements.resetBtn = document.getElementById('reset-btn');
+        this.elements.refreshBtn = document.getElementById('refresh-btn');
 
         // 装備スロット
         this.elements.weaponSlot = document.getElementById('weapon-slot');
@@ -189,12 +190,15 @@ class UI {
         // ストーリーモード
         addTouchAndClick(this.elements.storyNextBtn, () => this.advanceStory());
 
-        // セーブ・リセットボタン
+        // セーブ・リセット・更新ボタン
         if (this.elements.saveBtn) {
             addTouchAndClick(this.elements.saveBtn, () => this.onManualSave());
         }
         if (this.elements.resetBtn) {
             addTouchAndClick(this.elements.resetBtn, () => this.onDataReset());
+        }
+        if (this.elements.refreshBtn) {
+            addTouchAndClick(this.elements.refreshBtn, () => this.onRefresh());
         }
 
         // インベントリ管理ボタン
@@ -954,6 +958,16 @@ class UI {
                 location.reload();
             }
         }
+    }
+
+    onRefresh() {
+        // セーブしてからリロード
+        const sm = window.TapQuest && window.TapQuest.saveManager;
+        if (sm) {
+            sm.save();
+        }
+        // キャッシュをクリアしてリロード
+        location.reload(true);
     }
 
     // ========================================

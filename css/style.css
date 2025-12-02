@@ -1444,6 +1444,21 @@ h3 {
     transform: scale(0.98);
 }
 
+.settings-btn.refresh {
+    background: linear-gradient(180deg, #4CAF50 0%, #388E3C 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+}
+
+.settings-btn.refresh:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.5);
+}
+
+.settings-btn.refresh:active {
+    transform: scale(0.98);
+}
+
 .settings-btn.danger {
     background: linear-gradient(180deg, #666 0%, #444 100%);
     color: #ccc;
