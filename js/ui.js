@@ -372,13 +372,15 @@ class UI {
         this.elements.pendingSouls.textContent = this.formatNumber(this.game.getPendingSouls());
         this.elements.rebirthBtn.disabled = !this.game.canRebirth();
 
-        // アーティファクトソウル
-        this.elements.artifactSouls.textContent = this.formatNumber(this.game.state.souls);
+        // アーティファクトソウル（存在する場合のみ更新）
+        if (this.elements.artifactSouls) {
+            this.elements.artifactSouls.textContent = this.formatNumber(this.game.state.souls);
+        }
 
         // スキルクールダウン更新
         this.updateSkillCooldowns();
 
-        // ヒーロータブがアクティブなら再描画
+        // ヒーロータブがアクティブなら再描画（常に実行）
         if (this.currentTab === 'heroes') {
             this.renderHeroes();
         }
@@ -578,6 +580,9 @@ class UI {
     }
 
     renderArtifacts() {
+        // 要素が存在しない場合はスキップ
+        if (!this.elements.artifactsList) return;
+
         let html = '';
 
         GameData.ARTIFACTS.forEach(artifact => {
