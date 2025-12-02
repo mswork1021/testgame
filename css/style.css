@@ -84,10 +84,10 @@ body {
    ヘッダー - Persona Style
    ======================================== */
 #header {
-    padding: var(--spacing-xs) var(--spacing-md);
-    padding-top: calc(var(--spacing-xs) + var(--safe-area-top));
+    padding: 2px var(--spacing-sm);
+    padding-top: calc(2px + var(--safe-area-top));
     background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
-    border-bottom: 3px solid var(--accent-red);
+    border-bottom: 2px solid var(--accent-red);
     position: relative;
     overflow: hidden;
 }
@@ -119,10 +119,10 @@ body {
 .resource {
     display: flex;
     align-items: center;
-    gap: var(--spacing-xs);
-    font-size: 14px;
+    gap: 2px;
+    font-size: 12px;
     font-weight: 900;
-    padding: 4px 12px;
+    padding: 2px 8px;
     background: rgba(0,0,0,0.6);
     border: 2px solid rgba(255,255,255,0.2);
     border-radius: 4px;
@@ -136,7 +136,7 @@ body {
 }
 
 .resource .icon {
-    font-size: 16px;
+    font-size: 14px;
     transform: skewX(5deg);
 }
 
@@ -168,18 +168,18 @@ body {
 
 #stage-display {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 20px;
+    font-size: 16px;
     font-weight: bold;
-    margin-bottom: var(--spacing-xs);
+    margin-bottom: 2px;
     display: block;
-    letter-spacing: 3px;
+    letter-spacing: 2px;
     text-transform: uppercase;
     color: var(--accent-white);
     text-shadow: 2px 2px 0 var(--accent-red);
 }
 
 .progress-bar {
-    height: 10px;
+    height: 8px;
     background: #1a1a1a;
     border-radius: 0;
     overflow: hidden;
@@ -204,13 +204,13 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: var(--spacing-xs);
+    padding: var(--spacing-sm);
     background:
         radial-gradient(ellipse at center, rgba(255,0,64,0.1) 0%, transparent 60%),
         linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 50%, #1a1a1a 100%);
     position: relative;
-    min-height: 150px;
-    max-height: 170px;
+    min-height: 200px;
+    max-height: 240px;
     cursor: pointer;
     overflow: hidden;
 }
@@ -732,18 +732,18 @@ body {
 #bottom-nav {
     display: flex;
     background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
-    border-top: 3px solid var(--accent-red);
-    padding: var(--spacing-xs);
+    border-top: 2px solid var(--accent-red);
+    padding: 2px;
     position: relative;
 }
 
 #bottom-nav::before {
     content: '';
     position: absolute;
-    top: -3px;
+    top: -2px;
     left: 0;
     width: 100%;
-    height: 3px;
+    height: 2px;
     background: linear-gradient(90deg, transparent, var(--accent-red), transparent);
     animation: navGlow 2s ease-in-out infinite;
 }
@@ -798,14 +798,14 @@ body {
 }
 
 .nav-icon {
-    font-size: 20px;
-    margin-bottom: 1px;
+    font-size: 18px;
+    margin-bottom: 0;
 }
 
 .nav-label {
-    font-size: 10px;
+    font-size: 9px;
     font-weight: bold;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
 }
 
 /* ========================================
