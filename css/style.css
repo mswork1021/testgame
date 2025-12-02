@@ -1,0 +1,2689 @@
+/* ========================================
+   Tap Quest - タップクエスト
+   Persona 5 Inspired UI Design
+   ======================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@400;700;900&display=swap');
+
+:root {
+    /* ペルソナ5風カラーパレット */
+    --bg-primary: #0d0d0d;
+    --bg-secondary: #1a1a1a;
+    --bg-tertiary: #2a2a2a;
+    --accent-red: #ff0040;
+    --accent-red-dark: #cc0033;
+    --accent-gold: #ffd700;
+    --accent-yellow: #ffcc00;
+    --accent-white: #ffffff;
+    --accent-green: #00ff88;
+    --accent-blue: #00ccff;
+    --accent-purple: #9b59b6;
+    --text-primary: #ffffff;
+    --text-secondary: #cccccc;
+    --text-muted: #666666;
+
+    /* レアリティカラー */
+    --rarity-common: #888888;
+    --rarity-uncommon: #00ff88;
+    --rarity-rare: #00ccff;
+    --rarity-epic: #cc66ff;
+    --rarity-legendary: #ffd700;
+
+    /* スペーシング */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+
+    /* Safe area for notched phones */
+    --safe-area-top: env(safe-area-inset-top);
+    --safe-area-bottom: env(safe-area-inset-bottom);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+    height: 100%;
+    height: 100dvh; /* Dynamic viewport height - handles mobile URL bar */
+    overflow: hidden;
+    touch-action: manipulation;
+}
+
+body {
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    user-select: none;
+    -webkit-user-select: none;
+    /* Prevent pull-to-refresh */
+    overscroll-behavior: none;
+}
+
+#game-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    height: 100dvh;
+    max-width: 500px;
+    margin: 0 auto;
+    position: relative;
+    background:
+        linear-gradient(135deg, transparent 48%, rgba(255,0,64,0.03) 50%, transparent 52%),
+        repeating-linear-gradient(45deg, transparent 0, transparent 10px, rgba(255,255,255,0.01) 10px, rgba(255,255,255,0.01) 20px),
+        var(--bg-primary);
+    /* Safe area padding for notched phones */
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ========================================
+   ヘッダー - Persona Style
+   ======================================== */
+#header {
+    padding: 2px var(--spacing-sm);
+    padding-top: calc(2px + var(--safe-area-top));
+    background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
+    border-bottom: 2px solid var(--accent-red);
+    position: relative;
+    overflow: hidden;
+}
+
+#header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -50%;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,0,64,0.1) 50%, transparent 100%);
+    animation: headerSweep 4s ease-in-out infinite;
+}
+
+@keyframes headerSweep {
+    0%, 100% { transform: translateX(-25%); }
+    50% { transform: translateX(25%); }
+}
+
+.resource-bar {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: var(--spacing-xs);
+    position: relative;
+    z-index: 1;
+}
+
+.resource {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 12px;
+    font-weight: 900;
+    padding: 2px 8px;
+    background: rgba(0,0,0,0.6);
+    border: 2px solid rgba(255,255,255,0.2);
+    border-radius: 4px;
+    transform: skewX(-5deg);
+    transition: all 0.2s ease;
+}
+
+.resource:hover {
+    border-color: var(--accent-red);
+    transform: skewX(-5deg) scale(1.05);
+}
+
+.resource .icon {
+    font-size: 14px;
+    transform: skewX(5deg);
+}
+
+.resource span:last-child {
+    transform: skewX(5deg);
+}
+
+.resource.gold span:last-child {
+    color: var(--accent-gold);
+    text-shadow: 0 0 10px rgba(255,215,0,0.5);
+}
+
+.resource.souls span:last-child {
+    color: var(--accent-purple);
+    text-shadow: 0 0 10px rgba(155,89,182,0.5);
+}
+
+.resource.gems span:last-child {
+    color: var(--accent-blue);
+    text-shadow: 0 0 10px rgba(0,204,255,0.5);
+}
+
+.stage-info {
+    text-align: center;
+    position: relative;
+    z-index: 1;
+    padding-right: 50px;
+}
+
+#stage-display {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 2px;
+    display: block;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent-white);
+    text-shadow: 2px 2px 0 var(--accent-red);
+}
+
+.progress-bar {
+    height: 8px;
+    background: #1a1a1a;
+    border-radius: 0;
+    overflow: hidden;
+    border: 2px solid #333;
+    transform: skewX(-10deg);
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-red) 0%, var(--accent-yellow) 100%);
+    width: 0%;
+    transition: width 0.3s ease;
+    box-shadow: 0 0 15px var(--accent-red);
+}
+
+/* ========================================
+   バトルエリア - Dynamic Battle Zone
+   ======================================== */
+#battle-area {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-sm);
+    background:
+        radial-gradient(ellipse at center, rgba(255,0,64,0.1) 0%, transparent 60%),
+        linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 50%, #1a1a1a 100%);
+    position: relative;
+    min-height: 200px;
+    max-height: 240px;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+/* ダイナミックな背景パターン */
+#battle-area::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+        repeating-linear-gradient(
+            -45deg,
+            transparent 0,
+            transparent 40px,
+            rgba(255,0,64,0.03) 40px,
+            rgba(255,0,64,0.03) 80px
+        );
+    animation: bgSlide 20s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes bgSlide {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(80px); }
+}
+
+#battle-area::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 100px;
+    background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, transparent 100%);
+    pointer-events: none;
+}
+
+#boss-timer {
+    position: absolute;
+    top: var(--spacing-sm);
+    left: var(--spacing-md);
+    background: linear-gradient(135deg, var(--accent-red) 0%, var(--accent-red-dark) 100%);
+    padding: 8px 16px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    animation: timerPulse 0.5s ease-in-out infinite;
+    z-index: 10;
+    box-shadow: 0 4px 20px rgba(255,0,64,0.6), inset 0 1px 0 rgba(255,255,255,0.3);
+    transform: skewX(-5deg);
+    border: 2px solid rgba(255,255,255,0.3);
+    letter-spacing: 2px;
+}
+
+#boss-timer span {
+    transform: skewX(5deg);
+}
+
+@keyframes timerPulse {
+    0%, 100% { transform: skewX(-5deg) scale(1); }
+    50% { transform: skewX(-5deg) scale(1.05); }
+}
+
+#monster-container {
+    text-align: center;
+    position: relative;
+    z-index: 2;
+}
+
+#monster-hp-bar {
+    width: 240px;
+    height: 28px;
+    background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
+    margin-bottom: var(--spacing-md);
+    position: relative;
+    border: 3px solid #444;
+    box-shadow:
+        inset 0 3px 6px rgba(0,0,0,0.8),
+        0 4px 15px rgba(0,0,0,0.5);
+    overflow: hidden;
+    transform: skewX(-10deg);
+}
+
+#monster-hp-bar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+    pointer-events: none;
+}
+
+#monster-hp-fill {
+    height: 100%;
+    background: linear-gradient(180deg,
+        #ff4444 0%,
+        var(--accent-red) 50%,
+        #990033 100%);
+    width: 100%;
+    transition: width 0.15s ease;
+    box-shadow:
+        0 0 20px rgba(255,0,64,0.8),
+        inset 0 2px 0 rgba(255,255,255,0.4),
+        inset 0 -2px 0 rgba(0,0,0,0.3);
+}
+
+#monster-hp-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) skewX(10deg);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    text-shadow: 0 0 8px rgba(0,0,0,1), 2px 2px 0 rgba(0,0,0,0.8);
+}
+
+/* モンスターフレーム */
+#monster {
+    transition: transform 0.08s ease;
+    filter: drop-shadow(0 10px 30px rgba(255,0,64,0.4));
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* モンスター背景エフェクト */
+#monster::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 160px;
+    height: 160px;
+    background: radial-gradient(circle,
+        rgba(255,0,64,0.3) 0%,
+        rgba(255,0,64,0.1) 40%,
+        transparent 70%);
+    border-radius: 50%;
+    z-index: -1;
+    animation: monsterAura 2s ease-in-out infinite;
+}
+
+@keyframes monsterAura {
+    0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1) rotate(180deg); }
+}
+
+#monster.hit {
+    transform: scale(0.8) rotate(-12deg);
+    filter: drop-shadow(0 10px 40px rgba(255,0,64,1)) brightness(2.5) saturate(2);
+    animation: hitShake 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+@keyframes hitShake {
+    0% { transform: scale(0.75) rotate(-15deg) translateX(-10px); }
+    20% { transform: scale(0.85) rotate(10deg) translateX(8px); }
+    40% { transform: scale(0.78) rotate(-8deg) translateX(-6px); }
+    60% { transform: scale(0.83) rotate(6deg) translateX(4px); }
+    80% { transform: scale(0.8) rotate(-4deg) translateX(-2px); }
+    100% { transform: scale(0.8) rotate(-12deg) translateX(0); }
+}
+
+#monster.boss {
+    animation: bossFloat 2s ease-in-out infinite, bossGlow 1s ease-in-out infinite;
+}
+
+#monster.boss::before {
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle,
+        rgba(255,0,64,0.5) 0%,
+        rgba(155,89,182,0.3) 40%,
+        transparent 70%);
+    animation: bossAura 1.5s ease-in-out infinite;
+}
+
+@keyframes bossFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+}
+
+@keyframes bossGlow {
+    0%, 100% { filter: drop-shadow(0 10px 30px rgba(255,0,64,0.5)) drop-shadow(0 0 30px rgba(255,0,64,0.4)); }
+    50% { filter: drop-shadow(0 10px 30px rgba(255,0,64,0.8)) drop-shadow(0 0 50px rgba(255,0,64,0.7)); }
+}
+
+@keyframes bossAura {
+    0%, 100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 0.8; }
+    50% { transform: translate(-50%, -50%) scale(1.2) rotate(180deg); opacity: 1; }
+}
+
+#monster-name {
+    margin-top: var(--spacing-sm);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+}
+
+#monster-name.boss-name {
+    color: var(--accent-red);
+    font-size: 24px;
+    text-shadow: 0 0 20px rgba(255,0,64,0.8), 3px 3px 0 rgba(0,0,0,0.8);
+    animation: bossNamePulse 0.5s ease-in-out infinite;
+}
+
+@keyframes bossNamePulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+/* レアモンスター */
+#monster.rare {
+    animation: rareShine 1.5s ease-in-out infinite;
+}
+
+#monster.rare::after {
+    content: '★';
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    font-size: 24px;
+    color: #ffd700;
+    animation: starPulse 0.5s ease-in-out infinite;
+    text-shadow: 0 0 10px #ffd700;
+}
+
+@keyframes rareShine {
+    0%, 100% { filter: drop-shadow(0 0 15px rgba(255,215,0,0.6)) brightness(1.1); }
+    50% { filter: drop-shadow(0 0 30px rgba(255,215,0,1)) brightness(1.3); }
+}
+
+@keyframes starPulse {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    50% { transform: scale(1.2) rotate(15deg); }
+}
+
+#monster-name.rare-name {
+    color: var(--accent-gold);
+    font-size: 20px;
+    text-shadow: 0 0 15px rgba(255,215,0,0.8), 2px 2px 0 rgba(0,0,0,0.8);
+    animation: rareNameGlow 1s ease-in-out infinite;
+}
+
+@keyframes rareNameGlow {
+    0%, 100% { text-shadow: 0 0 15px rgba(255,215,0,0.8), 2px 2px 0 rgba(0,0,0,0.8); }
+    50% { text-shadow: 0 0 25px rgba(255,215,0,1), 0 0 40px rgba(255,215,0,0.5), 2px 2px 0 rgba(0,0,0,0.8); }
+}
+
+/* モンスター特性表示 */
+.monster-trait {
+    display: block;
+    font-size: 11px;
+    color: var(--accent-green);
+    letter-spacing: 1px;
+    text-transform: none;
+    margin-top: 2px;
+}
+
+/* ダメージ数字 - Stylish Impact */
+#damage-numbers {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.damage-number {
+    position: absolute;
+    font-family: 'Bebas Neue', sans-serif;
+    font-weight: 900;
+    font-size: 32px;
+    color: #fff;
+    text-shadow:
+        0 0 20px rgba(255,215,0,1),
+        3px 3px 0 #996600,
+        -2px -2px 0 #996600;
+    animation: damageFloat 0.8s ease-out forwards;
+    pointer-events: none;
+    letter-spacing: 2px;
+}
+
+.damage-number.critical {
+    font-size: 52px;
+    color: #fff;
+    text-shadow:
+        0 0 30px rgba(255,0,64,1),
+        0 0 60px rgba(255,0,64,0.8),
+        4px 4px 0 #990033,
+        -3px -3px 0 #990033;
+    animation: criticalFloat 0.8s ease-out forwards;
+}
+
+.damage-number.critical::before {
+    content: 'CRITICAL!';
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 14px;
+    color: var(--accent-yellow);
+    text-shadow: 2px 2px 0 #000;
+    letter-spacing: 3px;
+}
+
+@keyframes damageFloat {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1.3) rotate(-5deg);
+    }
+    50% {
+        opacity: 1;
+        transform: translateY(-50px) scale(1) rotate(0deg);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-100px) scale(0.5) rotate(5deg);
+    }
+}
+
+@keyframes criticalFloat {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1.8) rotate(-15deg);
+    }
+    30% {
+        transform: translateY(-40px) scale(1.3) rotate(10deg);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-120px) scale(0.4) rotate(0deg);
+    }
+}
+
+/* タップエフェクト - 爽快なインパクト */
+.tap-effect {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    margin-left: -50px;
+    margin-top: -50px;
+    pointer-events: none;
+    animation: tapRipple 0.5s ease-out forwards;
+}
+
+.tap-effect::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border: 5px solid var(--accent-red);
+    border-radius: 50%;
+    animation: tapBorder 0.5s ease-out forwards;
+    box-shadow: 0 0 20px var(--accent-red), inset 0 0 20px rgba(255,0,64,0.5);
+}
+
+.tap-effect::after {
+    content: '💥';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    font-size: 30px;
+    transform: translate(-50%, -50%);
+    animation: tapCenter 0.4s ease-out forwards;
+}
+
+@keyframes tapRipple {
+    0% { transform: scale(0.2); opacity: 1; }
+    50% { opacity: 1; }
+    100% { transform: scale(3); opacity: 0; }
+}
+
+@keyframes tapBorder {
+    0% { transform: scale(0.2); opacity: 1; border-width: 6px; }
+    100% { transform: scale(2.5); opacity: 0; border-width: 1px; }
+}
+
+@keyframes tapCenter {
+    0% { transform: translate(-50%, -50%) scale(0.5) rotate(-20deg); opacity: 1; }
+    50% { transform: translate(-50%, -50%) scale(1.2) rotate(10deg); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(0.3) rotate(0deg); opacity: 0; }
+}
+
+/* コンボ表示 - Persona Style */
+.combo-display {
+    position: absolute;
+    top: 50px;
+    right: 15px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 3px 3px 0 #000;
+    animation: comboPop 0.2s ease;
+    letter-spacing: 3px;
+    transform: skewX(-5deg);
+    padding: 5px 15px;
+    background: rgba(0,0,0,0.6);
+    border-left: 4px solid var(--accent-red);
+    z-index: 100;
+}
+
+.combo-display.hot {
+    color: var(--accent-yellow);
+    font-size: 34px;
+    text-shadow: 0 0 20px rgba(255,204,0,1), 3px 3px 0 #000;
+    animation: comboPop 0.2s ease, comboShake 0.3s ease-in-out infinite;
+    border-left-color: var(--accent-yellow);
+}
+
+.combo-display.fire {
+    color: var(--accent-red);
+    font-size: 40px;
+    text-shadow: 0 0 30px rgba(255,0,64,1), 0 0 60px rgba(255,0,64,0.5), 3px 3px 0 #000;
+    animation: comboPop 0.2s ease, fireCombo 0.2s ease-in-out infinite;
+    border-left-color: var(--accent-red);
+    background: rgba(255,0,64,0.2);
+}
+
+@keyframes comboPop {
+    0% { transform: skewX(-5deg) scale(1.4); }
+    100% { transform: skewX(-5deg) scale(1); }
+}
+
+@keyframes comboShake {
+    0%, 100% { transform: skewX(-5deg) rotate(-1deg); }
+    50% { transform: skewX(-5deg) rotate(1deg); }
+}
+
+@keyframes fireCombo {
+    0%, 100% { transform: skewX(-5deg) scale(1) rotate(-2deg); }
+    50% { transform: skewX(-5deg) scale(1.1) rotate(2deg); }
+}
+
+/* 画面シェイク - クリティカル時の迫力演出 */
+#battle-area.shake {
+    animation: screenShake 0.2s ease;
+}
+
+@keyframes screenShake {
+    0%, 100% { transform: translateX(0) translateY(0); }
+    10% { transform: translateX(-12px) translateY(5px); }
+    20% { transform: translateX(12px) translateY(-5px); }
+    30% { transform: translateX(-10px) translateY(4px); }
+    40% { transform: translateX(10px) translateY(-4px); }
+    50% { transform: translateX(-8px) translateY(3px); }
+    60% { transform: translateX(8px) translateY(-3px); }
+    70% { transform: translateX(-5px) translateY(2px); }
+    80% { transform: translateX(5px) translateY(-2px); }
+    90% { transform: translateX(-3px) translateY(1px); }
+}
+
+/* クリティカルフラッシュ */
+#battle-area::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 100px;
+    background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, transparent 100%);
+    pointer-events: none;
+    transition: background 0.1s ease;
+}
+
+#battle-area.shake::after {
+    background: linear-gradient(0deg, rgba(255,0,64,0.3) 0%, transparent 50%);
+}
+
+/* ドロップポップアップ */
+#loot-popup {
+    position: absolute;
+    top: var(--spacing-sm);
+    left: var(--spacing-md);
+    background: rgba(0,0,0,0.95);
+    padding: 10px 16px;
+    border-left: 4px solid var(--accent-gold);
+    animation: lootSlide 0.3s ease;
+    z-index: 10;
+    font-size: 13px;
+    max-width: 70%;
+    transform: skewX(-3deg);
+    box-shadow: 0 4px 20px rgba(255,215,0,0.3);
+}
+
+#loot-popup span {
+    display: inline-block;
+    transform: skewX(3deg);
+}
+
+@keyframes lootSlide {
+    0% { transform: skewX(-3deg) translateX(-100%); opacity: 0; }
+    100% { transform: skewX(-3deg) translateX(0); opacity: 1; }
+}
+
+/* ========================================
+   ボトムナビゲーション - Persona Menu
+   ======================================== */
+#bottom-nav {
+    display: flex;
+    background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
+    border-top: 2px solid var(--accent-red);
+    padding: 2px;
+    position: relative;
+}
+
+#bottom-nav::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent-red), transparent);
+    animation: navGlow 2s ease-in-out infinite;
+}
+
+@keyframes navGlow {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+
+.nav-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--spacing-xs);
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    transform: skewX(-5deg);
+}
+
+.nav-btn span {
+    transform: skewX(5deg);
+}
+
+.nav-btn::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 10%;
+    width: 80%;
+    height: 3px;
+    background: var(--accent-red);
+    transform: scaleX(0);
+    transition: transform 0.2s ease;
+}
+
+.nav-btn.active {
+    color: var(--accent-white);
+    background: linear-gradient(180deg, rgba(255,0,64,0.2) 0%, transparent 100%);
+}
+
+.nav-btn.active::before {
+    transform: scaleX(1);
+}
+
+.nav-btn:active {
+    transform: skewX(-5deg) scale(0.95);
+}
+
+.nav-icon {
+    font-size: 18px;
+    margin-bottom: 0;
+}
+
+.nav-label {
+    font-size: 9px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+
+/* ========================================
+   タブパネル - Sleek Panels
+   ======================================== */
+#tab-panels {
+    flex: 1;
+    min-height: 0;
+    background: var(--bg-secondary);
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+#tab-panels::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent-red), transparent);
+}
+
+.tab-panel {
+    display: none;
+    flex: 1;
+    flex-direction: column;
+    padding: var(--spacing-sm) var(--spacing-md);
+    padding-bottom: calc(var(--spacing-sm) + var(--safe-area-bottom));
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+.tab-panel.active {
+    display: flex;
+    animation: panelSlide 0.3s ease;
+}
+
+@keyframes panelSlide {
+    0% { opacity: 0; transform: translateX(20px); }
+    100% { opacity: 1; transform: translateX(0); }
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 2px solid var(--accent-red);
+}
+
+.panel-header h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 3px;
+    color: var(--accent-white);
+    text-shadow: 2px 2px 0 rgba(255,0,64,0.3);
+}
+
+.dps-display, .souls-display {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    color: var(--accent-gold);
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(255,215,0,0.5);
+}
+
+/* アップグレードリスト */
+.upgrade-list {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.upgrade-item {
+    display: flex;
+    align-items: center;
+    padding: 6px var(--spacing-sm);
+    background: linear-gradient(90deg, rgba(42,42,42,0.8) 0%, rgba(26,26,26,0.8) 100%);
+    margin-bottom: 4px;
+    gap: var(--spacing-xs);
+    border-left: 3px solid var(--accent-red);
+    transition: all 0.2s ease;
+    transform: skewX(-2deg);
+}
+
+.upgrade-item:hover {
+    background: linear-gradient(90deg, rgba(255,0,64,0.1) 0%, rgba(42,42,42,0.8) 100%);
+    border-left-color: var(--accent-gold);
+}
+
+.upgrade-item > * {
+    transform: skewX(2deg);
+}
+
+.upgrade-icon {
+    font-size: 22px;
+    width: 32px;
+    text-align: center;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+}
+
+.upgrade-info {
+    flex: 1;
+}
+
+.upgrade-name {
+    font-weight: 900;
+    font-size: 12px;
+    color: var(--accent-white);
+    letter-spacing: 1px;
+}
+
+.upgrade-stats {
+    font-size: 11px;
+    color: var(--accent-green);
+    margin-top: 2px;
+}
+
+.upgrade-btn {
+    padding: 6px 10px;
+    background: linear-gradient(180deg, var(--accent-red) 0%, var(--accent-red-dark) 100%);
+    border: none;
+    color: white;
+    font-weight: 900;
+    cursor: pointer;
+    min-width: 75px;
+    font-size: 11px;
+    letter-spacing: 1px;
+    transform: skewX(-5deg);
+    box-shadow: 0 3px 10px rgba(255,0,64,0.4);
+    transition: all 0.2s ease;
+}
+
+.upgrade-btn span {
+    transform: skewX(5deg);
+    display: inline-block;
+}
+
+.upgrade-btn:disabled,
+.upgrade-btn.cannot-afford {
+    background: linear-gradient(180deg, #444 0%, #333 100%) !important;
+    box-shadow: none !important;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.upgrade-btn.can-afford {
+    background: linear-gradient(180deg, var(--accent-red) 0%, var(--accent-red-dark) 100%) !important;
+    box-shadow: 0 2px 10px rgba(255,0,64,0.5) !important;
+    animation: canAffordPulse 1s ease-in-out infinite;
+    opacity: 1;
+}
+
+@keyframes canAffordPulse {
+    0%, 100% { box-shadow: 0 2px 10px rgba(255,0,64,0.5); }
+    50% { box-shadow: 0 2px 20px rgba(255,0,64,0.8); }
+}
+
+.upgrade-btn:active:not(:disabled) {
+    transform: skewX(-5deg) scale(0.95);
+    box-shadow: 0 1px 5px rgba(255,0,64,0.4);
+}
+
+/* ========================================
+   装備パネル
+   ======================================== */
+#equipment-panel.active {
+    display: block;
+    overflow-y: auto;
+}
+
+.equipment-slots {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-sm);
+    gap: var(--spacing-xs);
+}
+
+.equip-slot {
+    text-align: center;
+    padding: var(--spacing-sm);
+    background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
+    flex: 1;
+    border: 2px solid #444;
+    transition: all 0.2s ease;
+    transform: skewX(-3deg);
+}
+
+.equip-slot:hover {
+    border-color: var(--accent-red);
+}
+
+.equip-slot > * {
+    transform: skewX(3deg);
+}
+
+.slot-icon {
+    font-size: 20px;
+}
+
+.slot-label {
+    font-size: 10px;
+    color: var(--text-secondary);
+    margin: 4px 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.slot-item {
+    font-size: 10px;
+    padding: 4px 6px;
+    background: #1a1a1a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.slot-item.empty {
+    color: var(--text-muted);
+}
+
+/* レアリティ別ボーダー */
+.slot-item.common { border-left: 3px solid var(--rarity-common); }
+.slot-item.uncommon { border-left: 3px solid var(--rarity-uncommon); }
+.slot-item.rare { border-left: 3px solid var(--rarity-rare); }
+.slot-item.epic { border-left: 3px solid var(--rarity-epic); }
+.slot-item.legendary { border-left: 3px solid var(--rarity-legendary); box-shadow: 0 0 10px rgba(255,215,0,0.3); }
+
+#equipment-panel h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    margin-bottom: var(--spacing-xs);
+    color: var(--text-secondary);
+    letter-spacing: 2px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 4px;
+}
+
+h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    margin-bottom: var(--spacing-sm);
+    color: var(--text-secondary);
+    letter-spacing: 2px;
+}
+
+/* インベントリヘッダー */
+.inventory-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.inventory-header h3 {
+    margin: 0;
+    font-size: 14px;
+    color: #b8b8b8;
+}
+
+#inventory-count {
+    color: #666;
+    font-size: 12px;
+}
+
+.inventory-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.inv-btn {
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: bold;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: linear-gradient(180deg, #444 0%, #333 100%);
+    color: #ccc;
+}
+
+.inv-btn:hover {
+    background: linear-gradient(180deg, #555 0%, #444 100%);
+}
+
+.inv-btn:active {
+    transform: scale(0.95);
+}
+
+.inv-btn.sell {
+    background: linear-gradient(180deg, #8b4513 0%, #654321 100%);
+    color: #ffd700;
+}
+
+.inv-btn.sell:hover {
+    background: linear-gradient(180deg, #a0522d 0%, #8b4513 100%);
+}
+
+.inventory-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    padding-bottom: var(--spacing-md);
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.inventory-item {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid #333;
+}
+
+.inventory-item:active {
+    transform: scale(0.9);
+}
+
+.inventory-item:hover {
+    border-color: var(--accent-red);
+}
+
+.inventory-item.common { border-color: var(--rarity-common); }
+.inventory-item.uncommon { border-color: var(--rarity-uncommon); }
+.inventory-item.rare { border-color: var(--rarity-rare); box-shadow: 0 0 10px rgba(0,204,255,0.3); }
+.inventory-item.epic { border-color: var(--rarity-epic); box-shadow: 0 0 10px rgba(204,102,255,0.4); }
+.inventory-item.legendary {
+    border-color: var(--rarity-legendary);
+    box-shadow: 0 0 15px rgba(255,215,0,0.5);
+    animation: legendaryGlow 1.5s ease-in-out infinite;
+}
+
+@keyframes legendaryGlow {
+    0%, 100% { box-shadow: 0 0 10px rgba(255,215,0,0.5); }
+    50% { box-shadow: 0 0 20px rgba(255,215,0,0.8); }
+}
+
+/* インベントリ アイテム行表示 */
+.inventory-item-row {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+    border: 2px solid #333;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.inventory-item-row:active {
+    transform: scale(0.98);
+}
+
+.inventory-item-row:hover {
+    border-color: var(--accent-red);
+}
+
+.inventory-item-row.common { border-color: var(--rarity-common); }
+.inventory-item-row.uncommon { border-color: var(--rarity-uncommon); }
+.inventory-item-row.rare { border-color: var(--rarity-rare); box-shadow: 0 0 10px rgba(0,204,255,0.3); }
+.inventory-item-row.epic { border-color: var(--rarity-epic); box-shadow: 0 0 10px rgba(204,102,255,0.4); }
+.inventory-item-row.legendary {
+    border-color: var(--rarity-legendary);
+    box-shadow: 0 0 15px rgba(255,215,0,0.5);
+    animation: legendaryGlow 1.5s ease-in-out infinite;
+}
+
+.inventory-item-row .item-icon {
+    font-size: 28px;
+    margin-right: 12px;
+    min-width: 40px;
+    text-align: center;
+}
+
+.inventory-item-row .item-info {
+    flex: 1;
+}
+
+.inventory-item-row .item-name {
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 2px;
+}
+
+.inventory-item-row .item-stat {
+    font-size: 12px;
+    color: #888;
+}
+
+/* アイテム比較表示 */
+.item-compare {
+    font-size: 12px;
+    font-weight: bold;
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-left: 10px;
+}
+
+.item-compare.up {
+    color: #4cff4c;
+    background: rgba(76, 255, 76, 0.15);
+}
+
+.item-compare.down {
+    color: #ff4c4c;
+    background: rgba(255, 76, 76, 0.15);
+}
+
+.item-compare.same {
+    color: #888;
+    background: rgba(136, 136, 136, 0.15);
+}
+
+.item-compare.new {
+    color: #ffcc00;
+    background: rgba(255, 204, 0, 0.15);
+}
+
+/* 装備モーダル比較結果 */
+.compare-result {
+    margin-top: 8px;
+    padding: 8px;
+    border-radius: 4px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.compare-result.up {
+    color: #4cff4c;
+    background: rgba(76, 255, 76, 0.15);
+}
+
+.compare-result.down {
+    color: #ff4c4c;
+    background: rgba(255, 76, 76, 0.15);
+}
+
+.compare-result.same {
+    color: #888;
+}
+
+.compare-result.new {
+    color: #ffcc00;
+    background: rgba(255, 204, 0, 0.15);
+}
+
+/* ========================================
+   スキルパネル
+   ======================================== */
+.skills-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-md);
+}
+
+.skill-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--spacing-md);
+    background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+    border: 2px solid #444;
+    transform: skewX(-3deg);
+}
+
+.skill-item > * {
+    transform: skewX(3deg);
+}
+
+.skill-item:hover:not(.locked) {
+    border-color: var(--accent-red);
+    background: linear-gradient(180deg, rgba(255,0,64,0.1) 0%, #1a1a1a 100%);
+}
+
+.skill-item.locked {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.skill-item.on-cooldown {
+    opacity: 0.6;
+}
+
+.skill-icon {
+    font-size: 32px;
+    margin-bottom: var(--spacing-xs);
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+}
+
+.skill-name {
+    font-size: 10px;
+    text-align: center;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.skill-cooldown {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--accent-red);
+    letter-spacing: 2px;
+    transform: skewX(-3deg);
+}
+
+.skill-item:active:not(.locked):not(.on-cooldown) {
+    transform: skewX(-3deg) scale(0.9);
+    background: linear-gradient(180deg, var(--accent-red) 0%, #1a1a1a 100%);
+}
+
+/* ========================================
+   転生パネル
+   ======================================== */
+.rebirth-info {
+    text-align: center;
+    padding: var(--spacing-lg);
+}
+
+.rebirth-stats {
+    background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    border-left: 4px solid var(--accent-purple);
+    text-align: left;
+}
+
+.rebirth-stats p {
+    margin: var(--spacing-sm) 0;
+    font-size: 14px;
+    letter-spacing: 1px;
+}
+
+.rebirth-stats span {
+    color: var(--accent-purple);
+    font-weight: bold;
+}
+
+.rebirth-button {
+    padding: var(--spacing-lg) var(--spacing-lg);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    background: linear-gradient(180deg, var(--accent-purple) 0%, #6a3a8a 100%);
+    border: none;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 6px 25px rgba(155,89,182,0.5);
+    letter-spacing: 3px;
+    transform: skewX(-5deg);
+}
+
+.rebirth-button span {
+    transform: skewX(5deg);
+    display: inline-block;
+}
+
+.rebirth-button:disabled {
+    background: linear-gradient(180deg, #444 0%, #333 100%);
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+.rebirth-button:not(:disabled):hover {
+    transform: skewX(-5deg) scale(1.05);
+    box-shadow: 0 8px 35px rgba(155,89,182,0.7);
+}
+
+.rebirth-button:not(:disabled):active {
+    transform: skewX(-5deg) scale(0.98);
+}
+
+/* 設定セクション */
+.settings-section {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #333;
+}
+
+.settings-section h3 {
+    color: #b8b8b8;
+    margin-bottom: 12px;
+    font-size: 16px;
+}
+
+.settings-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.settings-btn {
+    flex: 1;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.settings-btn.save {
+    background: linear-gradient(180deg, #4a9eff 0%, #2d7fd3 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(74, 158, 255, 0.3);
+}
+
+.settings-btn.save:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 20px rgba(74, 158, 255, 0.5);
+}
+
+.settings-btn.save:active {
+    transform: scale(0.98);
+}
+
+.settings-btn.refresh {
+    background: linear-gradient(180deg, #4CAF50 0%, #388E3C 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+}
+
+.settings-btn.refresh:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.5);
+}
+
+.settings-btn.refresh:active {
+    transform: scale(0.98);
+}
+
+.settings-btn.danger {
+    background: linear-gradient(180deg, #666 0%, #444 100%);
+    color: #ccc;
+}
+
+.settings-btn.danger:hover {
+    background: linear-gradient(180deg, #ff4444 0%, #cc2222 100%);
+    color: white;
+}
+
+.settings-btn.danger:active {
+    transform: scale(0.98);
+}
+
+.save-note {
+    font-size: 11px;
+    color: #666;
+    margin-top: 10px;
+    text-align: center;
+}
+
+/* ========================================
+   モーダル - Stylish Popups
+   ======================================== */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: var(--spacing-lg);
+    animation: modalFade 0.3s ease;
+}
+
+@keyframes modalFade {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+.modal-content {
+    background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
+    padding: var(--spacing-lg);
+    text-align: center;
+    max-width: 320px;
+    width: 100%;
+    border: 3px solid var(--accent-red);
+    box-shadow: 0 0 50px rgba(255,0,64,0.3);
+    animation: modalSlide 0.3s ease;
+    transform: skewX(-2deg);
+}
+
+.modal-content > * {
+    transform: skewX(2deg);
+}
+
+@keyframes modalSlide {
+    0% { transform: skewX(-2deg) translateY(-30px); opacity: 0; }
+    100% { transform: skewX(-2deg) translateY(0); opacity: 1; }
+}
+
+.modal-content h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    margin-bottom: var(--spacing-md);
+    font-size: 28px;
+    letter-spacing: 3px;
+    color: var(--accent-white);
+    text-shadow: 2px 2px 0 var(--accent-red);
+}
+
+.offline-rewards {
+    background: #1a1a1a;
+    padding: var(--spacing-md);
+    margin: var(--spacing-md) 0;
+    border-left: 4px solid var(--accent-gold);
+}
+
+.offline-rewards p {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    color: var(--accent-gold);
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(255,215,0,0.5);
+}
+
+.modal-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-md);
+}
+
+.btn-primary {
+    padding: var(--spacing-md);
+    background: linear-gradient(180deg, var(--accent-red) 0%, var(--accent-red-dark) 100%);
+    border: none;
+    color: white;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    letter-spacing: 2px;
+    transform: skewX(-3deg);
+    box-shadow: 0 4px 15px rgba(255,0,64,0.4);
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+    box-shadow: 0 6px 20px rgba(255,0,64,0.6);
+}
+
+.btn-secondary {
+    padding: var(--spacing-md);
+    background: linear-gradient(180deg, #444 0%, #333 100%);
+    border: 2px solid #555;
+    color: white;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    cursor: pointer;
+    letter-spacing: 2px;
+    transform: skewX(-3deg);
+    transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+    border-color: var(--accent-red);
+}
+
+.btn-primary:active, .btn-secondary:active {
+    transform: skewX(-3deg) scale(0.95);
+}
+
+/* ========================================
+   ユーティリティ
+   ======================================== */
+.hidden {
+    display: none !important;
+}
+
+/* スクロールバー */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--accent-red);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-red-dark);
+}
+
+/* 横向き対応 */
+@media (orientation: landscape) {
+    #game-container {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    #header {
+        width: 100%;
+    }
+
+    #battle-area {
+        width: 50%;
+        min-height: auto;
+    }
+
+    #tab-panels {
+        width: 50%;
+        height: auto;
+    }
+
+    #bottom-nav {
+        width: 100%;
+    }
+}
+
+/* ========================================
+   デイリーボーナス
+   ======================================== */
+.daily-bonus-modal {
+    max-width: 360px;
+}
+
+.daily-bonus-modal h2 {
+    font-size: 28px;
+    margin-bottom: var(--spacing-sm);
+}
+
+.login-streak {
+    font-family: 'Bebas Neue', sans-serif;
+    color: var(--accent-gold);
+    font-size: 18px;
+    margin-bottom: var(--spacing-md);
+    letter-spacing: 2px;
+}
+
+.daily-rewards-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.daily-reward-item {
+    background: #1a1a1a;
+    padding: var(--spacing-sm);
+    text-align: center;
+    position: relative;
+    border: 2px solid #333;
+    transition: all 0.3s ease;
+    transform: skewX(-3deg);
+}
+
+.daily-reward-item > * {
+    transform: skewX(3deg);
+}
+
+.daily-reward-item:nth-child(7) {
+    grid-column: span 4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+}
+
+.daily-reward-item.today {
+    border-color: var(--accent-gold);
+    background: rgba(255,215,0,0.1);
+    animation: todayPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes todayPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,215,0,0.5); }
+    50% { box-shadow: 0 0 15px 5px rgba(255,215,0,0.3); }
+}
+
+.daily-reward-item.claimed {
+    opacity: 0.4;
+}
+
+.day-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-bottom: 2px;
+    letter-spacing: 1px;
+}
+
+.reward-icon {
+    font-size: 24px;
+    margin: var(--spacing-xs) 0;
+}
+
+.reward-label {
+    font-size: 10px;
+    color: var(--text-primary);
+}
+
+.claimed-check {
+    position: absolute;
+    top: 2px;
+    right: 5px;
+    color: var(--accent-green);
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.btn-glow {
+    animation: btnGlow 1.5s ease-in-out infinite;
+}
+
+@keyframes btnGlow {
+    0%, 100% { box-shadow: 0 4px 15px rgba(255,0,64,0.4); }
+    50% { box-shadow: 0 4px 30px rgba(255,0,64,0.8), 0 0 50px rgba(255,0,64,0.3); }
+}
+
+/* ========================================
+   SVGモンスター
+   ======================================== */
+.monster-svg {
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.monster-svg svg {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.6));
+    transition: transform 0.1s ease;
+}
+
+#monster {
+    --monster-color: #ff0040;
+    font-size: unset;
+}
+
+#monster::before {
+    background: radial-gradient(circle,
+        color-mix(in srgb, var(--monster-color) 40%, transparent) 0%,
+        transparent 70%);
+}
+
+#monster.boss .monster-svg {
+    width: 160px;
+    height: 160px;
+}
+
+#monster.boss::before {
+    width: 220px;
+    height: 220px;
+    background: radial-gradient(circle,
+        color-mix(in srgb, var(--monster-color) 50%, transparent) 0%,
+        rgba(255,0,64,0.3) 50%,
+        transparent 70%);
+}
+
+/* モンスターアイドルアニメーション */
+.monster-svg svg {
+    animation: monsterIdle 2s ease-in-out infinite;
+}
+
+@keyframes monsterIdle {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-8px) scale(1.03); }
+}
+
+/* ヒット時のSVGエフェクト */
+#monster.hit .monster-svg svg {
+    animation: none;
+    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.6)) brightness(2) saturate(1.5);
+}
+
+/* ボスのSVGアニメーション */
+#monster.boss .monster-svg svg {
+    animation: bossIdle 2s ease-in-out infinite;
+}
+
+@keyframes bossIdle {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-12px) scale(1.06); }
+}
+
+/* ========================================
+   追加エフェクト
+   ======================================== */
+
+/* スタイリッシュなセレクション */
+::selection {
+    background: var(--accent-red);
+    color: white;
+}
+
+/* フォーカス状態 */
+button:focus {
+    outline: 2px solid var(--accent-red);
+    outline-offset: 2px;
+}
+
+/* ローディングアニメーション */
+@keyframes loading {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* タイトルテキストスタイル */
+.title-text {
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+}
+
+/* ========================================
+   ワールドマップ
+   ======================================== */
+.world-map-button {
+    position: absolute;
+    right: var(--spacing-md);
+    top: 50%;
+    transform: translateY(-50%);
+    background: linear-gradient(180deg, var(--accent-red) 0%, var(--accent-red-dark) 100%);
+    border: 2px solid rgba(255,255,255,0.3);
+    padding: 6px 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 5;
+}
+
+.world-map-button:hover {
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 0 20px rgba(255,0,64,0.6);
+}
+
+.world-map-button:active {
+    transform: translateY(-50%) scale(0.95);
+}
+
+.world-icon {
+    font-size: 18px;
+}
+
+.world-map-modal {
+    max-width: 380px;
+    max-height: 80vh;
+    overflow: hidden;
+}
+
+.world-map-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 2px solid var(--accent-red);
+}
+
+.world-map-header h2 {
+    font-size: 24px;
+}
+
+.close-btn {
+    background: transparent;
+    border: 2px solid var(--text-muted);
+    color: var(--text-muted);
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.close-btn:hover {
+    border-color: var(--accent-red);
+    color: var(--accent-red);
+}
+
+.current-world-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: rgba(255,0,64,0.1);
+    border-left: 4px solid var(--accent-red);
+    margin-bottom: var(--spacing-md);
+}
+
+#current-world-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 2px;
+    color: var(--accent-white);
+}
+
+#current-world-stage {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.world-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    max-height: 50vh;
+    overflow-y: auto;
+    padding-right: var(--spacing-xs);
+}
+
+.world-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: linear-gradient(90deg, rgba(42,42,42,0.9) 0%, rgba(26,26,26,0.9) 100%);
+    border-left: 4px solid var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    transform: skewX(-2deg);
+    position: relative;
+    overflow: hidden;
+}
+
+.world-item > * {
+    transform: skewX(2deg);
+}
+
+.world-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    transform: skewX(2deg);
+}
+
+.world-item:hover:not(.locked) {
+    transform: skewX(-2deg) translateX(5px);
+}
+
+.world-item:hover:not(.locked)::before {
+    opacity: 0.1;
+}
+
+.world-item.current {
+    border-left-color: var(--accent-red);
+    background: linear-gradient(90deg, rgba(255,0,64,0.15) 0%, rgba(42,42,42,0.9) 100%);
+}
+
+.world-item.current::after {
+    content: 'NOW';
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 10px;
+    color: var(--accent-red);
+    letter-spacing: 2px;
+    transform: skewX(2deg);
+}
+
+.world-item.unlocked {
+    border-left-color: var(--accent-green);
+}
+
+.world-item.locked {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.world-item.locked::after {
+    content: '🔒';
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    transform: translateY(-50%) skewX(2deg);
+    font-size: 20px;
+}
+
+.world-icon-large {
+    font-size: 36px;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.3);
+    border-radius: 8px;
+}
+
+.world-info {
+    flex: 1;
+}
+
+.world-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 2px;
+    color: var(--accent-white);
+    margin-bottom: 2px;
+}
+
+.world-description {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.world-stages {
+    font-size: 10px;
+    color: var(--accent-gold);
+    letter-spacing: 1px;
+}
+
+.world-progress {
+    width: 60px;
+    text-align: right;
+}
+
+.world-progress-bar {
+    height: 6px;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    margin-bottom: 4px;
+    overflow: hidden;
+}
+
+.world-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-red) 0%, var(--accent-gold) 100%);
+    transition: width 0.3s ease;
+}
+
+.world-progress-text {
+    font-size: 9px;
+    color: var(--text-muted);
+}
+
+/* ========================================
+   ストーリーモード
+   ======================================== */
+.story-modal {
+    max-width: 400px;
+    min-height: 300px;
+}
+
+.story-header {
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 2px solid var(--accent-red);
+}
+
+.story-header h2 {
+    font-size: 20px;
+    text-align: center;
+}
+
+.story-scene {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.story-character {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm);
+    background: rgba(255,0,64,0.1);
+    border-left: 4px solid var(--accent-red);
+}
+
+.character-emoji {
+    font-size: 40px;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.3);
+    border-radius: 50%;
+}
+
+.character-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 2px;
+    color: var(--accent-gold);
+}
+
+.story-text {
+    padding: var(--spacing-md);
+    background: rgba(0,0,0,0.5);
+    border: 2px solid #333;
+    font-size: 14px;
+    line-height: 1.8;
+    min-height: 80px;
+    animation: textFade 0.3s ease;
+}
+
+@keyframes textFade {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+.story-controls {
+    display: flex;
+    justify-content: center;
+}
+
+.story-controls .btn-primary {
+    min-width: 120px;
+}
+
+/* ストーリーリスト */
+.story-list-modal {
+    max-width: 380px;
+    max-height: 80vh;
+}
+
+.story-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 2px solid var(--accent-red);
+}
+
+.story-chapter-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    max-height: 55vh;
+    overflow-y: auto;
+    padding-right: var(--spacing-xs);
+}
+
+.story-chapter-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: linear-gradient(90deg, rgba(42,42,42,0.9) 0%, rgba(26,26,26,0.9) 100%);
+    border-left: 4px solid var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    transform: skewX(-2deg);
+    position: relative;
+}
+
+.story-chapter-item > * {
+    transform: skewX(2deg);
+}
+
+.story-chapter-item:hover:not(.locked) {
+    transform: skewX(-2deg) translateX(5px);
+    border-left-color: var(--accent-gold);
+}
+
+.story-chapter-item.completed {
+    border-left-color: var(--accent-green);
+}
+
+.story-chapter-item.completed::after {
+    content: '✓';
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    color: var(--accent-green);
+    font-size: 16px;
+    font-weight: bold;
+    transform: skewX(2deg);
+}
+
+.story-chapter-item.available {
+    border-left-color: var(--accent-gold);
+    animation: chapterGlow 2s ease-in-out infinite;
+}
+
+@keyframes chapterGlow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,215,0,0); }
+    50% { box-shadow: 0 0 10px 2px rgba(255,215,0,0.3); }
+}
+
+.story-chapter-item.available::after {
+    content: 'NEW';
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 10px;
+    color: var(--accent-gold);
+    letter-spacing: 2px;
+    transform: skewX(2deg);
+}
+
+.story-chapter-item.locked {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.story-chapter-item.locked::after {
+    content: '🔒';
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    transform: translateY(-50%) skewX(2deg);
+    font-size: 18px;
+}
+
+.chapter-number {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,0,64,0.2);
+    border: 2px solid var(--accent-red);
+    color: var(--accent-red);
+}
+
+.chapter-info {
+    flex: 1;
+}
+
+.chapter-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    letter-spacing: 1px;
+    color: var(--accent-white);
+    margin-bottom: 2px;
+}
+
+.chapter-unlock {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.chapter-reward {
+    font-size: 11px;
+    color: var(--accent-gold);
+    margin-top: 2px;
+}
+
+.story-progress-display {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    color: var(--accent-gold);
+    letter-spacing: 2px;
+}
+
+/* ストーリー報酬表示 */
+.story-reward-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
+    border: 3px solid var(--accent-gold);
+    padding: var(--spacing-lg);
+    text-align: center;
+    z-index: 1001;
+    animation: rewardPop 0.5s ease;
+    min-width: 250px;
+}
+
+@keyframes rewardPop {
+    0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+    50% { transform: translate(-50%, -50%) scale(1.1); }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+.story-reward-popup h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    color: var(--accent-gold);
+    margin-bottom: var(--spacing-md);
+    letter-spacing: 3px;
+}
+
+.story-reward-popup .reward-content {
+    font-size: 24px;
+    margin-bottom: var(--spacing-md);
+}
+
+/* ========================================
+   スキルツリー
+   ======================================== */
+.skill-tree-header {
+    margin-bottom: var(--spacing-sm);
+}
+
+.skill-tree-info-box {
+    background: rgba(100, 100, 100, 0.2);
+    border: 1px solid #555;
+    padding: var(--spacing-sm);
+    text-align: center;
+    font-size: 12px;
+    color: #aaa;
+}
+
+.skill-tree-info-box.active {
+    background: rgba(231, 76, 60, 0.1);
+    border-color: var(--accent-red);
+    color: #fff;
+}
+
+.skill-tree-info-box p {
+    margin: 2px 0;
+}
+
+.skill-tree-info-box strong {
+    color: var(--accent-gold);
+}
+
+.skill-points-display {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    color: var(--accent-gold);
+    letter-spacing: 2px;
+}
+
+.skill-tree-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    overflow-y: auto;
+}
+
+.skill-tree-category {
+    background: rgba(0,0,0,0.3);
+    border: 2px solid #333;
+    padding: var(--spacing-sm);
+}
+
+.skill-tree-category-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+    padding-bottom: var(--spacing-xs);
+    border-bottom: 1px solid #444;
+}
+
+.skill-tree-category-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    letter-spacing: 1px;
+}
+
+.skill-tree-skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+}
+
+.skill-tree-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: 4px 8px;
+    background: rgba(42,42,42,0.9);
+    border: 2px solid #444;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex: 1;
+    min-width: 140px;
+}
+
+.skill-tree-item:hover:not(.locked) {
+    border-color: var(--accent-gold);
+    transform: translateY(-2px);
+}
+
+.skill-tree-item.maxed {
+    border-color: var(--accent-green);
+    background: rgba(0,255,136,0.1);
+}
+
+.skill-tree-item.can-upgrade {
+    border-color: var(--accent-gold);
+    animation: skillGlow 1.5s ease-in-out infinite;
+}
+
+@keyframes skillGlow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,215,0,0); }
+    50% { box-shadow: 0 0 8px 2px rgba(255,215,0,0.3); }
+}
+
+.skill-tree-item.locked {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.skill-tree-icon {
+    font-size: 18px;
+}
+
+.skill-tree-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.skill-tree-name {
+    font-size: 11px;
+    font-weight: bold;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.skill-tree-level {
+    font-size: 10px;
+    color: var(--accent-gold);
+}
+
+.skill-tree-effect {
+    font-size: 9px;
+    color: var(--text-secondary);
+}
+
+/* ========================================
+   図鑑（コレクション）
+   ======================================== */
+.collection-progress-display {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    color: var(--accent-gold);
+    letter-spacing: 2px;
+}
+
+.collection-tabs {
+    display: flex;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: rgba(0,0,0,0.3);
+    border-bottom: 2px solid #333;
+}
+
+.collection-tab {
+    flex: 1;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: transparent;
+    border: 2px solid #444;
+    color: var(--text-muted);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.collection-tab.active {
+    border-color: var(--accent-red);
+    color: var(--text-primary);
+    background: rgba(255,0,64,0.1);
+}
+
+.collection-tab:hover:not(.active) {
+    border-color: var(--accent-gold);
+    color: var(--text-primary);
+}
+
+.collection-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm);
+    overflow-y: auto;
+    flex: 1;
+}
+
+.collection-item {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(42,42,42,0.9);
+    border: 2px solid #444;
+    padding: var(--spacing-xs);
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.collection-item.discovered {
+    border-color: var(--accent-green);
+}
+
+.collection-item.undiscovered {
+    opacity: 0.3;
+}
+
+.collection-item.undiscovered .collection-icon {
+    filter: brightness(0);
+}
+
+.collection-icon {
+    font-size: 28px;
+    margin-bottom: 2px;
+}
+
+.collection-icon.svg-icon {
+    width: 40px;
+    height: 40px;
+}
+
+.collection-icon.svg-icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.collection-name {
+    font-size: 9px;
+    color: var(--text-secondary);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+}
+
+.collection-item.rarity-common { border-color: var(--rarity-common); }
+.collection-item.rarity-uncommon { border-color: var(--rarity-uncommon); }
+.collection-item.rarity-rare { border-color: var(--rarity-rare); }
+.collection-item.rarity-epic { border-color: var(--rarity-epic); }
+.collection-item.rarity-legendary { border-color: var(--rarity-legendary); }
+
+/* ========================================
+   実績システム
+   ======================================== */
+.achievements-section {
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-sm);
+    border-top: 2px solid var(--accent-red);
+}
+
+.achievements-section .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+}
+
+.achievement-count {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    color: var(--accent-gold);
+    letter-spacing: 2px;
+}
+
+.achievements-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: var(--spacing-xs);
+}
+
+.achievement-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background: rgba(42,42,42,0.9);
+    border: 2px solid #444;
+    transition: all 0.2s ease;
+}
+
+.achievement-item.unlocked {
+    border-color: var(--accent-gold);
+    background: rgba(255,215,0,0.05);
+}
+
+.achievement-item.claimed {
+    border-color: var(--accent-green);
+    opacity: 0.6;
+}
+
+.achievement-item.unlocked:not(.claimed) {
+    cursor: pointer;
+    animation: achievementPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes achievementPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,215,0,0); }
+    50% { box-shadow: 0 0 10px 2px rgba(255,215,0,0.3); }
+}
+
+.achievement-icon {
+    font-size: 24px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.3);
+    border-radius: 4px;
+}
+
+.achievement-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.achievement-name {
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+
+.achievement-desc {
+    font-size: 10px;
+    color: var(--text-secondary);
+}
+
+.achievement-progress {
+    width: 100%;
+    height: 4px;
+    background: #1a1a1a;
+    margin-top: 4px;
+    overflow: hidden;
+}
+
+.achievement-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-red) 0%, var(--accent-gold) 100%);
+    transition: width 0.3s ease;
+}
+
+.achievement-reward {
+    font-size: 11px;
+    color: var(--accent-gold);
+    text-align: right;
+    white-space: nowrap;
+}
+
+.achievement-item.claimed .achievement-reward {
+    color: var(--accent-green);
+}
+
+.achievement-item.claimed .achievement-reward::after {
+    content: ' ✓';
+}
