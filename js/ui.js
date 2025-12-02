@@ -377,6 +377,9 @@ class UI {
 
         // スキルクールダウン更新
         this.updateSkillCooldowns();
+
+        // ヒーローボタン状態を更新（ゴールドが変わった時に反映）
+        this.updateHeroButtons();
     }
 
     // ========================================
@@ -389,6 +392,25 @@ class UI {
         this.renderEquipment();
         this.renderInventory();
         this.updateDisplay();
+    }
+
+    // ヒーローボタンの状態だけを更新（軽量）
+    updateHeroButtons() {
+        this.elements.heroesList.querySelectorAll('.upgrade-btn').forEach(btn => {
+            const type = btn.dataset.type;
+            const id = btn.dataset.id;
+
+            let cost;
+            if (type === 'hero') {
+                cost = this.game.getHeroCost(id);
+            } else {
+                cost = this.game.getCompanionCost(id);
+            }
+
+            const canAfford = this.game.state.gold >= cost;
+            btn.disabled = !canAfford;
+            btn.textContent = `💰${this.formatNumber(cost)}`;
+        });
     }
 
     renderHeroes() {
