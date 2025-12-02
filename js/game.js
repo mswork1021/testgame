@@ -231,8 +231,6 @@ class Game {
 
     dealDamage(amount, showNumber = false, isCritical = false) {
         if (!this.currentMonster) return;
-        // 既に死亡処理中のモンスターには追加ダメージを与えない
-        if (this.currentMonster.isDying) return;
 
         this.currentMonster.currentHp -= amount;
 
@@ -241,8 +239,6 @@ class Game {
         }
 
         if (this.currentMonster.currentHp <= 0) {
-            // 死亡フラグを立てて二重処理を防止
-            this.currentMonster.isDying = true;
             this.killMonster();
         }
     }
@@ -363,6 +359,10 @@ class Game {
     // モンスター撃破
     // ========================================
     killMonster() {
+        // 二重呼び出し防止
+        if (this.isProcessingKill) return;
+        this.isProcessingKill = true;
+
         const monster = this.currentMonster;
         this.state.monstersKilled++;
         this.state.totalMonstersKilled++;
@@ -393,6 +393,9 @@ class Game {
         } else {
             this.spawnMonster();
         }
+
+        // ロック解除
+        this.isProcessingKill = false;
     }
 
     getGoldMultiplier() {
