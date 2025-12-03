@@ -361,26 +361,41 @@ class SoundManager {
     // BGM
     // ========================================
 
-    // メロディBGM開始
-    startBgm() {
-        if (!this.audioContext || this.bgmPlaying) return;
+    // 通常BGM開始
+    startBgm(type = 'normal') {
+        if (!this.audioContext) return;
+
+        // 既に同じタイプが再生中なら何もしない
+        if (this.bgmPlaying && this.currentBgmType === type) return;
+
+        // 違うタイプなら停止してから開始
+        if (this.bgmPlaying) {
+            this.stopBgm();
+        }
 
         this.bgmPlaying = true;
+        this.currentBgmType = type;
         this.bgmGain = this.audioContext.createGain();
         this.bgmGain.connect(this.audioContext.destination);
         this.bgmGain.gain.setValueAtTime(this.getEffectiveVolume('bgm'), this.audioContext.currentTime);
 
+        if (type === 'boss') {
+            this.playBossBgm();
+        } else {
+            this.playNormalBgm();
+        }
+    }
+
+    // 通常フィールドBGM
+    playNormalBgm() {
         // ファンタジーRPG風メロディ（Aマイナー系）
-        // 音符: [周波数, 長さ(拍), 開始拍]
         const melody = [
-            // フレーズ1
             { note: 440, duration: 0.5 },    // A4
             { note: 523.25, duration: 0.5 }, // C5
             { note: 659.25, duration: 1 },   // E5
             { note: 587.33, duration: 0.5 }, // D5
             { note: 523.25, duration: 0.5 }, // C5
             { note: 493.88, duration: 1 },   // B4
-            // フレーズ2
             { note: 440, duration: 0.5 },    // A4
             { note: 392, duration: 0.5 },    // G4
             { note: 440, duration: 1 },      // A4
@@ -389,7 +404,44 @@ class SoundManager {
             { note: 440, duration: 1 },      // A4
         ];
 
-        const tempo = 100; // BPM
+        const tempo = 100;
+        this.playMelodyLoop(melody, tempo, 'triangle');
+    }
+
+    // ボス戦BGM - 緊張感のある速いテンポ
+    playBossBgm() {
+        // ボス戦メロディ（Eマイナー系、緊迫感）
+        const melody = [
+            // イントロ的フレーズ「ついにきたか！」
+            { note: 329.63, duration: 0.25 }, // E4
+            { note: 329.63, duration: 0.25 }, // E4
+            { note: 493.88, duration: 0.25 }, // B4
+            { note: 493.88, duration: 0.25 }, // B4
+            { note: 659.25, duration: 0.5 },  // E5
+            { note: 622.25, duration: 0.25 }, // D#5
+            { note: 659.25, duration: 0.25 }, // E5
+            // 上昇フレーズ
+            { note: 392, duration: 0.25 },    // G4
+            { note: 440, duration: 0.25 },    // A4
+            { note: 493.88, duration: 0.25 }, // B4
+            { note: 523.25, duration: 0.25 }, // C5
+            { note: 587.33, duration: 0.5 },  // D5
+            { note: 659.25, duration: 0.5 },  // E5
+            // 緊迫フレーズ
+            { note: 493.88, duration: 0.25 }, // B4
+            { note: 523.25, duration: 0.25 }, // C5
+            { note: 493.88, duration: 0.25 }, // B4
+            { note: 440, duration: 0.25 },    // A4
+            { note: 392, duration: 0.25 },    // G4
+            { note: 329.63, duration: 0.75 }, // E4
+        ];
+
+        const tempo = 160; // 速いテンポ！
+        this.playMelodyLoop(melody, tempo, 'sawtooth');
+    }
+
+    // メロディループ再生（共通処理）
+    playMelodyLoop(melody, tempo, waveType) {
         const beatDuration = 60 / tempo;
         const loopDuration = melody.reduce((sum, n) => sum + n.duration, 0) * beatDuration;
 
@@ -407,7 +459,7 @@ class SoundManager {
                 gain.connect(this.bgmGain);
 
                 osc.frequency.setValueAtTime(note, time);
-                osc.type = 'triangle';
+                osc.type = waveType;
 
                 const noteDuration = duration * beatDuration;
                 gain.gain.setValueAtTime(0, time);
@@ -426,12 +478,13 @@ class SoundManager {
         };
 
         playMelody();
-        console.log('BGM started');
+        console.log(`BGM started: ${this.currentBgmType}`);
     }
 
     // BGM停止
     stopBgm() {
         this.bgmPlaying = false;
+        this.currentBgmType = null;
         if (this.bgmTimeout) {
             clearTimeout(this.bgmTimeout);
             this.bgmTimeout = null;
@@ -446,9 +499,21 @@ class SoundManager {
             this.stopBgm();
             return false;
         } else {
-            this.startBgm();
+            this.startBgm('normal');
             return true;
         }
+    }
+
+    // ボス戦BGMに切り替え
+    switchToBossBgm() {
+        if (!this.bgmPlaying) return; // BGMがOFFなら何もしない
+        this.startBgm('boss');
+    }
+
+    // 通常BGMに切り替え
+    switchToNormalBgm() {
+        if (!this.bgmPlaying) return; // BGMがOFFなら何もしない
+        this.startBgm('normal');
     }
 
     // 設定を保存

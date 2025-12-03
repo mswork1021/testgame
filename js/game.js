@@ -188,7 +188,12 @@ class Game {
 
             // ボスタイマー開始
             this.bossTimeLeft = this.getBossTimeLimit();
+
+            // ボス戦BGMに切り替え
+            if (window.soundManager) window.soundManager.switchToBossBgm();
         } else {
+            // 通常BGMに切り替え
+            if (window.soundManager) window.soundManager.switchToNormalBgm();
             // 現在のワールドを取得
             const currentWorld = this.getCurrentWorld();
 
