@@ -3590,3 +3590,115 @@ button:focus {
     0% { opacity: 0; }
     100% { opacity: 1; }
 }
+
+/* ========================================
+   バトル画面拡張モード
+   ======================================== */
+
+/* パネルトグルボタン */
+.panel-toggle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 32px;
+    background: linear-gradient(180deg, #252525 0%, #1a1a1a 100%);
+    border: none;
+    border-top: 1px solid rgba(255,0,64,0.3);
+    border-bottom: 1px solid rgba(255,0,64,0.3);
+    cursor: pointer;
+    transition: background 0.2s ease;
+    flex-shrink: 0;
+}
+
+.panel-toggle:active {
+    background: linear-gradient(180deg, #2a2a2a 0%, #1f1f1f 100%);
+}
+
+.toggle-icon {
+    font-size: 16px;
+    color: var(--accent-red);
+    transition: transform 0.3s ease;
+}
+
+/* 拡張モード時のトグルボタン */
+.game-container.expanded .panel-toggle .toggle-icon {
+    transform: rotate(180deg);
+}
+
+/* 拡張モード時のバトルエリア */
+.game-container.expanded #battle-area {
+    flex: 1;
+    max-height: none;
+    min-height: 300px;
+}
+
+/* 拡張モード時のモンスター */
+.game-container.expanded #monster {
+    width: 180px;
+    height: 180px;
+}
+
+.game-container.expanded #monster-name {
+    font-size: 22px;
+}
+
+/* 拡張モード時のナビゲーション（コンパクト化） */
+.game-container.expanded #bottom-nav {
+    padding: 2px;
+}
+
+.game-container.expanded .nav-btn {
+    padding: 6px 4px;
+}
+
+.game-container.expanded .nav-label {
+    display: none;
+}
+
+.game-container.expanded .nav-icon {
+    font-size: 22px;
+}
+
+/* 拡張モード時のタブパネル非表示 */
+.game-container.expanded #tab-panels {
+    display: none;
+}
+
+/* 拡張モードのトランジション */
+#battle-area {
+    transition: flex 0.3s ease, max-height 0.3s ease, min-height 0.3s ease;
+}
+
+#bottom-nav {
+    transition: padding 0.3s ease;
+}
+
+.nav-btn {
+    transition: padding 0.3s ease, transform 0.2s ease;
+}
+
+.nav-icon {
+    transition: font-size 0.3s ease;
+}
+
+.nav-label {
+    transition: opacity 0.2s ease;
+}
+
+#tab-panels {
+    transition: opacity 0.2s ease;
+}
+
+/* 拡張モード時のストックインジケーター位置調整 */
+.game-container.expanded .stock-indicator {
+    bottom: 12px;
+}
+
+.game-container.expanded .chest-collect-notification {
+    bottom: 60px;
+}
+
+.game-container.expanded .lucky-time-active-indicator {
+    bottom: 12px;
+}
