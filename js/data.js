@@ -555,7 +555,7 @@ const GameData = {
             id: 'gold',
             name: 'ゴールド',
             emoji: '💰',
-            weight: 35,
+            weight: 966,
             description: 'ゴールドを獲得！',
             getReward: (stage) => ({ type: 'gold', amount: Math.floor(stage * 100 * (1 + Math.random())) })
         },
@@ -563,7 +563,7 @@ const GameData = {
             id: 'gems',
             name: 'ジェム',
             emoji: '💎',
-            weight: 10,
+            weight: 1,
             description: 'ジェムを獲得！',
             getReward: (stage) => ({ type: 'gems', amount: Math.floor(1 + stage / 50) })
         },
@@ -579,7 +579,7 @@ const GameData = {
             id: 'skillReset',
             name: 'スキルリセット',
             emoji: '⚡',
-            weight: 15,
+            weight: 1,
             description: '全スキルのクールダウンをリセット！',
             getReward: (stage) => ({ type: 'skillReset' })
         },
@@ -587,7 +587,7 @@ const GameData = {
             id: 'rareEquip',
             name: 'レア装備',
             emoji: '🎁',
-            weight: 15,
+            weight: 10,
             description: 'レア以上の装備を獲得！',
             getReward: (stage) => ({ type: 'equipment', minRarity: 'RARE' })
         },
@@ -595,7 +595,7 @@ const GameData = {
             id: 'souls',
             name: 'ソウル',
             emoji: '👻',
-            weight: 5,
+            weight: 1,
             description: 'ソウルを獲得！',
             getReward: (stage) => ({ type: 'souls', amount: Math.floor(1 + stage / 20) })
         }
