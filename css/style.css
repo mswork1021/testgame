@@ -3622,46 +3622,46 @@ button:focus {
 }
 
 /* 拡張モード時のトグルボタン */
-.game-container.expanded .panel-toggle .toggle-icon {
+#game-container.expanded .panel-toggle .toggle-icon {
     transform: rotate(180deg);
 }
 
 /* 拡張モード時のバトルエリア */
-.game-container.expanded #battle-area {
+#game-container.expanded #battle-area {
     flex: 1;
     max-height: none;
     min-height: 300px;
 }
 
 /* 拡張モード時のモンスター */
-.game-container.expanded #monster {
+#game-container.expanded #monster {
     width: 180px;
     height: 180px;
 }
 
-.game-container.expanded #monster-name {
+#game-container.expanded #monster-name {
     font-size: 22px;
 }
 
 /* 拡張モード時のナビゲーション（コンパクト化） */
-.game-container.expanded #bottom-nav {
+#game-container.expanded #bottom-nav {
     padding: 2px;
 }
 
-.game-container.expanded .nav-btn {
+#game-container.expanded .nav-btn {
     padding: 6px 4px;
 }
 
-.game-container.expanded .nav-label {
+#game-container.expanded .nav-label {
     display: none;
 }
 
-.game-container.expanded .nav-icon {
+#game-container.expanded .nav-icon {
     font-size: 22px;
 }
 
 /* 拡張モード時のタブパネル非表示 */
-.game-container.expanded #tab-panels {
+#game-container.expanded #tab-panels {
     display: none;
 }
 
@@ -3691,14 +3691,14 @@ button:focus {
 }
 
 /* 拡張モード時のストックインジケーター位置調整 */
-.game-container.expanded .stock-indicator {
+#game-container.expanded .stock-indicator {
     bottom: 12px;
 }
 
-.game-container.expanded .chest-collect-notification {
+#game-container.expanded .chest-collect-notification {
     bottom: 60px;
 }
 
-.game-container.expanded .lucky-time-active-indicator {
+#game-container.expanded .lucky-time-active-indicator {
     bottom: 12px;
 }

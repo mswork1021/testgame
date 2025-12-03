@@ -42,7 +42,7 @@ class UI {
 
         // パネルトグル
         this.elements.panelToggle = document.getElementById('panel-toggle');
-        this.elements.gameContainer = document.querySelector('.game-container');
+        this.elements.gameContainer = document.getElementById('game-container');
 
         // パネル
         this.elements.heroesList = document.getElementById('heroes-list');
