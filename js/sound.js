@@ -436,7 +436,7 @@ class SoundManager {
             { note: 329.63, duration: 0.75 }, // E4
         ];
 
-        const tempo = 160; // 速いテンポ！
+        const tempo = 140; // 緊迫感のあるテンポ
         this.playMelodyLoop(melody, tempo, 'sawtooth');
     }
 
