@@ -64,7 +64,16 @@ class Game {
 
             // 実績
             unlockedAchievements: [],
-            claimedAchievements: []
+            claimedAchievements: [],
+
+            // 宝箱ストック
+            treasureChestCount: 0,
+
+            // ラッキータイムストック
+            luckyTimeStock: 0,
+
+            // 宝箱から獲得した未開封報酬（一括開封用）
+            pendingTreasureRewards: []
         };
 
         // 現在のモンスター
@@ -72,9 +81,6 @@ class Game {
         this.isBossFight = false;
         this.bossTimer = null;
         this.bossTimeLeft = 0;
-
-        // 宝箱
-        this.currentTreasureChest = null;
 
         // ラッキータイム
         this.luckyTimeEndTime = 0;
@@ -90,10 +96,11 @@ class Game {
         this.onBossFailed = null;
         this.onLevelUp = null;
         this.onLoot = null;
-        this.onTreasureChestSpawn = null;
-        this.onTreasureChestOpen = null;
+        this.onTreasureChestCollect = null;  // 宝箱自動獲得時
+        this.onTreasureChestBatchOpen = null; // 一括開封時
         this.onLuckyTimeStart = null;
         this.onLuckyTimeEnd = null;
+        this.onLuckyTimeStockUpdate = null;  // ストック変化時
     }
 
     // ========================================
@@ -329,27 +336,24 @@ class Game {
     }
 
     // ========================================
-    // 宝箱システム
+    // 宝箱システム（自動収集・ストック方式）
     // ========================================
     spawnTreasureChest() {
-        console.log('[DEBUG] 宝箱出現！');
-        // モンスターはクリアしない（同時に表示）
-        this.currentTreasureChest = {
-            svg: GameData.TREASURE_CHEST.SVG,
-            name: '宝箱',
-            opened: false
-        };
+        console.log('[DEBUG] 宝箱出現！自動収集');
+        // 自動収集：カウンターを増やすだけ
+        this.state.treasureChestCount++;
 
-        // コールバック
-        if (this.onTreasureChestSpawn) this.onTreasureChestSpawn();
+        // サウンド再生
+        if (window.soundManager) window.soundManager.playTreasureChest();
+
+        // コールバック（UIに通知を表示）
+        if (this.onTreasureChestCollect) {
+            this.onTreasureChestCollect(this.state.treasureChestCount);
+        }
     }
 
-    openTreasureChest() {
-        if (!this.currentTreasureChest || this.currentTreasureChest.opened) return null;
-
-        this.currentTreasureChest.opened = true;
-
-        // 重み付きランダムで報酬を選択
+    // 宝箱を1つ開ける（報酬を決定してストックに追加）
+    rollTreasureReward() {
         const rewards = GameData.TREASURE_CHEST_REWARDS;
         const totalWeight = rewards.reduce((sum, r) => sum + r.weight, 0);
         let random = Math.random() * totalWeight;
@@ -363,21 +367,36 @@ class Game {
             }
         }
 
-        // 報酬を計算
-        const rewardData = selectedReward.getReward(this.state.currentStage);
+        return {
+            reward: selectedReward,
+            data: selectedReward.getReward(this.state.currentStage)
+        };
+    }
 
-        // 報酬を適用
-        this.applyTreasureReward(rewardData, selectedReward);
+    // 宝箱を一括開封
+    openAllTreasureChests() {
+        if (this.state.treasureChestCount <= 0) return [];
 
-        // コールバック
-        if (this.onTreasureChestOpen) {
-            this.onTreasureChestOpen(selectedReward, rewardData);
+        const results = [];
+        const count = this.state.treasureChestCount;
+
+        for (let i = 0; i < count; i++) {
+            const result = this.rollTreasureReward();
+            results.push(result);
+
+            // 報酬を適用（ラッキータイムはストックに）
+            this.applyTreasureReward(result.data, result.reward);
         }
 
-        // 宝箱をクリア（モンスターは既にいるので生成しない）
-        this.currentTreasureChest = null;
+        // カウンターをリセット
+        this.state.treasureChestCount = 0;
 
-        return { reward: selectedReward, data: rewardData };
+        // コールバック
+        if (this.onTreasureChestBatchOpen) {
+            this.onTreasureChestBatchOpen(results);
+        }
+
+        return results;
     }
 
     applyTreasureReward(rewardData, rewardInfo) {
@@ -397,7 +416,11 @@ class Game {
                 break;
 
             case 'luckyTime':
-                this.startLuckyTime(rewardData.duration);
+                // ストックに追加（即時発動しない）
+                this.state.luckyTimeStock++;
+                if (this.onLuckyTimeStockUpdate) {
+                    this.onLuckyTimeStockUpdate(this.state.luckyTimeStock);
+                }
                 break;
 
             case 'skillReset':
@@ -461,8 +484,32 @@ class Game {
         return Math.ceil((this.luckyTimeEndTime - Date.now()) / 1000);
     }
 
+    // ストックからラッキータイムを1つ使用
+    useLuckyTime() {
+        if (this.state.luckyTimeStock <= 0) return false;
+
+        this.state.luckyTimeStock--;
+        this.startLuckyTime(30); // 30秒間
+
+        // ストック更新コールバック
+        if (this.onLuckyTimeStockUpdate) {
+            this.onLuckyTimeStockUpdate(this.state.luckyTimeStock);
+        }
+
+        return true;
+    }
+
     startLuckyTime(duration) {
-        this.luckyTimeEndTime = Date.now() + duration * 1000;
+        // 既にアクティブな場合は時間を延長
+        if (this.isLuckyTimeActive()) {
+            this.luckyTimeEndTime += duration * 1000;
+        } else {
+            this.luckyTimeEndTime = Date.now() + duration * 1000;
+        }
+
+        // サウンド再生
+        if (window.soundManager) window.soundManager.playLuckyTime();
+
         if (this.onLuckyTimeStart) this.onLuckyTimeStart(duration);
     }
 

@@ -3235,3 +3235,358 @@ button:focus {
 .treasure-chest-banner:active {
     transform: translateX(-50%) scale(0.95);
 }
+
+/* ========================================
+   ストックインジケーター（新システム）
+   ======================================== */
+
+/* 基本ストックインジケータースタイル */
+.stock-indicator {
+    position: absolute;
+    bottom: 8px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 50;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stock-indicator:active {
+    transform: scale(0.95);
+}
+
+.stock-icon {
+    font-size: 18px;
+}
+
+.stock-count {
+    background: rgba(0,0,0,0.4);
+    padding: 2px 8px;
+    border-radius: 10px;
+    min-width: 20px;
+    text-align: center;
+}
+
+/* 宝箱ストック（右下） */
+.chest-stock {
+    right: 8px;
+    background: linear-gradient(180deg, rgba(139,69,19,0.95) 0%, rgba(101,67,33,0.95) 100%);
+    border: 2px solid var(--accent-gold);
+    color: var(--accent-gold);
+    box-shadow: 0 0 15px rgba(255,215,0,0.4), 0 2px 8px rgba(0,0,0,0.4);
+    animation: chestStockPulse 2s ease-in-out infinite;
+}
+
+.chest-stock:hover {
+    box-shadow: 0 0 25px rgba(255,215,0,0.6), 0 2px 8px rgba(0,0,0,0.4);
+}
+
+@keyframes chestStockPulse {
+    0%, 100% { box-shadow: 0 0 15px rgba(255,215,0,0.4), 0 2px 8px rgba(0,0,0,0.4); }
+    50% { box-shadow: 0 0 20px rgba(255,215,0,0.6), 0 2px 8px rgba(0,0,0,0.4); }
+}
+
+/* ラッキータイムストック（中央下） */
+.lucky-stock {
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(180deg, rgba(255,215,0,0.95) 0%, rgba(255,170,0,0.95) 100%);
+    border: 2px solid #fff;
+    color: #000;
+    box-shadow: 0 0 15px rgba(255,215,0,0.6), 0 2px 8px rgba(0,0,0,0.4);
+    animation: luckyStockPulse 1.5s ease-in-out infinite;
+}
+
+.lucky-stock:active {
+    transform: translateX(-50%) scale(0.95);
+}
+
+@keyframes luckyStockPulse {
+    0%, 100% { box-shadow: 0 0 15px rgba(255,215,0,0.6), 0 2px 8px rgba(0,0,0,0.4); }
+    50% { box-shadow: 0 0 25px rgba(255,215,0,0.9), 0 2px 8px rgba(0,0,0,0.4); }
+}
+
+/* ラッキータイムアクティブインジケーター（左下） */
+.lucky-time-active-indicator {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    background: linear-gradient(180deg, rgba(255,215,0,0.95) 0%, rgba(255,170,0,0.95) 100%);
+    color: #000;
+    padding: 6px 12px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: bold;
+    font-size: 14px;
+    z-index: 50;
+    box-shadow: 0 0 20px rgba(255,215,0,0.8), 0 2px 8px rgba(0,0,0,0.4);
+    animation: activeIndicatorPulse 0.8s ease-in-out infinite;
+}
+
+.lucky-active-icon {
+    font-size: 18px;
+    animation: iconSpin 2s linear infinite;
+}
+
+.lucky-active-timer {
+    background: rgba(0,0,0,0.3);
+    padding: 2px 8px;
+    border-radius: 10px;
+    color: #fff;
+    min-width: 32px;
+    text-align: center;
+}
+
+@keyframes activeIndicatorPulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(255,215,0,0.8), 0 2px 8px rgba(0,0,0,0.4); }
+    50% { box-shadow: 0 0 30px rgba(255,215,0,1), 0 2px 8px rgba(0,0,0,0.4); }
+}
+
+/* 宝箱獲得通知（右下小さい） */
+.chest-collect-notification {
+    position: absolute;
+    bottom: 50px;
+    right: 8px;
+    background: linear-gradient(180deg, rgba(139,69,19,0.95) 0%, rgba(101,67,33,0.95) 100%);
+    border: 2px solid var(--accent-gold);
+    border-radius: 20px;
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--accent-gold);
+    font-weight: bold;
+    font-size: 12px;
+    z-index: 60;
+    box-shadow: 0 0 15px rgba(255,215,0,0.5);
+    animation: collectNotify 1.5s ease-out forwards;
+}
+
+.chest-mini-icon {
+    font-size: 16px;
+}
+
+@keyframes collectNotify {
+    0% { transform: translateY(20px) scale(0.8); opacity: 0; }
+    20% { transform: translateY(0) scale(1.1); opacity: 1; }
+    30% { transform: translateY(0) scale(1); }
+    80% { opacity: 1; }
+    100% { transform: translateY(-20px); opacity: 0; }
+}
+
+/* ========================================
+   レインボーボーダー（ラッキータイム中）
+   ======================================== */
+
+.battle-area.rainbow-border {
+    border: 3px solid transparent;
+    background-clip: padding-box;
+    position: relative;
+}
+
+.battle-area.rainbow-border::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    right: -4px;
+    bottom: -4px;
+    background: linear-gradient(90deg,
+        #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000
+    );
+    background-size: 400% 100%;
+    border-radius: 14px;
+    z-index: -1;
+    animation: rainbowMove 2s linear infinite;
+}
+
+.battle-area.rainbow-border::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--bg-dark);
+    border-radius: 10px;
+    z-index: -1;
+}
+
+@keyframes rainbowMove {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 400% 50%; }
+}
+
+/* ========================================
+   宝箱開封モーダル
+   ======================================== */
+
+.chest-open-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1100;
+    animation: modalFadeIn 0.3s ease-out;
+}
+
+.chest-open-content {
+    background: linear-gradient(180deg, var(--bg-dark) 0%, var(--bg-darker) 100%);
+    border: 3px solid var(--accent-gold);
+    border-radius: 16px;
+    padding: 24px 32px;
+    text-align: center;
+    min-width: 280px;
+    box-shadow: 0 0 40px rgba(255,215,0,0.3);
+}
+
+.chest-open-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    color: var(--accent-gold);
+    text-shadow: 0 0 10px rgba(255,215,0,0.5);
+    margin-bottom: 8px;
+    letter-spacing: 2px;
+}
+
+.chest-open-count {
+    font-size: 16px;
+    color: var(--accent-white);
+    margin-bottom: 20px;
+}
+
+.chest-open-btn {
+    display: block;
+    width: 100%;
+    background: linear-gradient(180deg, var(--accent-gold) 0%, #cc8800 100%);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    padding: 14px 24px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 12px rgba(255,215,0,0.4);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.chest-open-btn:active {
+    transform: scale(0.97);
+}
+
+.chest-close-btn {
+    display: block;
+    width: 100%;
+    background: rgba(255,255,255,0.1);
+    color: var(--text-secondary);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+/* ========================================
+   一括開封結果モーダル
+   ======================================== */
+
+.batch-result-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1100;
+    animation: modalFadeIn 0.3s ease-out;
+}
+
+.batch-result-content {
+    background: linear-gradient(180deg, var(--bg-dark) 0%, var(--bg-darker) 100%);
+    border: 3px solid var(--accent-gold);
+    border-radius: 16px;
+    padding: 24px 32px;
+    text-align: center;
+    min-width: 280px;
+    max-width: 340px;
+    box-shadow: 0 0 40px rgba(255,215,0,0.3);
+}
+
+.batch-result-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    color: var(--accent-gold);
+    text-shadow: 0 0 10px rgba(255,215,0,0.5);
+    margin-bottom: 4px;
+    letter-spacing: 2px;
+}
+
+.batch-result-count {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+}
+
+.batch-result-list {
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+.batch-item {
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 6px;
+    font-size: 15px;
+    color: var(--accent-white);
+}
+
+.batch-item.rare {
+    background: rgba(52,152,219,0.2);
+    border-left: 3px solid #3498db;
+}
+
+.batch-item.epic {
+    background: rgba(155,89,182,0.2);
+    border-left: 3px solid #9b59b6;
+}
+
+.batch-item.legendary {
+    background: rgba(255,215,0,0.2);
+    border-left: 3px solid var(--accent-gold);
+    color: var(--accent-gold);
+}
+
+.batch-close-btn {
+    display: block;
+    width: 100%;
+    background: linear-gradient(180deg, var(--accent-gold) 0%, #cc8800 100%);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+@keyframes modalFadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
