@@ -1,0 +1,453 @@
+/* ========================================
+   Tap Quest - サウンドマネージャー
+   Web Audio APIを使用してプログラムで音を生成
+   ======================================== */
+
+class SoundManager {
+    constructor() {
+        this.audioContext = null;
+        this.masterVolume = 0.5;
+        this.sfxVolume = 0.7;
+        this.bgmVolume = 0.3;
+        this.isMuted = false;
+        this.bgmOscillator = null;
+        this.bgmGain = null;
+        this.isInitialized = false;
+    }
+
+    // ユーザー操作後に呼び出す（ブラウザのautoplay制限対策）
+    init() {
+        if (this.isInitialized) return;
+
+        try {
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            this.isInitialized = true;
+            console.log('SoundManager initialized');
+        } catch (e) {
+            console.log('Web Audio API not supported:', e);
+        }
+    }
+
+    // マスター音量設定
+    setMasterVolume(value) {
+        this.masterVolume = Math.max(0, Math.min(1, value));
+        this.updateBgmVolume();
+    }
+
+    // SE音量設定
+    setSfxVolume(value) {
+        this.sfxVolume = Math.max(0, Math.min(1, value));
+    }
+
+    // BGM音量設定
+    setBgmVolume(value) {
+        this.bgmVolume = Math.max(0, Math.min(1, value));
+        this.updateBgmVolume();
+    }
+
+    // ミュート切り替え
+    toggleMute() {
+        this.isMuted = !this.isMuted;
+        this.updateBgmVolume();
+        return this.isMuted;
+    }
+
+    // 実効音量を取得
+    getEffectiveVolume(type = 'sfx') {
+        if (this.isMuted) return 0;
+        const baseVolume = type === 'bgm' ? this.bgmVolume : this.sfxVolume;
+        return baseVolume * this.masterVolume;
+    }
+
+    // BGM音量をリアルタイム更新
+    updateBgmVolume() {
+        if (this.bgmGain) {
+            this.bgmGain.gain.setValueAtTime(
+                this.getEffectiveVolume('bgm'),
+                this.audioContext.currentTime
+            );
+        }
+    }
+
+    // ========================================
+    // 効果音生成
+    // ========================================
+
+    // タップ音（軽快なクリック音）
+    playTap() {
+        if (!this.audioContext || this.isMuted) return;
+
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+
+        osc.connect(gain);
+        gain.connect(this.audioContext.destination);
+
+        osc.frequency.setValueAtTime(800, this.audioContext.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(400, this.audioContext.currentTime + 0.05);
+        osc.type = 'sine';
+
+        const vol = this.getEffectiveVolume('sfx') * 0.3;
+        gain.gain.setValueAtTime(vol, this.audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.05);
+
+        osc.start(this.audioContext.currentTime);
+        osc.stop(this.audioContext.currentTime + 0.05);
+    }
+
+    // クリティカルヒット音（派手な音）
+    playCritical() {
+        if (!this.audioContext || this.isMuted) return;
+
+        const vol = this.getEffectiveVolume('sfx');
+
+        // 高い音
+        const osc1 = this.audioContext.createOscillator();
+        const gain1 = this.audioContext.createGain();
+        osc1.connect(gain1);
+        gain1.connect(this.audioContext.destination);
+
+        osc1.frequency.setValueAtTime(1200, this.audioContext.currentTime);
+        osc1.frequency.exponentialRampToValueAtTime(600, this.audioContext.currentTime + 0.15);
+        osc1.type = 'sawtooth';
+
+        gain1.gain.setValueAtTime(vol * 0.4, this.audioContext.currentTime);
+        gain1.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.15);
+
+        osc1.start(this.audioContext.currentTime);
+        osc1.stop(this.audioContext.currentTime + 0.15);
+
+        // 低い音（重み）
+        const osc2 = this.audioContext.createOscillator();
+        const gain2 = this.audioContext.createGain();
+        osc2.connect(gain2);
+        gain2.connect(this.audioContext.destination);
+
+        osc2.frequency.setValueAtTime(200, this.audioContext.currentTime);
+        osc2.type = 'square';
+
+        gain2.gain.setValueAtTime(vol * 0.3, this.audioContext.currentTime);
+        gain2.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.1);
+
+        osc2.start(this.audioContext.currentTime);
+        osc2.stop(this.audioContext.currentTime + 0.1);
+    }
+
+    // モンスター撃破音
+    playKill() {
+        if (!this.audioContext || this.isMuted) return;
+
+        const vol = this.getEffectiveVolume('sfx');
+
+        // スイープダウン音
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+
+        osc.connect(gain);
+        gain.connect(this.audioContext.destination);
+
+        osc.frequency.setValueAtTime(600, this.audioContext.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(100, this.audioContext.currentTime + 0.2);
+        osc.type = 'triangle';
+
+        gain.gain.setValueAtTime(vol * 0.5, this.audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.2);
+
+        osc.start(this.audioContext.currentTime);
+        osc.stop(this.audioContext.currentTime + 0.2);
+    }
+
+    // ボス撃破音（豪華なファンファーレ）
+    playBossKill() {
+        if (!this.audioContext || this.isMuted) return;
+
+        const vol = this.getEffectiveVolume('sfx');
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+
+        notes.forEach((freq, i) => {
+            const osc = this.audioContext.createOscillator();
+            const gain = this.audioContext.createGain();
+
+            osc.connect(gain);
+            gain.connect(this.audioContext.destination);
+
+            osc.frequency.setValueAtTime(freq, this.audioContext.currentTime + i * 0.1);
+            osc.type = 'triangle';
+
+            gain.gain.setValueAtTime(0, this.audioContext.currentTime + i * 0.1);
+            gain.gain.linearRampToValueAtTime(vol * 0.4, this.audioContext.currentTime + i * 0.1 + 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + i * 0.1 + 0.4);
+
+            osc.start(this.audioContext.currentTime + i * 0.1);
+            osc.stop(this.audioContext.currentTime + i * 0.1 + 0.4);
+        });
+    }
+
+    // レジェンダリードロップ音
+    playLegendaryDrop() {
+        if (!this.audioContext || this.isMuted) return;
+
+        const vol = this.getEffectiveVolume('sfx');
+
+        // キラキラ音
+        const frequencies = [1318.51, 1567.98, 2093.00, 2637.02]; // E6, G6, C7, E7
+
+        frequencies.forEach((freq, i) => {
+            const osc = this.audioContext.createOscillator();
+            const gain = this.audioContext.createGain();
+
+            osc.connect(gain);
+            gain.connect(this.audioContext.destination);
+
+            osc.frequency.setValueAtTime(freq, this.audioContext.currentTime + i * 0.08);
+            osc.type = 'sine';
+
+            gain.gain.setValueAtTime(vol * 0.3, this.audioContext.currentTime + i * 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + i * 0.08 + 0.3);
+
+            osc.start(this.audioContext.currentTime + i * 0.08);
+            osc.stop(this.audioContext.currentTime + i * 0.08 + 0.3);
+        });
+    }
+
+    // 通常ドロップ音
+    playDrop() {
+        if (!this.audioContext || this.isMuted) return;
+
+        const vol = this.getEffectiveVolume('sfx');
+
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+
+        osc.connect(gain);
+        gain.connect(this.audioContext.destination);
+
+        osc.frequency.setValueAtTime(880, this.audioContext.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1760, this.audioContext.currentTime + 0.1);
+        osc.type = 'sine';
+
+        gain.gain.setValueAtTime(vol * 0.3, this.audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.15);
+
+        osc.start(this.audioContext.currentTime);
+        osc.stop(this.audioContext.currentTime + 0.15);
+    }
+
+    // スキル発動音
+    playSkill() {
+        if (!this.audioContext || this.isMuted) return;
+
+        const vol = this.getEffectiveVolume('sfx');
+
+        // シュイン音
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+
+        osc.connect(gain);
+        gain.connect(this.audioContext.destination);
+
+        osc.frequency.setValueAtTime(300, this.audioContext.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1500, this.audioContext.currentTime + 0.15);
+        osc.frequency.exponentialRampToValueAtTime(800, this.audioContext.currentTime + 0.3);
+        osc.type = 'sine';
+
+        gain.gain.setValueAtTime(vol * 0.4, this.audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.3);
+
+        osc.start(this.audioContext.currentTime);
+        osc.stop(this.audioContext.currentTime + 0.3);
+    }
+
+    // アップグレード音
+    playUpgrade() {
+        if (!this.audioContext || this.isMuted) return;
+
+        const vol = this.getEffectiveVolume('sfx');
+
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+
+        osc.connect(gain);
+        gain.connect(this.audioContext.destination);
+
+        osc.frequency.setValueAtTime(440, this.audioContext.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, this.audioContext.currentTime + 0.1);
+        osc.type = 'sine';
+
+        gain.gain.setValueAtTime(vol * 0.3, this.audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.15);
+
+        osc.start(this.audioContext.currentTime);
+        osc.stop(this.audioContext.currentTime + 0.15);
+    }
+
+    // 転生音（神秘的な音）
+    playRebirth() {
+        if (!this.audioContext || this.isMuted) return;
+
+        const vol = this.getEffectiveVolume('sfx');
+
+        // 複数の周波数を重ねて神秘的な雰囲気
+        const baseFreq = 220;
+        [1, 1.5, 2, 3].forEach((mult, i) => {
+            const osc = this.audioContext.createOscillator();
+            const gain = this.audioContext.createGain();
+
+            osc.connect(gain);
+            gain.connect(this.audioContext.destination);
+
+            osc.frequency.setValueAtTime(baseFreq * mult, this.audioContext.currentTime);
+            osc.type = 'sine';
+
+            gain.gain.setValueAtTime(0, this.audioContext.currentTime);
+            gain.gain.linearRampToValueAtTime(vol * 0.2, this.audioContext.currentTime + 0.3);
+            gain.gain.linearRampToValueAtTime(vol * 0.2, this.audioContext.currentTime + 0.7);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 1.2);
+
+            osc.start(this.audioContext.currentTime);
+            osc.stop(this.audioContext.currentTime + 1.2);
+        });
+    }
+
+    // ボタンクリック音
+    playButton() {
+        if (!this.audioContext || this.isMuted) return;
+
+        const vol = this.getEffectiveVolume('sfx');
+
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+
+        osc.connect(gain);
+        gain.connect(this.audioContext.destination);
+
+        osc.frequency.setValueAtTime(600, this.audioContext.currentTime);
+        osc.type = 'sine';
+
+        gain.gain.setValueAtTime(vol * 0.2, this.audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.05);
+
+        osc.start(this.audioContext.currentTime);
+        osc.stop(this.audioContext.currentTime + 0.05);
+    }
+
+    // コンボ音（高いコンボで音程上昇）
+    playCombo(comboCount) {
+        if (!this.audioContext || this.isMuted) return;
+        if (comboCount < 5) return; // 5コンボ以上で音を出す
+
+        const vol = this.getEffectiveVolume('sfx');
+
+        // コンボ数に応じて音程を上げる
+        const baseFreq = 400 + Math.min(comboCount * 20, 800);
+
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+
+        osc.connect(gain);
+        gain.connect(this.audioContext.destination);
+
+        osc.frequency.setValueAtTime(baseFreq, this.audioContext.currentTime);
+        osc.type = 'triangle';
+
+        gain.gain.setValueAtTime(vol * 0.2, this.audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.08);
+
+        osc.start(this.audioContext.currentTime);
+        osc.stop(this.audioContext.currentTime + 0.08);
+    }
+
+    // ========================================
+    // BGM
+    // ========================================
+
+    // シンプルなBGM開始
+    startBgm() {
+        if (!this.audioContext || this.bgmOscillator) return;
+
+        // BGMノード作成
+        this.bgmGain = this.audioContext.createGain();
+        this.bgmGain.connect(this.audioContext.destination);
+        this.bgmGain.gain.setValueAtTime(this.getEffectiveVolume('bgm'), this.audioContext.currentTime);
+
+        // 低いドローン音
+        this.bgmOscillator = this.audioContext.createOscillator();
+        this.bgmOscillator.connect(this.bgmGain);
+        this.bgmOscillator.frequency.setValueAtTime(55, this.audioContext.currentTime); // A1
+        this.bgmOscillator.type = 'triangle';
+
+        // LFOでゆっくり音量を揺らす
+        const lfo = this.audioContext.createOscillator();
+        const lfoGain = this.audioContext.createGain();
+        lfo.connect(lfoGain);
+        lfoGain.connect(this.bgmGain.gain);
+        lfo.frequency.setValueAtTime(0.1, this.audioContext.currentTime);
+        lfoGain.gain.setValueAtTime(0.05, this.audioContext.currentTime);
+
+        this.bgmOscillator.start();
+        lfo.start();
+
+        this.bgmLfo = lfo;
+
+        console.log('BGM started');
+    }
+
+    // BGM停止
+    stopBgm() {
+        if (this.bgmOscillator) {
+            this.bgmOscillator.stop();
+            this.bgmOscillator = null;
+        }
+        if (this.bgmLfo) {
+            this.bgmLfo.stop();
+            this.bgmLfo = null;
+        }
+        this.bgmGain = null;
+        console.log('BGM stopped');
+    }
+
+    // BGMトグル
+    toggleBgm() {
+        if (this.bgmOscillator) {
+            this.stopBgm();
+            return false;
+        } else {
+            this.startBgm();
+            return true;
+        }
+    }
+
+    // 設定を保存
+    saveSettings() {
+        const settings = {
+            masterVolume: this.masterVolume,
+            sfxVolume: this.sfxVolume,
+            bgmVolume: this.bgmVolume,
+            isMuted: this.isMuted,
+            bgmEnabled: !!this.bgmOscillator
+        };
+        localStorage.setItem('tapquest_sound_settings', JSON.stringify(settings));
+    }
+
+    // 設定を読み込み
+    loadSettings() {
+        try {
+            const saved = localStorage.getItem('tapquest_sound_settings');
+            if (saved) {
+                const settings = JSON.parse(saved);
+                this.masterVolume = settings.masterVolume ?? 0.5;
+                this.sfxVolume = settings.sfxVolume ?? 0.7;
+                this.bgmVolume = settings.bgmVolume ?? 0.3;
+                this.isMuted = settings.isMuted ?? false;
+                return settings.bgmEnabled ?? false;
+            }
+        } catch (e) {
+            console.log('Failed to load sound settings:', e);
+        }
+        return false;
+    }
+}
+
+// グローバルインスタンス
+window.SoundManager = SoundManager;
+window.soundManager = new SoundManager();

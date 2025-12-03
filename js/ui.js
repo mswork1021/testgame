@@ -258,6 +258,12 @@ class UI {
     // ========================================
     onTap(e) {
         try {
+            // サウンドマネージャー初期化（最初のタップ時）
+            if (window.soundManager && !window.soundManager.isInitialized) {
+                window.soundManager.init();
+                this.initSoundSettings();
+            }
+
             this.game.tap();
 
             // コンボカウント更新
@@ -285,6 +291,16 @@ class UI {
             // 画面シェイク（クリティカル時）
             if (this.lastWasCritical) {
                 this.shakeScreen();
+                // クリティカル音
+                if (window.soundManager) window.soundManager.playCritical();
+            } else {
+                // 通常タップ音
+                if (window.soundManager) window.soundManager.playTap();
+            }
+
+            // コンボ音
+            if (window.soundManager && this.comboCount >= 5) {
+                window.soundManager.playCombo(this.comboCount);
             }
         } catch(err) {
             console.error('onTap error:', err);
@@ -551,6 +567,9 @@ class UI {
                     this.game.upgradeCompanion(id);
                 }
 
+                // アップグレード音
+                if (window.soundManager) window.soundManager.playUpgrade();
+
                 this.renderHeroes();
             };
             btn.addEventListener('touchend', (e) => {
@@ -598,6 +617,9 @@ class UI {
                             this.game.stopAutoTap();
                         }, skill.duration * 1000);
                     }
+
+                    // スキル発動音
+                    if (window.soundManager) window.soundManager.playSkill();
 
                     this.showToast(`${skill.name}発動！`);
                     this.renderSkills();
@@ -923,6 +945,10 @@ class UI {
         const skillPoints = this.game.getPendingSkillPoints();
         if (confirm(`転生しますか？\n\n獲得ソウル: ${this.formatNumber(souls)}\n獲得スキルポイント: ${skillPoints}\n\n※ゴールド、ヒーロー、仲間がリセットされます`)) {
             const gained = this.game.rebirth();
+
+            // 転生音
+            if (window.soundManager) window.soundManager.playRebirth();
+
             this.showToast(`転生完了！👻${this.formatNumber(gained)}ソウル ✨${skillPoints}SP獲得！`);
             this.renderAll();
         }
@@ -934,6 +960,15 @@ class UI {
     onMonsterKill(monster, gold) {
         // ゴールド獲得表示は不要（damageNumbersと被るため）
         this.updateDisplay();
+
+        // サウンド再生
+        if (window.soundManager) {
+            if (monster.isBoss) {
+                window.soundManager.playBossKill();
+            } else {
+                window.soundManager.playKill();
+            }
+        }
     }
 
     showLootPopup(item) {
@@ -942,6 +977,15 @@ class UI {
             <span style="color: ${rarity.color}">${item.emoji} ${item.rarityName} ${item.name} ドロップ！</span>
         `;
         this.elements.lootPopup.classList.remove('hidden');
+
+        // ドロップ音（レジェンダリーは特別）
+        if (window.soundManager) {
+            if (item.rarity === 'LEGENDARY' || item.rarity === 'EPIC') {
+                window.soundManager.playLegendaryDrop();
+            } else {
+                window.soundManager.playDrop();
+            }
+        }
 
         setTimeout(() => {
             this.elements.lootPopup.classList.add('hidden');
@@ -1698,6 +1742,85 @@ class UI {
                 }
             });
         });
+    }
+
+    // ========================================
+    // サウンド設定
+    // ========================================
+    initSoundSettings() {
+        if (!window.soundManager) return;
+
+        // 設定を読み込み
+        const bgmEnabled = window.soundManager.loadSettings();
+
+        // スライダー要素取得
+        const masterSlider = document.getElementById('master-volume');
+        const bgmSlider = document.getElementById('bgm-volume');
+        const sfxSlider = document.getElementById('sfx-volume');
+        const muteBtn = document.getElementById('mute-btn');
+        const bgmToggleBtn = document.getElementById('bgm-toggle-btn');
+
+        if (!masterSlider || !bgmSlider || !sfxSlider) return;
+
+        // 初期値設定
+        masterSlider.value = window.soundManager.masterVolume * 100;
+        bgmSlider.value = window.soundManager.bgmVolume * 100;
+        sfxSlider.value = window.soundManager.sfxVolume * 100;
+
+        // ミュート状態更新
+        this.updateMuteButton();
+
+        // BGMボタン状態更新
+        if (bgmToggleBtn) {
+            bgmToggleBtn.textContent = bgmEnabled ? 'ON' : 'OFF';
+            bgmToggleBtn.classList.toggle('active', bgmEnabled);
+        }
+
+        // BGMを開始（設定がONの場合）
+        if (bgmEnabled) {
+            window.soundManager.startBgm();
+        }
+
+        // イベントリスナー
+        masterSlider.addEventListener('input', () => {
+            window.soundManager.setMasterVolume(masterSlider.value / 100);
+            window.soundManager.saveSettings();
+        });
+
+        bgmSlider.addEventListener('input', () => {
+            window.soundManager.setBgmVolume(bgmSlider.value / 100);
+            window.soundManager.saveSettings();
+        });
+
+        sfxSlider.addEventListener('input', () => {
+            window.soundManager.setSfxVolume(sfxSlider.value / 100);
+            window.soundManager.saveSettings();
+        });
+
+        if (muteBtn) {
+            muteBtn.addEventListener('click', () => {
+                window.soundManager.toggleMute();
+                this.updateMuteButton();
+                window.soundManager.saveSettings();
+            });
+        }
+
+        if (bgmToggleBtn) {
+            bgmToggleBtn.addEventListener('click', () => {
+                const isPlaying = window.soundManager.toggleBgm();
+                bgmToggleBtn.textContent = isPlaying ? 'ON' : 'OFF';
+                bgmToggleBtn.classList.toggle('active', isPlaying);
+                window.soundManager.saveSettings();
+            });
+        }
+    }
+
+    updateMuteButton() {
+        const muteBtn = document.getElementById('mute-btn');
+        if (!muteBtn || !window.soundManager) return;
+
+        muteBtn.textContent = window.soundManager.isMuted ? '🔇' : '🔊';
+        muteBtn.classList.toggle('muted', window.soundManager.isMuted);
     }
 }
 

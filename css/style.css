@@ -2686,3 +2686,89 @@ button:focus {
 .achievement-item.claimed .achievement-reward::after {
     content: ' ✓';
 }
+
+/* ========================================
+   サウンド設定
+   ======================================== */
+.sound-settings {
+    background: rgba(0,0,0,0.3);
+    border: 2px solid #333;
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.sound-setting-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+}
+
+.sound-setting-row:last-child {
+    margin-bottom: 0;
+}
+
+.sound-label {
+    width: 80px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.volume-slider {
+    flex: 1;
+    height: 6px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #1a1a1a;
+    border: 1px solid #444;
+    outline: none;
+    cursor: pointer;
+}
+
+.volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: linear-gradient(180deg, var(--accent-red) 0%, var(--accent-red-dark) 100%);
+    border: 2px solid #fff;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.volume-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+.volume-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: linear-gradient(180deg, var(--accent-red) 0%, var(--accent-red-dark) 100%);
+    border: 2px solid #fff;
+    cursor: pointer;
+    border-radius: 0;
+}
+
+.sound-btn {
+    width: 40px;
+    height: 28px;
+    background: linear-gradient(180deg, #444 0%, #333 100%);
+    border: 2px solid #555;
+    color: var(--text-primary);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sound-btn:hover {
+    border-color: var(--accent-red);
+}
+
+.sound-btn.active {
+    background: linear-gradient(180deg, var(--accent-red) 0%, var(--accent-red-dark) 100%);
+    border-color: var(--accent-red);
+}
+
+.sound-btn.muted {
+    opacity: 0.5;
+}
