@@ -331,6 +331,74 @@ class SoundManager {
         osc.stop(this.audioContext.currentTime + 0.05);
     }
 
+    // 宝箱オープン音（キラキラ＋開封音）
+    playTreasureChest() {
+        if (!this.audioContext || this.isMuted) return;
+
+        const vol = this.getEffectiveVolume('sfx');
+
+        // 開封音（低い音）
+        const osc1 = this.audioContext.createOscillator();
+        const gain1 = this.audioContext.createGain();
+        osc1.connect(gain1);
+        gain1.connect(this.audioContext.destination);
+
+        osc1.frequency.setValueAtTime(200, this.audioContext.currentTime);
+        osc1.frequency.exponentialRampToValueAtTime(400, this.audioContext.currentTime + 0.15);
+        osc1.type = 'triangle';
+
+        gain1.gain.setValueAtTime(vol * 0.4, this.audioContext.currentTime);
+        gain1.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.2);
+
+        osc1.start(this.audioContext.currentTime);
+        osc1.stop(this.audioContext.currentTime + 0.2);
+
+        // キラキラ音（高い音の連続）
+        const sparkleFreqs = [1046.50, 1318.51, 1567.98, 2093.00]; // C6, E6, G6, C7
+        sparkleFreqs.forEach((freq, i) => {
+            const osc = this.audioContext.createOscillator();
+            const gain = this.audioContext.createGain();
+
+            osc.connect(gain);
+            gain.connect(this.audioContext.destination);
+
+            osc.frequency.setValueAtTime(freq, this.audioContext.currentTime + 0.1 + i * 0.08);
+            osc.type = 'sine';
+
+            gain.gain.setValueAtTime(vol * 0.3, this.audioContext.currentTime + 0.1 + i * 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.1 + i * 0.08 + 0.25);
+
+            osc.start(this.audioContext.currentTime + 0.1 + i * 0.08);
+            osc.stop(this.audioContext.currentTime + 0.1 + i * 0.08 + 0.25);
+        });
+    }
+
+    // ラッキータイム開始音
+    playLuckyTime() {
+        if (!this.audioContext || this.isMuted) return;
+
+        const vol = this.getEffectiveVolume('sfx');
+
+        // 上昇する音（ワクワク感）
+        const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51]; // C5, E5, G5, C6, E6
+        notes.forEach((freq, i) => {
+            const osc = this.audioContext.createOscillator();
+            const gain = this.audioContext.createGain();
+
+            osc.connect(gain);
+            gain.connect(this.audioContext.destination);
+
+            osc.frequency.setValueAtTime(freq, this.audioContext.currentTime + i * 0.1);
+            osc.type = 'triangle';
+
+            gain.gain.setValueAtTime(vol * 0.4, this.audioContext.currentTime + i * 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + i * 0.1 + 0.3);
+
+            osc.start(this.audioContext.currentTime + i * 0.1);
+            osc.stop(this.audioContext.currentTime + i * 0.1 + 0.3);
+        });
+    }
+
     // コンボ音（高いコンボで音程上昇）
     playCombo(comboCount) {
         if (!this.audioContext || this.isMuted) return;
