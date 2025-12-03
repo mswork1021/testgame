@@ -411,28 +411,51 @@ class UI {
         setTimeout(() => effect.remove(), 1000);
     }
 
-    // 宝箱表示
+    // 宝箱表示（フローティングバナー）
     showTreasureChest() {
-        if (!this.elements.monster || !this.elements.monsterEmoji) return;
+        // 既存のバナーを削除
+        this.hideTreasureChestBanner();
 
-        // モンスター表示を宝箱に切り替え
-        this.elements.monsterEmoji.innerHTML = GameData.TREASURE_CHEST.SVG;
-        this.elements.monsterName.textContent = '✨ 宝箱 ✨';
-        this.elements.monsterName.className = 'treasure-chest-name';
-        this.elements.monster.className = 'monster treasure-chest';
+        const banner = document.createElement('div');
+        banner.id = 'treasure-chest-banner';
+        banner.className = 'treasure-chest-banner';
+        banner.innerHTML = `
+            <div class="chest-icon">${GameData.TREASURE_CHEST.SVG}</div>
+            <div class="chest-text">
+                <div class="chest-title">🎁 宝箱発見！</div>
+                <div class="chest-hint">タップで開ける</div>
+            </div>
+        `;
 
-        // HPバーを非表示
-        this.elements.monsterHpFill.style.width = '100%';
-        this.elements.monsterHpFill.style.background = 'linear-gradient(90deg, #ffd700 0%, #ffaa00 100%)';
-        this.elements.monsterHpText.textContent = 'タップで開ける！';
+        document.body.appendChild(banner);
+
+        // バナーをタップで宝箱を開ける
+        const openChest = (e) => {
+            e.stopPropagation();
+            if (this.game.currentTreasureChest && !this.game.currentTreasureChest.opened) {
+                this.game.openTreasureChest();
+            }
+        };
+
+        banner.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            openChest(e);
+        });
+        banner.addEventListener('click', (e) => {
+            if (!e.defaultPrevented) openChest(e);
+        });
+    }
+
+    // 宝箱バナー非表示
+    hideTreasureChestBanner() {
+        const banner = document.getElementById('treasure-chest-banner');
+        if (banner) banner.remove();
     }
 
     // 宝箱報酬表示
     showTreasureReward(reward, data) {
-        // 宝箱オープンアニメーション
-        if (this.elements.monster) {
-            this.elements.monster.classList.add('chest-opening');
-        }
+        // 宝箱バナーを非表示
+        this.hideTreasureChestBanner();
 
         // 報酬ポップアップ
         const popup = document.createElement('div');

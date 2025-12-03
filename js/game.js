@@ -189,10 +189,10 @@ class Game {
         const isBoss = this.state.currentStage % GameData.BALANCE.BOSS_EVERY_STAGES === 0;
         this.isBossFight = isBoss;
 
-        // ボス戦でない場合、宝箱が出現する可能性
+        // ボス戦でない場合、宝箱が出現する可能性（モンスターと同時に出現）
         if (!isBoss && Math.random() * 100 < GameData.TREASURE_CHEST.SPAWN_CHANCE) {
             this.spawnTreasureChest();
-            return;
+            // モンスターも通常通り生成（returnしない）
         }
 
         if (isBoss) {
@@ -333,15 +333,12 @@ class Game {
     // ========================================
     spawnTreasureChest() {
         console.log('[DEBUG] 宝箱出現！');
-        this.currentMonster = null;
+        // モンスターはクリアしない（同時に表示）
         this.currentTreasureChest = {
             svg: GameData.TREASURE_CHEST.SVG,
             name: '宝箱',
             opened: false
         };
-
-        // 通常BGMに切り替え
-        if (window.soundManager) window.soundManager.switchToNormalBgm();
 
         // コールバック
         if (this.onTreasureChestSpawn) this.onTreasureChestSpawn();
@@ -377,11 +374,8 @@ class Game {
             this.onTreasureChestOpen(selectedReward, rewardData);
         }
 
-        // 次のモンスターを生成（少し遅延）
-        setTimeout(() => {
-            this.currentTreasureChest = null;
-            this.spawnMonster();
-        }, 1500);
+        // 宝箱をクリア（モンスターは既にいるので生成しない）
+        this.currentTreasureChest = null;
 
         return { reward: selectedReward, data: rewardData };
     }
@@ -476,11 +470,7 @@ class Game {
     // ダメージ計算
     // ========================================
     tap() {
-        // 宝箱がある場合は開ける
-        if (this.currentTreasureChest && !this.currentTreasureChest.opened) {
-            this.openTreasureChest();
-            return;
-        }
+        // 宝箱はバナーをタップで開く（ここでは処理しない）
 
         if (!this.currentMonster) return;
 

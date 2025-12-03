@@ -3171,3 +3171,67 @@ button:focus {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+/* 宝箱バナー（フローティング） */
+.treasure-chest-banner {
+    position: fixed;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(180deg, rgba(139,69,19,0.95) 0%, rgba(101,67,33,0.95) 100%);
+    border: 3px solid var(--accent-gold);
+    border-radius: 12px;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 100;
+    box-shadow: 0 0 20px rgba(255,215,0,0.5), 0 4px 12px rgba(0,0,0,0.5);
+    animation: chestBannerAppear 0.5s ease-out, chestBannerPulse 2s ease-in-out infinite;
+    cursor: pointer;
+}
+
+.treasure-chest-banner .chest-icon {
+    width: 50px;
+    height: 50px;
+}
+
+.treasure-chest-banner .chest-icon svg {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 0 8px rgba(255,215,0,0.6));
+}
+
+.treasure-chest-banner .chest-text {
+    text-align: left;
+}
+
+.treasure-chest-banner .chest-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    color: var(--accent-gold);
+    text-shadow: 0 0 10px rgba(255,215,0,0.5), 1px 1px 0 #000;
+    letter-spacing: 1px;
+}
+
+.treasure-chest-banner .chest-hint {
+    font-size: 12px;
+    color: #fff;
+    opacity: 0.9;
+}
+
+@keyframes chestBannerAppear {
+    0% { transform: translateX(-50%) translateY(-20px) scale(0.8); opacity: 0; }
+    50% { transform: translateX(-50%) translateY(5px) scale(1.05); }
+    100% { transform: translateX(-50%) translateY(0) scale(1); opacity: 1; }
+}
+
+@keyframes chestBannerPulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(255,215,0,0.5), 0 4px 12px rgba(0,0,0,0.5); }
+    50% { box-shadow: 0 0 30px rgba(255,215,0,0.8), 0 4px 12px rgba(0,0,0,0.5); }
+}
+
+/* 宝箱バナータップ時 */
+.treasure-chest-banner:active {
+    transform: translateX(-50%) scale(0.95);
+}
