@@ -614,44 +614,44 @@ body {
     100% { transform: translate(-50%, -50%) scale(0.3) rotate(0deg); opacity: 0; }
 }
 
-/* コンボ表示 - Persona Style */
+/* コンボ表示 - Persona Style（小さめ） */
 .combo-display {
     position: absolute;
-    top: 50px;
-    right: 15px;
+    top: 8px;
+    right: 10px;
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 28px;
+    font-size: 14px;
     font-weight: 900;
     color: #fff;
-    text-shadow: 3px 3px 0 #000;
+    text-shadow: 1px 1px 0 #000;
     animation: comboPop 0.2s ease;
-    letter-spacing: 3px;
+    letter-spacing: 2px;
     transform: skewX(-5deg);
-    padding: 5px 15px;
-    background: rgba(0,0,0,0.6);
-    border-left: 4px solid var(--accent-red);
+    padding: 2px 8px;
+    background: rgba(0,0,0,0.5);
+    border-left: 2px solid var(--accent-red);
     z-index: 100;
 }
 
 .combo-display.hot {
     color: var(--accent-yellow);
-    font-size: 34px;
-    text-shadow: 0 0 20px rgba(255,204,0,1), 3px 3px 0 #000;
+    font-size: 16px;
+    text-shadow: 0 0 8px rgba(255,204,0,0.8), 1px 1px 0 #000;
     animation: comboPop 0.2s ease, comboShake 0.3s ease-in-out infinite;
     border-left-color: var(--accent-yellow);
 }
 
 .combo-display.fire {
     color: var(--accent-red);
-    font-size: 40px;
-    text-shadow: 0 0 30px rgba(255,0,64,1), 0 0 60px rgba(255,0,64,0.5), 3px 3px 0 #000;
+    font-size: 18px;
+    text-shadow: 0 0 12px rgba(255,0,64,0.8), 1px 1px 0 #000;
     animation: comboPop 0.2s ease, fireCombo 0.2s ease-in-out infinite;
     border-left-color: var(--accent-red);
-    background: rgba(255,0,64,0.2);
+    background: rgba(255,0,64,0.15);
 }
 
 @keyframes comboPop {
-    0% { transform: skewX(-5deg) scale(1.4); }
+    0% { transform: skewX(-5deg) scale(1.3); }
     100% { transform: skewX(-5deg) scale(1); }
 }
 
@@ -661,8 +661,8 @@ body {
 }
 
 @keyframes fireCombo {
-    0%, 100% { transform: skewX(-5deg) scale(1) rotate(-2deg); }
-    50% { transform: skewX(-5deg) scale(1.1) rotate(2deg); }
+    0%, 100% { transform: skewX(-5deg) scale(1) rotate(-1deg); }
+    50% { transform: skewX(-5deg) scale(1.05) rotate(1deg); }
 }
 
 /* 画面シェイク - クリティカル時の迫力演出 */
@@ -2771,4 +2771,202 @@ button:focus {
 
 .sound-btn.muted {
     opacity: 0.5;
+}
+
+/* ========================================
+   ビジュアルエフェクト
+   ======================================== */
+
+/* クリティカルフラッシュ */
+.critical-flash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at center, rgba(255,215,0,0.4) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 1000;
+    animation: criticalFlash 0.3s ease-out forwards;
+}
+
+@keyframes criticalFlash {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* ボス出現警告 */
+.boss-warning {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 999;
+    animation: bossWarning 0.5s ease-out;
+}
+
+.boss-warning::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(0deg,
+        transparent 0%,
+        rgba(255,0,64,0.3) 20%,
+        rgba(255,0,64,0.3) 80%,
+        transparent 100%);
+    animation: bossWarningPulse 0.15s ease-in-out 3;
+}
+
+.boss-warning-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 48px;
+    color: var(--accent-red);
+    text-shadow: 0 0 30px rgba(255,0,64,1), 0 0 60px rgba(255,0,64,0.8), 4px 4px 0 #000;
+    letter-spacing: 10px;
+    animation: bossTextSlam 0.5s ease-out;
+    white-space: nowrap;
+}
+
+@keyframes bossWarning {
+    0% { opacity: 0; }
+    20% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@keyframes bossWarningPulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.8; }
+}
+
+@keyframes bossTextSlam {
+    0% { transform: translate(-50%, -50%) scale(3); opacity: 0; }
+    30% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+}
+
+/* ボス撃破エフェクト */
+.boss-defeat-effect {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 1000;
+    animation: bossDefeatFlash 0.8s ease-out forwards;
+}
+
+.boss-defeat-effect::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: radial-gradient(circle, rgba(255,215,0,0.8) 0%, rgba(255,0,64,0.4) 50%, transparent 70%);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    animation: bossDefeatBurst 0.6s ease-out forwards;
+}
+
+.boss-defeat-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+    color: var(--accent-gold);
+    text-shadow: 0 0 20px rgba(255,215,0,1), 3px 3px 0 #000;
+    letter-spacing: 8px;
+    animation: defeatTextPop 0.8s ease-out forwards;
+    white-space: nowrap;
+}
+
+@keyframes bossDefeatFlash {
+    0% { background: rgba(255,255,255,0.8); }
+    30% { background: rgba(255,215,0,0.3); }
+    100% { background: transparent; }
+}
+
+@keyframes bossDefeatBurst {
+    0% { width: 0; height: 0; opacity: 1; }
+    100% { width: 300vw; height: 300vw; opacity: 0; }
+}
+
+@keyframes defeatTextPop {
+    0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+    30% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+    50% { transform: translate(-50%, -50%) scale(1); }
+    80% { opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1) translateY(-30px); opacity: 0; }
+}
+
+/* レジェンダリードロップエフェクト */
+.legendary-drop-effect {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 1001;
+    background: radial-gradient(circle at center, rgba(255,215,0,0.2) 0%, transparent 60%);
+    animation: legendaryGlow 1s ease-out forwards;
+}
+
+.legendary-drop-effect::before,
+.legendary-drop-effect::after {
+    content: '✨';
+    position: absolute;
+    font-size: 40px;
+    animation: sparkle 1s ease-out forwards;
+}
+
+.legendary-drop-effect::before {
+    top: 30%;
+    left: 20%;
+    animation-delay: 0.1s;
+}
+
+.legendary-drop-effect::after {
+    top: 40%;
+    right: 25%;
+    animation-delay: 0.2s;
+}
+
+@keyframes legendaryGlow {
+    0% { opacity: 0; }
+    30% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@keyframes sparkle {
+    0% { transform: scale(0) rotate(0deg); opacity: 0; }
+    50% { transform: scale(1.5) rotate(180deg); opacity: 1; }
+    100% { transform: scale(0) rotate(360deg); opacity: 0; }
+}
+
+/* クリティカルダメージ数字強化 */
+.damage-number.critical {
+    color: var(--accent-gold) !important;
+    font-size: 32px !important;
+    text-shadow: 0 0 20px rgba(255,215,0,1), 0 0 40px rgba(255,215,0,0.8), 3px 3px 0 #000 !important;
+    animation: criticalDamage 0.8s ease-out forwards !important;
+}
+
+@keyframes criticalDamage {
+    0% { transform: translate(-50%, 0) scale(0.5); opacity: 0; }
+    20% { transform: translate(-50%, -20px) scale(1.5); opacity: 1; }
+    40% { transform: translate(-50%, -40px) scale(1.2); }
+    100% { transform: translate(-50%, -80px) scale(1); opacity: 0; }
 }

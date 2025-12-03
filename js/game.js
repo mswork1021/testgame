@@ -191,6 +191,9 @@ class Game {
 
             // ボス戦BGMに切り替え
             if (window.soundManager) window.soundManager.switchToBossBgm();
+
+            // ボス出現コールバック
+            if (this.onBossSpawn) this.onBossSpawn();
         } else {
             // 通常BGMに切り替え
             if (window.soundManager) window.soundManager.switchToNormalBgm();

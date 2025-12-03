@@ -247,6 +247,11 @@ class UI {
             this.showToast('ボス戦に失敗...1ステージ戻ります');
         };
 
+        // ボス出現
+        this.game.onBossSpawn = () => {
+            this.showBossWarning();
+        };
+
         // ドロップ
         this.game.onLoot = (item) => {
             this.showLootPopup(item);
@@ -288,9 +293,10 @@ class UI {
             // タップ位置にエフェクト表示
             this.showTapEffect(e);
 
-            // 画面シェイク（クリティカル時）
+            // 画面シェイク＆フラッシュ（クリティカル時）
             if (this.lastWasCritical) {
                 this.shakeScreen();
+                this.showCriticalFlash();
                 // クリティカル音
                 if (window.soundManager) window.soundManager.playCritical();
             } else {
@@ -346,6 +352,40 @@ class UI {
         setTimeout(() => {
             this.elements.battleArea.classList.remove('shake');
         }, 100);
+    }
+
+    // クリティカルフラッシュ
+    showCriticalFlash() {
+        const flash = document.createElement('div');
+        flash.className = 'critical-flash';
+        document.body.appendChild(flash);
+        setTimeout(() => flash.remove(), 300);
+    }
+
+    // ボス出現警告
+    showBossWarning() {
+        const warning = document.createElement('div');
+        warning.className = 'boss-warning';
+        warning.innerHTML = '<div class="boss-warning-text">WARNING</div>';
+        document.body.appendChild(warning);
+        setTimeout(() => warning.remove(), 500);
+    }
+
+    // ボス撃破エフェクト
+    showBossDefeatEffect() {
+        const effect = document.createElement('div');
+        effect.className = 'boss-defeat-effect';
+        effect.innerHTML = '<div class="boss-defeat-text">VICTORY!</div>';
+        document.body.appendChild(effect);
+        setTimeout(() => effect.remove(), 800);
+    }
+
+    // レジェンダリードロップエフェクト
+    showLegendaryDropEffect() {
+        const effect = document.createElement('div');
+        effect.className = 'legendary-drop-effect';
+        document.body.appendChild(effect);
+        setTimeout(() => effect.remove(), 1000);
     }
 
     showDamageNumber(amount, isCritical) {
@@ -961,13 +1001,12 @@ class UI {
         // ゴールド獲得表示は不要（damageNumbersと被るため）
         this.updateDisplay();
 
-        // サウンド再生
-        if (window.soundManager) {
-            if (monster.isBoss) {
-                window.soundManager.playBossKill();
-            } else {
-                window.soundManager.playKill();
-            }
+        // サウンド再生＆エフェクト
+        if (monster.isBoss) {
+            if (window.soundManager) window.soundManager.playBossKill();
+            this.showBossDefeatEffect();
+        } else {
+            if (window.soundManager) window.soundManager.playKill();
         }
     }
 
@@ -978,13 +1017,14 @@ class UI {
         `;
         this.elements.lootPopup.classList.remove('hidden');
 
-        // ドロップ音（レジェンダリーは特別）
-        if (window.soundManager) {
-            if (item.rarity === 'LEGENDARY' || item.rarity === 'EPIC') {
-                window.soundManager.playLegendaryDrop();
-            } else {
-                window.soundManager.playDrop();
-            }
+        // ドロップ音＆エフェクト（レジェンダリーは特別）
+        if (item.rarity === 'LEGENDARY') {
+            if (window.soundManager) window.soundManager.playLegendaryDrop();
+            this.showLegendaryDropEffect();
+        } else if (item.rarity === 'EPIC') {
+            if (window.soundManager) window.soundManager.playLegendaryDrop();
+        } else {
+            if (window.soundManager) window.soundManager.playDrop();
         }
 
         setTimeout(() => {
