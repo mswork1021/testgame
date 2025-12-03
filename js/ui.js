@@ -86,14 +86,6 @@ class UI {
         this.elements.dailyRewardsGrid = document.getElementById('daily-rewards-grid');
         this.elements.claimDaily = document.getElementById('claim-daily');
 
-        // ワールドマップ
-        this.elements.worldMapBtn = document.getElementById('world-map-btn');
-        this.elements.worldMapModal = document.getElementById('world-map-modal');
-        this.elements.closeWorldMap = document.getElementById('close-world-map');
-        this.elements.currentWorldName = document.getElementById('current-world-name');
-        this.elements.currentWorldStage = document.getElementById('current-world-stage');
-        this.elements.worldList = document.getElementById('world-list');
-
         // ストーリーモード
         this.elements.storyModal = document.getElementById('story-modal');
         this.elements.storyChapterTitle = document.getElementById('story-chapter-title');
@@ -199,12 +191,10 @@ class UI {
         addTouchAndClick(this.elements.closeEquipModal, () => this.closeEquipmentModal());
         addTouchAndClick(this.elements.claimDaily, () => this.claimDailyBonus());
 
-        // ワールドマップ
-        addTouchAndClick(this.elements.worldMapBtn, () => this.openWorldMap());
-        addTouchAndClick(this.elements.closeWorldMap, () => this.closeWorldMap());
-
         // ストーリーモード
-        addTouchAndClick(this.elements.storyNextBtn, () => this.advanceStory());
+        if (this.elements.storyNextBtn) {
+            addTouchAndClick(this.elements.storyNextBtn, () => this.advanceStory());
+        }
 
         // セーブ・リセット・更新ボタン
         if (this.elements.saveBtn) {
@@ -1144,21 +1134,16 @@ class UI {
     }
 
     openWorldMap() {
-        const currentWorld = this.getCurrentWorld();
-
-        // 現在のワールド情報を更新
-        this.elements.currentWorldName.textContent = `${currentWorld.icon} ${currentWorld.name}`;
-        this.elements.currentWorldStage.textContent = `ステージ ${currentWorld.stageRange[0]}-${currentWorld.stageRange[1]}`;
-
-        // ワールドリストをレンダリング
-        this.renderWorldList();
+        // ワールドマップ機能は削除済み
+        return;
 
         // モーダルを表示
         this.elements.worldMapModal.classList.remove('hidden');
     }
 
     closeWorldMap() {
-        this.elements.worldMapModal.classList.add('hidden');
+        // ワールドマップ機能は削除済み
+        return;
     }
 
     renderWorldList() {
