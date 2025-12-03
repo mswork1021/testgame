@@ -1890,12 +1890,15 @@ class UI {
                     lockInfo = ` (要: ${reqSkill.name} Lv${skill.requiresLevel})`;
                 }
 
+                // コスト表示（MAX以外）
+                const costText = isMaxed ? 'MAX' : `${skill.costPerLevel}SP`;
+
                 html += `
                     <div class="skill-tree-item ${statusClass}" data-skill="${skill.id}">
                         <span class="skill-tree-icon">${skill.emoji}</span>
                         <div class="skill-tree-info">
                             <div class="skill-tree-name">${skill.name}${lockInfo}</div>
-                            <div class="skill-tree-level">Lv ${level}/${skill.maxLevel}</div>
+                            <div class="skill-tree-level">Lv ${level}/${skill.maxLevel} <span class="skill-cost">[${costText}]</span></div>
                             <div class="skill-tree-effect">${effectText}</div>
                         </div>
                     </div>
@@ -1907,14 +1910,22 @@ class UI {
 
         this.elements.skillTreeContainer.innerHTML = html;
 
-        // クリックイベント
+        // タッチとクリック両方対応
         this.elements.skillTreeContainer.querySelectorAll('.skill-tree-item:not(.locked):not(.maxed)').forEach(item => {
-            item.addEventListener('click', () => {
+            const handleUpgrade = () => {
                 const skillId = item.dataset.skill;
                 if (this.game.upgradeSkillTree(skillId)) {
                     this.renderSkillTree();
                     this.showToast('スキル強化！');
+                    if (window.soundManager) window.soundManager.playUpgrade();
                 }
+            };
+            item.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                handleUpgrade();
+            });
+            item.addEventListener('click', (e) => {
+                if (!e.defaultPrevented) handleUpgrade();
             });
         });
     }

@@ -2458,6 +2458,20 @@ button:focus {
     color: var(--accent-gold);
 }
 
+.skill-cost {
+    color: var(--accent-blue);
+    font-weight: bold;
+    margin-left: 4px;
+}
+
+.skill-tree-item.can-upgrade .skill-cost {
+    color: #4ade80;
+}
+
+.skill-tree-item.maxed .skill-cost {
+    color: var(--text-muted);
+}
+
 .skill-tree-effect {
     font-size: 9px;
     color: var(--text-secondary);
