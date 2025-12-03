@@ -40,6 +40,10 @@ class UI {
         this.elements.damageNumbers = document.getElementById('damage-numbers');
         this.elements.lootPopup = document.getElementById('loot-popup');
 
+        // パネルトグル
+        this.elements.panelToggle = document.getElementById('panel-toggle');
+        this.elements.gameContainer = document.querySelector('.game-container');
+
         // パネル
         this.elements.heroesList = document.getElementById('heroes-list');
         this.elements.totalDps = document.getElementById('total-dps');
@@ -214,6 +218,14 @@ class UI {
         if (this.elements.sellCommonBtn) {
             addTouchAndClick(this.elements.sellCommonBtn, () => this.sellCommonItems());
         }
+
+        // パネルトグル
+        if (this.elements.panelToggle) {
+            addTouchAndClick(this.elements.panelToggle, () => this.togglePanelExpand());
+        }
+
+        // 保存済みの拡張状態を復元
+        this.restorePanelState();
 
         // 図鑑タブ
         document.querySelectorAll('.collection-tab').forEach(tab => {
@@ -655,6 +667,30 @@ class UI {
     // レインボーボーダー非表示
     hideRainbowBorder() {
         this.elements.battleArea.classList.remove('rainbow-border');
+    }
+
+    // ========================================
+    // パネル拡張/縮小
+    // ========================================
+    togglePanelExpand() {
+        if (!this.elements.gameContainer) return;
+
+        const isExpanded = this.elements.gameContainer.classList.toggle('expanded');
+
+        // 状態を保存
+        localStorage.setItem('tapquest_panel_expanded', isExpanded ? '1' : '0');
+
+        // 効果音
+        if (window.soundManager) window.soundManager.playTap();
+    }
+
+    restorePanelState() {
+        if (!this.elements.gameContainer) return;
+
+        const savedState = localStorage.getItem('tapquest_panel_expanded');
+        if (savedState === '1') {
+            this.elements.gameContainer.classList.add('expanded');
+        }
     }
 
     showDamageNumber(amount, isCritical) {
