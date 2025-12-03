@@ -257,27 +257,34 @@ class UI {
             this.showLootPopup(item);
         };
 
-        // 宝箱出現
-        this.game.onTreasureChestSpawn = () => {
-            this.showTreasureChest();
+        // 宝箱自動収集
+        this.game.onTreasureChestCollect = (count) => {
+            this.showTreasureChestNotification(count);
+            this.updateTreasureChestIndicator();
         };
 
-        // 宝箱オープン
-        this.game.onTreasureChestOpen = (reward, data) => {
-            this.showTreasureReward(reward, data);
-            if (window.soundManager) window.soundManager.playTreasureChest();
+        // 宝箱一括開封
+        this.game.onTreasureChestBatchOpen = (results) => {
+            this.showBatchOpenResults(results);
+            this.updateTreasureChestIndicator();
         };
 
         // ラッキータイム開始
         this.game.onLuckyTimeStart = (duration) => {
             this.showLuckyTimeStart(duration);
-            if (window.soundManager) window.soundManager.playLuckyTime();
+            this.showRainbowBorder();
         };
 
         // ラッキータイム終了
         this.game.onLuckyTimeEnd = () => {
             this.showToast('ラッキータイム終了！');
             this.hideLuckyTimeIndicator();
+            this.hideRainbowBorder();
+        };
+
+        // ラッキータイムストック更新
+        this.game.onLuckyTimeStockUpdate = (stock) => {
+            this.updateLuckyTimeStockIndicator();
         };
     }
 
@@ -411,86 +418,174 @@ class UI {
         setTimeout(() => effect.remove(), 1000);
     }
 
-    // 宝箱表示（フローティングバナー）
-    showTreasureChest() {
-        // 既存のバナーを削除
-        this.hideTreasureChestBanner();
+    // 宝箱獲得通知（小さいコーナー表示）
+    showTreasureChestNotification(count) {
+        // 既存の通知を削除
+        const existing = document.querySelector('.chest-collect-notification');
+        if (existing) existing.remove();
 
-        const banner = document.createElement('div');
-        banner.id = 'treasure-chest-banner';
-        banner.className = 'treasure-chest-banner';
-        banner.innerHTML = `
-            <div class="chest-icon">${GameData.TREASURE_CHEST.SVG}</div>
-            <div class="chest-text">
-                <div class="chest-title">🎁 宝箱発見！</div>
-                <div class="chest-hint">タップで開ける</div>
+        const notification = document.createElement('div');
+        notification.className = 'chest-collect-notification';
+        notification.innerHTML = `
+            <div class="chest-mini-icon">📦</div>
+            <div class="chest-collect-text">宝箱+1</div>
+        `;
+
+        // バトルエリアの右下に配置
+        this.elements.battleArea.appendChild(notification);
+
+        setTimeout(() => notification.remove(), 1500);
+    }
+
+    // 宝箱ストックインジケーター更新
+    updateTreasureChestIndicator() {
+        let indicator = document.getElementById('chest-stock-indicator');
+        const count = this.game.state.treasureChestCount;
+
+        if (count > 0) {
+            if (!indicator) {
+                indicator = document.createElement('div');
+                indicator.id = 'chest-stock-indicator';
+                indicator.className = 'stock-indicator chest-stock';
+                this.elements.battleArea.appendChild(indicator);
+
+                // タップで開封モーダルを表示
+                const handleOpen = (e) => {
+                    e.stopPropagation();
+                    this.showChestOpenModal();
+                };
+                indicator.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    handleOpen(e);
+                });
+                indicator.addEventListener('click', (e) => {
+                    if (!e.defaultPrevented) handleOpen(e);
+                });
+            }
+            indicator.innerHTML = `<span class="stock-icon">📦</span><span class="stock-count">${count}</span>`;
+        } else if (indicator) {
+            indicator.remove();
+        }
+    }
+
+    // ラッキータイムストックインジケーター更新
+    updateLuckyTimeStockIndicator() {
+        let indicator = document.getElementById('lucky-stock-indicator');
+        const stock = this.game.state.luckyTimeStock;
+
+        if (stock > 0) {
+            if (!indicator) {
+                indicator = document.createElement('div');
+                indicator.id = 'lucky-stock-indicator';
+                indicator.className = 'stock-indicator lucky-stock';
+                this.elements.battleArea.appendChild(indicator);
+
+                // タップでラッキータイム発動
+                const handleUse = (e) => {
+                    e.stopPropagation();
+                    if (this.game.useLuckyTime()) {
+                        this.updateLuckyTimeStockIndicator();
+                    }
+                };
+                indicator.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    handleUse(e);
+                });
+                indicator.addEventListener('click', (e) => {
+                    if (!e.defaultPrevented) handleUse(e);
+                });
+            }
+            indicator.innerHTML = `<span class="stock-icon">🌟</span><span class="stock-count">${stock}</span>`;
+        } else if (indicator) {
+            indicator.remove();
+        }
+    }
+
+    // 宝箱開封モーダル
+    showChestOpenModal() {
+        const count = this.game.state.treasureChestCount;
+        if (count <= 0) return;
+
+        const modal = document.createElement('div');
+        modal.className = 'chest-open-modal';
+        modal.innerHTML = `
+            <div class="chest-open-content">
+                <div class="chest-open-title">📦 宝箱を開ける</div>
+                <div class="chest-open-count">${count}個の宝箱があります</div>
+                <button class="chest-open-btn">一括で開ける！</button>
+                <button class="chest-close-btn">閉じる</button>
             </div>
         `;
 
-        document.body.appendChild(banner);
+        document.body.appendChild(modal);
 
-        // バナーをタップで宝箱を開ける
-        const openChest = (e) => {
-            e.stopPropagation();
-            if (this.game.currentTreasureChest && !this.game.currentTreasureChest.opened) {
-                this.game.openTreasureChest();
-            }
+        const openBtn = modal.querySelector('.chest-open-btn');
+        const closeBtn = modal.querySelector('.chest-close-btn');
+
+        const handleOpen = () => {
+            modal.remove();
+            this.game.openAllTreasureChests();
         };
 
-        banner.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            openChest(e);
-        });
-        banner.addEventListener('click', (e) => {
-            if (!e.defaultPrevented) openChest(e);
-        });
+        const handleClose = () => modal.remove();
+
+        openBtn.addEventListener('touchend', (e) => { e.preventDefault(); handleOpen(); });
+        openBtn.addEventListener('click', (e) => { if (!e.defaultPrevented) handleOpen(); });
+        closeBtn.addEventListener('touchend', (e) => { e.preventDefault(); handleClose(); });
+        closeBtn.addEventListener('click', (e) => { if (!e.defaultPrevented) handleClose(); });
     }
 
-    // 宝箱バナー非表示
-    hideTreasureChestBanner() {
-        const banner = document.getElementById('treasure-chest-banner');
-        if (banner) banner.remove();
-    }
+    // 一括開封結果表示
+    showBatchOpenResults(results) {
+        // 報酬を集計
+        let totalGold = 0;
+        let totalGems = 0;
+        let totalSouls = 0;
+        let luckyTimeCount = 0;
+        let skillResetCount = 0;
+        let equipmentCount = 0;
 
-    // 宝箱報酬表示
-    showTreasureReward(reward, data) {
-        // 宝箱バナーを非表示
-        this.hideTreasureChestBanner();
+        results.forEach(r => {
+            switch (r.data.type) {
+                case 'gold': totalGold += r.data.amount; break;
+                case 'gems': totalGems += r.data.amount; break;
+                case 'souls': totalSouls += r.data.amount; break;
+                case 'luckyTime': luckyTimeCount++; break;
+                case 'skillReset': skillResetCount++; break;
+                case 'equipment': equipmentCount++; break;
+            }
+        });
 
-        // 報酬ポップアップ
-        const popup = document.createElement('div');
-        popup.className = 'treasure-reward-popup';
+        // 結果モーダル
+        const modal = document.createElement('div');
+        modal.className = 'batch-result-modal';
 
-        let rewardText = '';
-        switch (data.type) {
-            case 'gold':
-                rewardText = `💰 ${this.formatNumber(data.amount)}G`;
-                break;
-            case 'gems':
-                rewardText = `💎 ${data.amount}ジェム`;
-                break;
-            case 'souls':
-                rewardText = `👻 ${data.amount}ソウル`;
-                break;
-            case 'luckyTime':
-                rewardText = `🌟 ラッキータイム ${data.duration}秒！`;
-                break;
-            case 'skillReset':
-                rewardText = `⚡ スキルクールダウンリセット！`;
-                break;
-            case 'equipment':
-                rewardText = `🎁 レア装備ドロップ！`;
-                break;
-        }
+        let resultHtml = '<div class="batch-result-content">';
+        resultHtml += `<div class="batch-result-title">🎉 宝箱結果</div>`;
+        resultHtml += `<div class="batch-result-count">${results.length}個の宝箱を開封！</div>`;
+        resultHtml += '<div class="batch-result-list">';
 
-        popup.innerHTML = `
-            <div class="treasure-reward-icon">${reward.emoji}</div>
-            <div class="treasure-reward-name">${reward.name}</div>
-            <div class="treasure-reward-value">${rewardText}</div>
-        `;
+        if (totalGold > 0) resultHtml += `<div class="batch-item">💰 ${this.formatNumber(totalGold)}G</div>`;
+        if (totalGems > 0) resultHtml += `<div class="batch-item rare">💎 ${totalGems}ジェム</div>`;
+        if (totalSouls > 0) resultHtml += `<div class="batch-item rare">👻 ${totalSouls}ソウル</div>`;
+        if (luckyTimeCount > 0) resultHtml += `<div class="batch-item epic">🌟 ラッキータイム x${luckyTimeCount}</div>`;
+        if (skillResetCount > 0) resultHtml += `<div class="batch-item epic">⚡ スキルリセット x${skillResetCount}</div>`;
+        if (equipmentCount > 0) resultHtml += `<div class="batch-item legendary">🎁 レア装備 x${equipmentCount}</div>`;
 
-        document.body.appendChild(popup);
-        setTimeout(() => popup.remove(), 2000);
+        resultHtml += '</div>';
+        resultHtml += '<button class="batch-close-btn">閉じる</button>';
+        resultHtml += '</div>';
+
+        modal.innerHTML = resultHtml;
+        document.body.appendChild(modal);
+
+        const closeBtn = modal.querySelector('.batch-close-btn');
+        const handleClose = () => modal.remove();
+        closeBtn.addEventListener('touchend', (e) => { e.preventDefault(); handleClose(); });
+        closeBtn.addEventListener('click', (e) => { if (!e.defaultPrevented) handleClose(); });
+
+        // ラッキータイムストック更新
+        this.updateLuckyTimeStockIndicator();
     }
 
     // ラッキータイム開始表示
@@ -509,23 +604,25 @@ class UI {
         setTimeout(() => effect.remove(), 2000);
     }
 
-    // ラッキータイムインジケーター表示
+    // ラッキータイムインジケーター表示（左下コーナー）
     showLuckyTimeIndicator(duration) {
-        // 既存のインジケーターを削除
-        this.hideLuckyTimeIndicator();
+        // 既存のインジケーターを更新
+        let indicator = document.getElementById('lucky-time-indicator');
 
-        const indicator = document.createElement('div');
-        indicator.id = 'lucky-time-indicator';
-        indicator.className = 'lucky-time-indicator';
+        if (!indicator) {
+            indicator = document.createElement('div');
+            indicator.id = 'lucky-time-indicator';
+            indicator.className = 'lucky-time-active-indicator';
+            this.elements.battleArea.appendChild(indicator);
+        }
+
         indicator.innerHTML = `
-            <span class="lucky-time-icon">🌟</span>
-            <span class="lucky-time-label">LUCKY TIME</span>
-            <span class="lucky-time-timer" id="lucky-time-timer">${duration}s</span>
+            <span class="lucky-active-icon">🌟</span>
+            <span class="lucky-active-timer" id="lucky-time-timer">${this.game.getLuckyTimeRemaining()}s</span>
         `;
 
-        document.body.appendChild(indicator);
-
         // タイマー更新
+        if (this.luckyTimeInterval) clearInterval(this.luckyTimeInterval);
         this.luckyTimeInterval = setInterval(() => {
             const remaining = this.game.getLuckyTimeRemaining();
             const timerEl = document.getElementById('lucky-time-timer');
@@ -534,6 +631,7 @@ class UI {
             }
             if (remaining <= 0) {
                 this.hideLuckyTimeIndicator();
+                this.hideRainbowBorder();
             }
         }, 1000);
     }
@@ -547,6 +645,16 @@ class UI {
             clearInterval(this.luckyTimeInterval);
             this.luckyTimeInterval = null;
         }
+    }
+
+    // レインボーボーダー表示
+    showRainbowBorder() {
+        this.elements.battleArea.classList.add('rainbow-border');
+    }
+
+    // レインボーボーダー非表示
+    hideRainbowBorder() {
+        this.elements.battleArea.classList.remove('rainbow-border');
     }
 
     showDamageNumber(amount, isCritical) {
@@ -668,6 +776,9 @@ class UI {
         try { this.renderCollection(); } catch(e) { console.error('renderCollection error:', e); }
         try { this.renderAchievements(); } catch(e) { console.error('renderAchievements error:', e); }
         try { this.updateDisplay(); } catch(e) { console.error('updateDisplay error:', e); }
+        // 宝箱・ラッキータイムストック表示
+        try { this.updateTreasureChestIndicator(); } catch(e) { console.error('updateTreasureChestIndicator error:', e); }
+        try { this.updateLuckyTimeStockIndicator(); } catch(e) { console.error('updateLuckyTimeStockIndicator error:', e); }
     }
 
     // ヒーローボタンの状態だけを更新（軽量）
