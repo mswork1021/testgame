@@ -549,6 +549,79 @@ const GameData = {
         }
     ],
 
+    // 宝箱報酬定義
+    TREASURE_CHEST_REWARDS: [
+        {
+            id: 'gold',
+            name: 'ゴールド',
+            emoji: '💰',
+            weight: 35,
+            description: 'ゴールドを獲得！',
+            getReward: (stage) => ({ type: 'gold', amount: Math.floor(stage * 100 * (1 + Math.random())) })
+        },
+        {
+            id: 'gems',
+            name: 'ジェム',
+            emoji: '💎',
+            weight: 10,
+            description: 'ジェムを獲得！',
+            getReward: (stage) => ({ type: 'gems', amount: Math.floor(1 + stage / 50) })
+        },
+        {
+            id: 'luckyTime',
+            name: 'ラッキータイム',
+            emoji: '🌟',
+            weight: 20,
+            description: '30秒間ゴールド2倍＆ドロップ率UP！',
+            getReward: (stage) => ({ type: 'luckyTime', duration: 30 })
+        },
+        {
+            id: 'skillReset',
+            name: 'スキルリセット',
+            emoji: '⚡',
+            weight: 15,
+            description: '全スキルのクールダウンをリセット！',
+            getReward: (stage) => ({ type: 'skillReset' })
+        },
+        {
+            id: 'rareEquip',
+            name: 'レア装備',
+            emoji: '🎁',
+            weight: 15,
+            description: 'レア以上の装備を獲得！',
+            getReward: (stage) => ({ type: 'equipment', minRarity: 'RARE' })
+        },
+        {
+            id: 'souls',
+            name: 'ソウル',
+            emoji: '👻',
+            weight: 5,
+            description: 'ソウルを獲得！',
+            getReward: (stage) => ({ type: 'souls', amount: Math.floor(1 + stage / 20) })
+        }
+    ],
+
+    // 宝箱出現設定
+    TREASURE_CHEST: {
+        SPAWN_CHANCE: 5, // 5%の確率で宝箱出現
+        SVG: `<svg viewBox="0 0 100 100">
+            <ellipse cx="50" cy="85" rx="35" ry="10" fill="#333" opacity="0.3"/>
+            <rect x="15" y="40" width="70" height="40" rx="5" fill="#8b4513"/>
+            <rect x="15" y="35" width="70" height="20" rx="5" fill="#daa520"/>
+            <rect x="18" y="38" width="64" height="14" fill="#ffd700"/>
+            <rect x="42" y="45" width="16" height="25" rx="3" fill="#ffd700"/>
+            <circle cx="50" cy="57" r="6" fill="#fff"/>
+            <circle cx="50" cy="57" r="4" fill="#333"/>
+            <rect x="20" y="55" width="60" height="20" rx="3" fill="#a0522d"/>
+            <path d="M25,60 L75,60" stroke="#8b4513" stroke-width="2"/>
+            <path d="M25,70 L75,70" stroke="#8b4513" stroke-width="2"/>
+            <!-- キラキラエフェクト -->
+            <circle cx="30" cy="42" r="2" fill="#fff" opacity="0.8"/>
+            <circle cx="70" cy="38" r="1.5" fill="#fff" opacity="0.6"/>
+            <circle cx="25" cy="50" r="1" fill="#fff" opacity="0.7"/>
+        </svg>`
+    },
+
     // ゲームバランス設定
     BALANCE: {
         // ステージ関連

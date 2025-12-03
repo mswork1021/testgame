@@ -73,6 +73,12 @@ class Game {
         this.bossTimer = null;
         this.bossTimeLeft = 0;
 
+        // 宝箱
+        this.currentTreasureChest = null;
+
+        // ラッキータイム
+        this.luckyTimeEndTime = 0;
+
         // ゲームループ
         this.lastTick = Date.now();
         this.gameLoopId = null;
@@ -84,6 +90,10 @@ class Game {
         this.onBossFailed = null;
         this.onLevelUp = null;
         this.onLoot = null;
+        this.onTreasureChestSpawn = null;
+        this.onTreasureChestOpen = null;
+        this.onLuckyTimeStart = null;
+        this.onLuckyTimeEnd = null;
     }
 
     // ========================================
@@ -155,6 +165,12 @@ class Game {
             }
         }
 
+        // ラッキータイム終了チェック
+        if (this.isLuckyTimeActive() && Date.now() >= this.luckyTimeEndTime) {
+            this.luckyTimeEndTime = 0;
+            if (this.onLuckyTimeEnd) this.onLuckyTimeEnd();
+        }
+
         // UI更新コールバック
         if (this.onUpdate) {
             this.onUpdate();
@@ -166,8 +182,18 @@ class Game {
     // ========================================
     spawnMonster() {
         console.log(`[DEBUG] spawnMonster 開始 (ステージ ${this.state.currentStage})`);
+
+        // 宝箱をクリア
+        this.currentTreasureChest = null;
+
         const isBoss = this.state.currentStage % GameData.BALANCE.BOSS_EVERY_STAGES === 0;
         this.isBossFight = isBoss;
+
+        // ボス戦でない場合、宝箱が出現する可能性
+        if (!isBoss && Math.random() * 100 < GameData.TREASURE_CHEST.SPAWN_CHANCE) {
+            this.spawnTreasureChest();
+            return;
+        }
 
         if (isBoss) {
             const bossIndex = Math.floor((this.state.currentStage / GameData.BALANCE.BOSS_EVERY_STAGES - 1) % GameData.BOSSES.length);
@@ -303,9 +329,159 @@ class Game {
     }
 
     // ========================================
+    // 宝箱システム
+    // ========================================
+    spawnTreasureChest() {
+        console.log('[DEBUG] 宝箱出現！');
+        this.currentMonster = null;
+        this.currentTreasureChest = {
+            svg: GameData.TREASURE_CHEST.SVG,
+            name: '宝箱',
+            opened: false
+        };
+
+        // 通常BGMに切り替え
+        if (window.soundManager) window.soundManager.switchToNormalBgm();
+
+        // コールバック
+        if (this.onTreasureChestSpawn) this.onTreasureChestSpawn();
+    }
+
+    openTreasureChest() {
+        if (!this.currentTreasureChest || this.currentTreasureChest.opened) return null;
+
+        this.currentTreasureChest.opened = true;
+
+        // 重み付きランダムで報酬を選択
+        const rewards = GameData.TREASURE_CHEST_REWARDS;
+        const totalWeight = rewards.reduce((sum, r) => sum + r.weight, 0);
+        let random = Math.random() * totalWeight;
+
+        let selectedReward = rewards[0];
+        for (const reward of rewards) {
+            random -= reward.weight;
+            if (random <= 0) {
+                selectedReward = reward;
+                break;
+            }
+        }
+
+        // 報酬を計算
+        const rewardData = selectedReward.getReward(this.state.currentStage);
+
+        // 報酬を適用
+        this.applyTreasureReward(rewardData, selectedReward);
+
+        // コールバック
+        if (this.onTreasureChestOpen) {
+            this.onTreasureChestOpen(selectedReward, rewardData);
+        }
+
+        // 次のモンスターを生成（少し遅延）
+        setTimeout(() => {
+            this.currentTreasureChest = null;
+            this.spawnMonster();
+        }, 1500);
+
+        return { reward: selectedReward, data: rewardData };
+    }
+
+    applyTreasureReward(rewardData, rewardInfo) {
+        switch (rewardData.type) {
+            case 'gold':
+                const goldAmount = Math.floor(rewardData.amount * this.getGoldMultiplier());
+                this.state.gold += goldAmount;
+                this.state.totalGoldEarned += goldAmount;
+                break;
+
+            case 'gems':
+                this.state.gems += rewardData.amount;
+                break;
+
+            case 'souls':
+                this.state.souls += rewardData.amount;
+                break;
+
+            case 'luckyTime':
+                this.startLuckyTime(rewardData.duration);
+                break;
+
+            case 'skillReset':
+                this.state.skillCooldowns = {};
+                break;
+
+            case 'equipment':
+                this.dropTreasureEquipment(rewardData.minRarity);
+                break;
+        }
+    }
+
+    dropTreasureEquipment(minRarity) {
+        // 装備タイプを選択
+        const types = ['WEAPONS', 'ARMORS', 'ACCESSORIES'];
+        const typeKey = types[Math.floor(Math.random() * types.length)];
+        const templates = GameData.EQUIPMENT[typeKey];
+
+        // ステージに応じた装備を選択
+        const maxIndex = Math.min(
+            Math.floor(this.state.currentStage / 20),
+            templates.length - 1
+        );
+        const template = templates[Math.floor(Math.random() * (maxIndex + 1))];
+
+        // レアリティ決定（最低レアリティ保証）
+        const rarities = ['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY'];
+        const minIndex = rarities.indexOf(minRarity);
+        const roll = Math.random() * 100;
+
+        let rarity;
+        if (roll < 60) {
+            rarity = rarities[minIndex]; // 最低レアリティ
+        } else if (roll < 85) {
+            rarity = rarities[Math.min(minIndex + 1, rarities.length - 1)];
+        } else if (roll < 97) {
+            rarity = rarities[Math.min(minIndex + 2, rarities.length - 1)];
+        } else {
+            rarity = 'LEGENDARY';
+        }
+
+        // 装備生成
+        const equipment = this.generateEquipment(template, rarity);
+        this.state.inventory.push(equipment);
+        this.recordEquipment(equipment);
+
+        if (this.onLoot) {
+            this.onLoot(equipment);
+        }
+    }
+
+    // ========================================
+    // ラッキータイム
+    // ========================================
+    isLuckyTimeActive() {
+        return Date.now() < this.luckyTimeEndTime;
+    }
+
+    getLuckyTimeRemaining() {
+        if (!this.isLuckyTimeActive()) return 0;
+        return Math.ceil((this.luckyTimeEndTime - Date.now()) / 1000);
+    }
+
+    startLuckyTime(duration) {
+        this.luckyTimeEndTime = Date.now() + duration * 1000;
+        if (this.onLuckyTimeStart) this.onLuckyTimeStart(duration);
+    }
+
+    // ========================================
     // ダメージ計算
     // ========================================
     tap() {
+        // 宝箱がある場合は開ける
+        if (this.currentTreasureChest && !this.currentTreasureChest.opened) {
+            this.openTreasureChest();
+            return;
+        }
+
         if (!this.currentMonster) return;
 
         this.state.totalTaps++;
@@ -568,6 +744,11 @@ class Game {
             multiplier *= goldMultiplier;
         }
 
+        // ラッキータイムボーナス（ゴールド2倍）
+        if (this.isLuckyTimeActive()) {
+            multiplier *= 2;
+        }
+
         return multiplier;
     }
 
@@ -608,6 +789,11 @@ class Game {
 
         // ドロップ倍率を適用
         dropChance *= dropMultiplier;
+
+        // ラッキータイムボーナス（ドロップ率2倍）
+        if (this.isLuckyTimeActive()) {
+            dropChance *= 2;
+        }
 
         if (Math.random() * 100 >= dropChance) return;
 

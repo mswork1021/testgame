@@ -256,6 +256,29 @@ class UI {
         this.game.onLoot = (item) => {
             this.showLootPopup(item);
         };
+
+        // 宝箱出現
+        this.game.onTreasureChestSpawn = () => {
+            this.showTreasureChest();
+        };
+
+        // 宝箱オープン
+        this.game.onTreasureChestOpen = (reward, data) => {
+            this.showTreasureReward(reward, data);
+            if (window.soundManager) window.soundManager.playTreasureChest();
+        };
+
+        // ラッキータイム開始
+        this.game.onLuckyTimeStart = (duration) => {
+            this.showLuckyTimeStart(duration);
+            if (window.soundManager) window.soundManager.playLuckyTime();
+        };
+
+        // ラッキータイム終了
+        this.game.onLuckyTimeEnd = () => {
+            this.showToast('ラッキータイム終了！');
+            this.hideLuckyTimeIndicator();
+        };
     }
 
     // ========================================
@@ -386,6 +409,121 @@ class UI {
         effect.className = 'legendary-drop-effect';
         document.body.appendChild(effect);
         setTimeout(() => effect.remove(), 1000);
+    }
+
+    // 宝箱表示
+    showTreasureChest() {
+        if (!this.elements.monster || !this.elements.monsterEmoji) return;
+
+        // モンスター表示を宝箱に切り替え
+        this.elements.monsterEmoji.innerHTML = GameData.TREASURE_CHEST.SVG;
+        this.elements.monsterName.textContent = '✨ 宝箱 ✨';
+        this.elements.monsterName.className = 'treasure-chest-name';
+        this.elements.monster.className = 'monster treasure-chest';
+
+        // HPバーを非表示
+        this.elements.monsterHpFill.style.width = '100%';
+        this.elements.monsterHpFill.style.background = 'linear-gradient(90deg, #ffd700 0%, #ffaa00 100%)';
+        this.elements.monsterHpText.textContent = 'タップで開ける！';
+    }
+
+    // 宝箱報酬表示
+    showTreasureReward(reward, data) {
+        // 宝箱オープンアニメーション
+        if (this.elements.monster) {
+            this.elements.monster.classList.add('chest-opening');
+        }
+
+        // 報酬ポップアップ
+        const popup = document.createElement('div');
+        popup.className = 'treasure-reward-popup';
+
+        let rewardText = '';
+        switch (data.type) {
+            case 'gold':
+                rewardText = `💰 ${this.formatNumber(data.amount)}G`;
+                break;
+            case 'gems':
+                rewardText = `💎 ${data.amount}ジェム`;
+                break;
+            case 'souls':
+                rewardText = `👻 ${data.amount}ソウル`;
+                break;
+            case 'luckyTime':
+                rewardText = `🌟 ラッキータイム ${data.duration}秒！`;
+                break;
+            case 'skillReset':
+                rewardText = `⚡ スキルクールダウンリセット！`;
+                break;
+            case 'equipment':
+                rewardText = `🎁 レア装備ドロップ！`;
+                break;
+        }
+
+        popup.innerHTML = `
+            <div class="treasure-reward-icon">${reward.emoji}</div>
+            <div class="treasure-reward-name">${reward.name}</div>
+            <div class="treasure-reward-value">${rewardText}</div>
+        `;
+
+        document.body.appendChild(popup);
+        setTimeout(() => popup.remove(), 2000);
+    }
+
+    // ラッキータイム開始表示
+    showLuckyTimeStart(duration) {
+        // ラッキータイムインジケーター表示
+        this.showLuckyTimeIndicator(duration);
+
+        // 開始エフェクト
+        const effect = document.createElement('div');
+        effect.className = 'lucky-time-start-effect';
+        effect.innerHTML = `
+            <div class="lucky-time-text">🌟 LUCKY TIME! 🌟</div>
+            <div class="lucky-time-bonus">ゴールド2倍 ＆ ドロップ率UP！</div>
+        `;
+        document.body.appendChild(effect);
+        setTimeout(() => effect.remove(), 2000);
+    }
+
+    // ラッキータイムインジケーター表示
+    showLuckyTimeIndicator(duration) {
+        // 既存のインジケーターを削除
+        this.hideLuckyTimeIndicator();
+
+        const indicator = document.createElement('div');
+        indicator.id = 'lucky-time-indicator';
+        indicator.className = 'lucky-time-indicator';
+        indicator.innerHTML = `
+            <span class="lucky-time-icon">🌟</span>
+            <span class="lucky-time-label">LUCKY TIME</span>
+            <span class="lucky-time-timer" id="lucky-time-timer">${duration}s</span>
+        `;
+
+        document.body.appendChild(indicator);
+
+        // タイマー更新
+        this.luckyTimeInterval = setInterval(() => {
+            const remaining = this.game.getLuckyTimeRemaining();
+            const timerEl = document.getElementById('lucky-time-timer');
+            if (timerEl) {
+                timerEl.textContent = `${remaining}s`;
+            }
+            if (remaining <= 0) {
+                this.hideLuckyTimeIndicator();
+            }
+        }, 1000);
+    }
+
+    // ラッキータイムインジケーター非表示
+    hideLuckyTimeIndicator() {
+        const indicator = document.getElementById('lucky-time-indicator');
+        if (indicator) indicator.remove();
+
+        if (this.luckyTimeInterval) {
+            clearInterval(this.luckyTimeInterval);
+            this.luckyTimeInterval = null;
+        }
     }
 
     showDamageNumber(amount, isCritical) {
