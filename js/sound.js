@@ -361,46 +361,80 @@ class SoundManager {
     // BGM
     // ========================================
 
-    // シンプルなBGM開始
+    // メロディBGM開始
     startBgm() {
-        if (!this.audioContext || this.bgmOscillator) return;
+        if (!this.audioContext || this.bgmPlaying) return;
 
-        // BGMノード作成
+        this.bgmPlaying = true;
         this.bgmGain = this.audioContext.createGain();
         this.bgmGain.connect(this.audioContext.destination);
         this.bgmGain.gain.setValueAtTime(this.getEffectiveVolume('bgm'), this.audioContext.currentTime);
 
-        // 低いドローン音
-        this.bgmOscillator = this.audioContext.createOscillator();
-        this.bgmOscillator.connect(this.bgmGain);
-        this.bgmOscillator.frequency.setValueAtTime(55, this.audioContext.currentTime); // A1
-        this.bgmOscillator.type = 'triangle';
+        // ファンタジーRPG風メロディ（Aマイナー系）
+        // 音符: [周波数, 長さ(拍), 開始拍]
+        const melody = [
+            // フレーズ1
+            { note: 440, duration: 0.5 },    // A4
+            { note: 523.25, duration: 0.5 }, // C5
+            { note: 659.25, duration: 1 },   // E5
+            { note: 587.33, duration: 0.5 }, // D5
+            { note: 523.25, duration: 0.5 }, // C5
+            { note: 493.88, duration: 1 },   // B4
+            // フレーズ2
+            { note: 440, duration: 0.5 },    // A4
+            { note: 392, duration: 0.5 },    // G4
+            { note: 440, duration: 1 },      // A4
+            { note: 523.25, duration: 0.5 }, // C5
+            { note: 493.88, duration: 0.5 }, // B4
+            { note: 440, duration: 1 },      // A4
+        ];
 
-        // LFOでゆっくり音量を揺らす
-        const lfo = this.audioContext.createOscillator();
-        const lfoGain = this.audioContext.createGain();
-        lfo.connect(lfoGain);
-        lfoGain.connect(this.bgmGain.gain);
-        lfo.frequency.setValueAtTime(0.1, this.audioContext.currentTime);
-        lfoGain.gain.setValueAtTime(0.05, this.audioContext.currentTime);
+        const tempo = 100; // BPM
+        const beatDuration = 60 / tempo;
+        const loopDuration = melody.reduce((sum, n) => sum + n.duration, 0) * beatDuration;
 
-        this.bgmOscillator.start();
-        lfo.start();
+        const playMelody = () => {
+            if (!this.bgmPlaying) return;
 
-        this.bgmLfo = lfo;
+            let time = this.audioContext.currentTime;
+            const vol = this.getEffectiveVolume('bgm');
 
+            melody.forEach(({ note, duration }) => {
+                const osc = this.audioContext.createOscillator();
+                const gain = this.audioContext.createGain();
+
+                osc.connect(gain);
+                gain.connect(this.bgmGain);
+
+                osc.frequency.setValueAtTime(note, time);
+                osc.type = 'triangle';
+
+                const noteDuration = duration * beatDuration;
+                gain.gain.setValueAtTime(0, time);
+                gain.gain.linearRampToValueAtTime(vol * 0.4, time + 0.02);
+                gain.gain.setValueAtTime(vol * 0.4, time + noteDuration * 0.7);
+                gain.gain.exponentialRampToValueAtTime(0.001, time + noteDuration * 0.95);
+
+                osc.start(time);
+                osc.stop(time + noteDuration);
+
+                time += noteDuration;
+            });
+
+            // ループ
+            this.bgmTimeout = setTimeout(playMelody, loopDuration * 1000);
+        };
+
+        playMelody();
         console.log('BGM started');
     }
 
     // BGM停止
     stopBgm() {
-        if (this.bgmOscillator) {
-            this.bgmOscillator.stop();
-            this.bgmOscillator = null;
-        }
-        if (this.bgmLfo) {
-            this.bgmLfo.stop();
-            this.bgmLfo = null;
+        this.bgmPlaying = false;
+        if (this.bgmTimeout) {
+            clearTimeout(this.bgmTimeout);
+            this.bgmTimeout = null;
         }
         this.bgmGain = null;
         console.log('BGM stopped');
@@ -408,7 +442,7 @@ class SoundManager {
 
     // BGMトグル
     toggleBgm() {
-        if (this.bgmOscillator) {
+        if (this.bgmPlaying) {
             this.stopBgm();
             return false;
         } else {
@@ -424,7 +458,7 @@ class SoundManager {
             sfxVolume: this.sfxVolume,
             bgmVolume: this.bgmVolume,
             isMuted: this.isMuted,
-            bgmEnabled: !!this.bgmOscillator
+            bgmEnabled: !!this.bgmPlaying
         };
         localStorage.setItem('tapquest_sound_settings', JSON.stringify(settings));
     }
