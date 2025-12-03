@@ -3631,6 +3631,16 @@ button:focus {
     flex: 1;
     max-height: none;
     min-height: 300px;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 拡張モード時のモンスターコンテナを確実に中央に */
+#game-container.expanded #monster-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 /* 拡張モード時のモンスター */
