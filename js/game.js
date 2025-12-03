@@ -1100,8 +1100,8 @@ class Game {
         this.state.rebirthCount++;
 
         // スキルポイント獲得（ステージ進行に基づく）
-        // 100ステージごとに1ポイント
-        const skillPointsGained = Math.floor(this.state.maxStageReached / 100);
+        // 50ステージごとに1ポイント
+        const skillPointsGained = Math.floor(this.state.maxStageReached / 50);
         this.state.skillPoints += skillPointsGained;
 
         // リセット
@@ -1252,7 +1252,7 @@ class Game {
 
     // 転生時に獲得予定のスキルポイントを計算
     getPendingSkillPoints() {
-        return Math.floor(this.state.maxStageReached / 100);
+        return Math.floor(this.state.maxStageReached / 50);
     }
 
     canUpgradeSkillTree(skillId) {

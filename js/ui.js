@@ -1847,7 +1847,7 @@ class UI {
         if (totalSP === 0) {
             html += `<div class="skill-tree-info-box">
                 <p>💡 スキルポイント(SP)は<strong>転生</strong>で獲得できます</p>
-                <p style="font-size:11px;color:#888;">ステージ100ごとに+1SP (例: ステージ300で転生 → 3SP)</p>
+                <p style="font-size:11px;color:#888;">ステージ50ごとに+1SP (例: ステージ150で転生 → 3SP)</p>
             </div>`;
         } else {
             html += `<div class="skill-tree-info-box active">
