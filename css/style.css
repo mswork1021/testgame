@@ -2583,6 +2583,34 @@ button:focus {
 .collection-item.rarity-legendary { border-color: var(--rarity-legendary); }
 
 /* ========================================
+   アーティファクトシステム
+   ======================================== */
+.artifacts-section {
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-sm);
+    border-top: 2px solid var(--accent-purple);
+}
+
+.artifacts-section .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-xs);
+}
+
+.artifacts-description {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: var(--spacing-sm);
+}
+
+.artifacts-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* ========================================
    実績システム
    ======================================== */
 .achievements-section {
