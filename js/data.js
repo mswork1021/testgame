@@ -645,7 +645,7 @@ const GameData = {
         BASE_CRIT_DAMAGE: 200,
 
         // 転生関連
-        MIN_REBIRTH_STAGE: 100,
+        MIN_REBIRTH_STAGE: 50,
         SOULS_PER_STAGE: 1,
         SOULS_SCALING: 1.1,
 
