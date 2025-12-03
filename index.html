@@ -180,6 +180,25 @@
 
                 <div class="settings-section">
                     <h3>⚙️ 設定</h3>
+
+                    <!-- サウンド設定 -->
+                    <div class="sound-settings">
+                        <div class="sound-setting-row">
+                            <span class="sound-label">🔊 マスター</span>
+                            <input type="range" id="master-volume" min="0" max="100" value="50" class="volume-slider">
+                            <button id="mute-btn" class="sound-btn">🔊</button>
+                        </div>
+                        <div class="sound-setting-row">
+                            <span class="sound-label">🎵 BGM</span>
+                            <input type="range" id="bgm-volume" min="0" max="100" value="30" class="volume-slider">
+                            <button id="bgm-toggle-btn" class="sound-btn">OFF</button>
+                        </div>
+                        <div class="sound-setting-row">
+                            <span class="sound-label">🔔 SE</span>
+                            <input type="range" id="sfx-volume" min="0" max="100" value="70" class="volume-slider">
+                        </div>
+                    </div>
+
                     <div class="settings-buttons">
                         <button id="refresh-btn" class="settings-btn refresh">
                             🔄 更新
@@ -260,10 +279,11 @@
     </div>
 
     <script src="js/data.js"></script>
+    <script src="js/sound.js"></script>
     <script src="js/game.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/save.js"></script>
     <script src="js/main.js"></script>
-    <div id="debug-version" style="position:fixed;bottom:5px;left:5px;font-size:10px;color:#666;z-index:9999;">v2.27</div>
+    <div id="debug-version" style="position:fixed;bottom:5px;left:5px;font-size:10px;color:#666;z-index:9999;">v2.28</div>
 </body>
 </html>
