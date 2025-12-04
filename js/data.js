@@ -1645,16 +1645,15 @@ const GameData = {
         // 階層ボーナス（10階ごと）
         MILESTONE_FLOORS: [10, 25, 50, 100, 200],
 
-        // 報酬計算
+        // 報酬計算（メダルのみ）
         getFloorReward(floor) {
-            const baseGold = 500 + (floor * 100);
-            const baseGems = floor % 10 === 0 ? Math.floor(floor / 10) * 5 : 0;
-            const baseSouls = floor >= 50 ? Math.floor(floor / 50) * 10 : 0;
-            return {
-                gold: baseGold,
-                gems: baseGems,
-                souls: baseSouls
-            };
+            // 基本メダル + 階層ボーナス
+            let medals = 1 + Math.floor(floor / 5);
+            // マイルストーンボーナス
+            if (floor % 10 === 0) medals += 5;
+            if (floor % 25 === 0) medals += 10;
+            if (floor % 50 === 0) medals += 25;
+            return { medals };
         },
 
         // ボスHP計算（階層に応じて増加）
@@ -1670,7 +1669,19 @@ const GameData = {
             const name = names[Math.floor(floor / 5) % names.length];
             return `${prefix}${name}`;
         }
-    }
+    },
+
+    // 塔交換所
+    TOWER_SHOP: [
+        { id: 'gold_pack', name: 'ゴールドパック', desc: '10,000ゴールド獲得', cost: 5, reward: { type: 'gold', amount: 10000 }, icon: '💰', limit: -1 },
+        { id: 'gem_pack', name: 'ジェムパック', desc: '10ジェム獲得', cost: 10, reward: { type: 'gems', amount: 10 }, icon: '💎', limit: -1 },
+        { id: 'soul_pack', name: 'ソウルパック', desc: '50ソウル獲得', cost: 15, reward: { type: 'souls', amount: 50 }, icon: '👻', limit: -1 },
+        { id: 'lucky_ticket', name: 'ラッキーチケット', desc: 'ラッキータイム+1ストック', cost: 20, reward: { type: 'lucky', amount: 1 }, icon: '🎫', limit: 3 },
+        { id: 'summon_ticket', name: '召喚チケット', desc: '無料単発召喚×1', cost: 25, reward: { type: 'summon', amount: 1 }, icon: '🎟️', limit: 5 },
+        { id: 'tower_sword', name: '塔の魔剣', desc: 'タップダメージ+50%（永続）', cost: 100, reward: { type: 'buff', stat: 'tapDamage', amount: 50 }, icon: '🗡️', limit: 1 },
+        { id: 'tower_armor', name: '塔の神鎧', desc: 'DPS+30%（永続）', cost: 100, reward: { type: 'buff', stat: 'dps', amount: 30 }, icon: '🛡️', limit: 1 },
+        { id: 'tower_crown', name: '塔の王冠', desc: 'ゴールド獲得+25%（永続）', cost: 150, reward: { type: 'buff', stat: 'goldBonus', amount: 25 }, icon: '👑', limit: 1 }
+    ]
 };
 
 // グローバルにエクスポート

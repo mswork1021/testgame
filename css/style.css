@@ -5114,3 +5114,168 @@ button:focus {
     border-color: rgba(220,38,38,0.5);
     color: #f87171;
 }
+
+/* タワー挑戦中メッセージ */
+.tower-in-progress {
+    background: linear-gradient(135deg, rgba(139,92,246,0.3) 0%, rgba(79,70,229,0.3) 100%);
+    border: 2px solid rgba(139,92,246,0.7);
+    border-radius: 16px;
+    padding: 20px;
+    margin: 16px 0;
+    text-align: center;
+}
+
+.tower-tap-message {
+    padding: 16px;
+}
+
+.tower-tap-message .tap-icon {
+    font-size: 48px;
+    display: block;
+    margin-bottom: 12px;
+    animation: bounce 1s infinite;
+}
+
+.tower-tap-message p {
+    font-size: 18px;
+    font-weight: bold;
+    color: #a78bfa;
+    line-height: 1.5;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+/* タワーボス用のモンスター装飾 */
+.monster.tower-boss {
+    filter: drop-shadow(0 0 20px rgba(139,92,246,0.8));
+}
+
+.monster.tower-boss::before {
+    content: '🗼';
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 24px;
+}
+
+/* タワーメダル表示 */
+.tower-medals-display {
+    font-size: 16px;
+    font-weight: bold;
+    color: #fbbf24;
+    background: rgba(251,191,36,0.2);
+    padding: 4px 12px;
+    border-radius: 20px;
+}
+
+.tower-stats-row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: 13px;
+    color: #888;
+}
+
+/* 塔交換所 */
+.tower-shop-section {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.tower-shop-section h3 {
+    font-size: 16px;
+    margin-bottom: 12px;
+    color: #fbbf24;
+}
+
+.tower-shop-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.tower-shop-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(30,30,40,0.8);
+    border: 1px solid rgba(139,92,246,0.3);
+    border-radius: 10px;
+    padding: 12px;
+    transition: all 0.2s ease;
+}
+
+.tower-shop-item:hover {
+    border-color: rgba(139,92,246,0.6);
+    background: rgba(40,40,55,0.9);
+}
+
+.tower-shop-item.sold-out {
+    opacity: 0.5;
+}
+
+.tower-shop-item .item-icon {
+    font-size: 28px;
+    width: 40px;
+    text-align: center;
+}
+
+.tower-shop-item .item-info {
+    flex: 1;
+}
+
+.tower-shop-item .item-name {
+    font-size: 14px;
+    font-weight: bold;
+    color: #fff;
+}
+
+.tower-shop-item .item-desc {
+    font-size: 11px;
+    color: #888;
+    margin-top: 2px;
+}
+
+.tower-shop-item .item-limit {
+    font-size: 10px;
+    color: #a78bfa;
+    margin-top: 2px;
+}
+
+.tower-shop-item .item-cost {
+    font-size: 14px;
+    font-weight: bold;
+    color: #fbbf24;
+    min-width: 60px;
+    text-align: right;
+}
+
+.btn-exchange {
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #fff;
+    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-exchange:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 10px rgba(139,92,246,0.5);
+}
+
+.btn-exchange:disabled {
+    background: #444;
+    color: #888;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}

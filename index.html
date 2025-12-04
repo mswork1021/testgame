@@ -362,8 +362,8 @@
             <div id="tower-panel" class="tab-panel">
                 <div class="panel-header">
                     <h2>🗼 無限の塔</h2>
-                    <div class="tower-attempts">
-                        残り挑戦: <span id="tower-attempts">3</span>回
+                    <div class="tower-medals-display">
+                        🏅 <span id="tower-medals">0</span>
                     </div>
                 </div>
 
@@ -373,8 +373,9 @@
                         <span class="floor-label">現在の階層</span>
                         <span id="tower-current-floor" class="floor-number">1F</span>
                     </div>
-                    <div class="tower-max-floor">
-                        最高到達: <span id="tower-max-floor">0</span>F
+                    <div class="tower-stats-row">
+                        <span>最高到達: <span id="tower-max-floor">0</span>F</span>
+                        <span>残り挑戦: <span id="tower-attempts">3</span>回</span>
                     </div>
                 </div>
 
@@ -382,25 +383,15 @@
                 <div class="tower-reward-preview">
                     <h3>クリア報酬</h3>
                     <div id="tower-next-reward" class="tower-rewards">
-                        <span class="reward-item">💰 600</span>
+                        <span class="reward-item">🏅 1</span>
                     </div>
                 </div>
 
-                <!-- バトルエリア（挑戦中のみ表示） -->
-                <div id="tower-battle-area" class="tower-battle-area hidden">
-                    <div class="tower-boss-info">
-                        <span id="tower-boss-name" class="tower-boss-name">影のゴーレム</span>
-                        <div class="tower-timer">
-                            <span class="timer-icon">⏱️</span>
-                            <span id="tower-time-left">30</span>秒
-                        </div>
-                    </div>
-                    <div class="tower-boss-hp-bar">
-                        <div id="tower-boss-hp-fill" class="tower-boss-hp-fill"></div>
-                        <span id="tower-boss-hp-text" class="tower-boss-hp-text">100/100</span>
-                    </div>
-                    <div id="tower-boss-display" class="tower-boss-display">
-                        <!-- ボスSVGがここに -->
+                <!-- 挑戦中メッセージ（挑戦中のみ表示） -->
+                <div id="tower-battle-area" class="tower-in-progress hidden">
+                    <div class="tower-tap-message">
+                        <span class="tap-icon">👆</span>
+                        <p>上のバトル画面をタップして<br>ボスを倒せ！</p>
                     </div>
                     <button id="tower-abandon-btn" class="btn-danger">諦める</button>
                 </div>
@@ -418,6 +409,12 @@
                 </div>
 
                 <p class="tower-note">※ 挑戦回数は毎日0:00にリセット</p>
+
+                <!-- 塔交換所 -->
+                <div class="tower-shop-section">
+                    <h3>🏅 メダル交換所</h3>
+                    <div id="tower-shop-list" class="tower-shop-grid"></div>
+                </div>
             </div>
         </div>
 
@@ -528,6 +525,6 @@
     <script src="js/ui.js"></script>
     <script src="js/save.js"></script>
     <script src="js/main.js"></script>
-    <div id="debug-version" style="position:fixed;bottom:5px;left:5px;font-size:10px;color:#666;z-index:9999;">v2.33</div>
+    <div id="debug-version" style="position:fixed;bottom:5px;left:5px;font-size:10px;color:#666;z-index:9999;">v2.34</div>
 </body>
 </html>
