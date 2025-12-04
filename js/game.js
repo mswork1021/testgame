@@ -9,7 +9,7 @@ class Game {
             // リソース
             gold: 0,
             souls: 0,
-            gems: 0,
+            gems: 100,
 
             // ステージ情報
             currentStage: 1,
