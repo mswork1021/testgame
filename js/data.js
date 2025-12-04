@@ -1485,7 +1485,72 @@ const GameData = {
             image: 'assets/characters/emperor.png',
             color: '#800080'
         }
-    ]
+    ],
+
+    // デイリーミッション
+    DAILY_MISSIONS: [
+        {
+            id: 'tap_100',
+            name: 'タップ修行',
+            description: '100回タップする',
+            type: 'tap',
+            target: 100,
+            reward: { type: 'gold', amount: 500 },
+            icon: '👆'
+        },
+        {
+            id: 'kill_50',
+            name: 'モンスター討伐',
+            description: 'モンスターを50体倒す',
+            type: 'kill',
+            target: 50,
+            reward: { type: 'gold', amount: 1000 },
+            icon: '⚔️'
+        },
+        {
+            id: 'gold_10000',
+            name: 'ゴールド収集',
+            description: 'ゴールドを10,000獲得する',
+            type: 'gold',
+            target: 10000,
+            reward: { type: 'gems', amount: 5 },
+            icon: '💰'
+        },
+        {
+            id: 'stage_5',
+            name: 'ステージ攻略',
+            description: 'ステージを5つクリアする',
+            type: 'stage',
+            target: 5,
+            reward: { type: 'gems', amount: 5 },
+            icon: '🏰'
+        },
+        {
+            id: 'upgrade_3',
+            name: '強化訓練',
+            description: '修行・秘技を3回強化する',
+            type: 'upgrade',
+            target: 3,
+            reward: { type: 'gold', amount: 2000 },
+            icon: '⬆️'
+        },
+        {
+            id: 'summon_1',
+            name: '召喚の儀',
+            description: '召喚を1回行う',
+            type: 'summon',
+            target: 1,
+            reward: { type: 'gems', amount: 10 },
+            icon: '🌟'
+        }
+    ],
+
+    // デイリーミッション全クリアボーナス
+    DAILY_COMPLETE_BONUS: {
+        type: 'gems',
+        amount: 20,
+        icon: '🎁'
+    }
 };
 
 // グローバルにエクスポート

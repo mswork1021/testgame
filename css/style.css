@@ -4455,3 +4455,194 @@ button:focus {
 .hero-detail-stars.rare { color: #3b82f6; }
 .hero-detail-stars.epic { color: #a855f7; }
 .hero-detail-stars.legendary { color: #fbbf24; text-shadow: 0 0 8px rgba(251,191,36,0.5); }
+
+/* ========================================
+   デイリー任務
+   ======================================== */
+
+#missions-panel .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+#missions-panel .panel-header h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.missions-progress {
+    background: rgba(255,215,0,0.2);
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 14px;
+    color: #ffd700;
+}
+
+.missions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.mission-item {
+    background: linear-gradient(135deg, rgba(30,30,50,0.9) 0%, rgba(20,20,40,0.9) 100%);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.mission-item.completed {
+    border-color: rgba(74,222,128,0.3);
+    background: linear-gradient(135deg, rgba(30,50,30,0.9) 0%, rgba(20,40,20,0.9) 100%);
+}
+
+.mission-item.claimed {
+    opacity: 0.6;
+}
+
+.mission-icon {
+    font-size: 24px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.3);
+    border-radius: 10px;
+}
+
+.mission-info {
+    flex: 1;
+}
+
+.mission-name {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 2px;
+}
+
+.mission-desc {
+    font-size: 11px;
+    color: #888;
+    margin-bottom: 4px;
+}
+
+.mission-progress-bar {
+    height: 6px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.mission-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4ade80, #22c55e);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.mission-progress-text {
+    font-size: 10px;
+    color: #aaa;
+    margin-top: 2px;
+}
+
+.mission-reward {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 70px;
+}
+
+.reward-amount {
+    font-size: 12px;
+    color: #ffd700;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.reward-amount.gold { color: #ffd700; }
+.reward-amount.gems { color: #60a5fa; }
+
+.btn-claim {
+    padding: 6px 12px;
+    font-size: 11px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+    color: #fff;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+
+.btn-claim:disabled {
+    background: #444;
+    color: #888;
+    cursor: not-allowed;
+}
+
+.btn-claim:not(:disabled):hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 10px rgba(74,222,128,0.5);
+}
+
+.btn-claim.claimed {
+    background: #333;
+    color: #666;
+}
+
+/* 全クリアボーナス */
+.missions-bonus {
+    background: linear-gradient(135deg, rgba(255,215,0,0.15) 0%, rgba(255,180,0,0.1) 100%);
+    border: 2px solid rgba(255,215,0,0.3);
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.missions-bonus.completed {
+    border-color: rgba(74,222,128,0.5);
+    box-shadow: 0 0 15px rgba(74,222,128,0.2);
+}
+
+.bonus-info {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.bonus-icon {
+    font-size: 28px;
+}
+
+.bonus-text {
+    font-size: 14px;
+    font-weight: bold;
+    color: #ffd700;
+}
+
+.bonus-reward {
+    font-size: 16px;
+    color: #60a5fa;
+    font-weight: bold;
+}
+
+.missions-reset-note {
+    text-align: center;
+    font-size: 11px;
+    color: #666;
+    margin: 0;
+}

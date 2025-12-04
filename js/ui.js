@@ -145,6 +145,13 @@ class UI {
         this.elements.heroDetailDupe = document.getElementById('hero-detail-dupe');
         this.elements.heroBattleToggle = document.getElementById('hero-battle-toggle');
         this.elements.closeHeroDetail = document.getElementById('close-hero-detail');
+
+        // デイリー任務
+        this.elements.missionsList = document.getElementById('missions-list');
+        this.elements.missionsCompleted = document.getElementById('missions-completed');
+        this.elements.missionsTotal = document.getElementById('missions-total');
+        this.elements.missionsBonus = document.getElementById('missions-bonus');
+        this.elements.claimAllBonus = document.getElementById('claim-all-bonus');
     }
 
     bindEvents() {
@@ -282,6 +289,11 @@ class UI {
             this.elements.heroBattleToggle.addEventListener('change', (e) => {
                 this.onBattleToggleChange(e.target.checked);
             });
+        }
+
+        // デイリー任務の全クリアボーナス
+        if (this.elements.claimAllBonus) {
+            addTouchAndClick(this.elements.claimAllBonus, () => this.claimAllMissionsBonus());
         }
     }
 
@@ -1261,6 +1273,7 @@ class UI {
         if (tabId === 'skills') this.renderSkillTree();
         if (tabId === 'collection') this.renderCollection();
         if (tabId === 'rebirth') this.renderAchievements();
+        if (tabId === 'missions') this.renderMissions();
     }
 
     // ========================================
@@ -2622,6 +2635,126 @@ class UI {
         const totalDps = baseDps + summonDps;
 
         this.elements.totalDps.textContent = this.formatNumber(totalDps) + '/秒';
+    }
+
+    // ========================================
+    // デイリー任務
+    // ========================================
+
+    renderMissions() {
+        if (!this.elements.missionsList) return;
+
+        const missions = this.game.getDailyMissions();
+        const completedCount = this.game.getCompletedDailyMissionCount();
+        const totalCount = missions.length;
+
+        // 進捗表示更新
+        if (this.elements.missionsCompleted) {
+            this.elements.missionsCompleted.textContent = completedCount;
+        }
+        if (this.elements.missionsTotal) {
+            this.elements.missionsTotal.textContent = totalCount;
+        }
+
+        // ミッションリスト生成
+        let html = '';
+        missions.forEach(mission => {
+            const progress = Math.min(mission.progress, mission.target);
+            const percent = Math.floor((progress / mission.target) * 100);
+            const statusClass = mission.isClaimed ? 'claimed' : (mission.isComplete ? 'completed' : '');
+            const rewardIcon = mission.reward.type === 'gems' ? '💎' : '💰';
+            const rewardClass = mission.reward.type === 'gems' ? 'gems' : 'gold';
+
+            html += `
+                <div class="mission-item ${statusClass}" data-mission-id="${mission.id}">
+                    <div class="mission-icon">${mission.icon}</div>
+                    <div class="mission-info">
+                        <div class="mission-name">${mission.name}</div>
+                        <div class="mission-desc">${mission.description}</div>
+                        <div class="mission-progress-bar">
+                            <div class="mission-progress-fill" style="width: ${percent}%"></div>
+                        </div>
+                        <div class="mission-progress-text">${this.formatNumber(progress)} / ${this.formatNumber(mission.target)}</div>
+                    </div>
+                    <div class="mission-reward">
+                        <span class="reward-amount ${rewardClass}">${rewardIcon} ${this.formatNumber(mission.reward.amount)}</span>
+                        ${this.getMissionButtonHtml(mission)}
+                    </div>
+                </div>
+            `;
+        });
+
+        this.elements.missionsList.innerHTML = html;
+
+        // ボタンイベントをバインド
+        this.bindMissionButtons();
+
+        // 全クリアボーナス更新
+        this.updateAllBonusButton();
+    }
+
+    getMissionButtonHtml(mission) {
+        if (mission.isClaimed) {
+            return '<button class="btn-claim claimed" disabled>済</button>';
+        } else if (mission.isComplete) {
+            return '<button class="btn-claim" data-action="claim">受取</button>';
+        } else {
+            return '<button class="btn-claim" disabled>未達成</button>';
+        }
+    }
+
+    bindMissionButtons() {
+        const addTouchAndClick = (el, handler) => {
+            el.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                handler();
+            });
+            el.addEventListener('click', (e) => {
+                if (!e.defaultPrevented) handler();
+            });
+        };
+
+        this.elements.missionsList.querySelectorAll('.btn-claim[data-action="claim"]').forEach(btn => {
+            const missionId = btn.closest('.mission-item').dataset.missionId;
+            addTouchAndClick(btn, () => this.claimMissionReward(missionId));
+        });
+    }
+
+    claimMissionReward(missionId) {
+        const reward = this.game.claimDailyMissionReward(missionId);
+        if (reward) {
+            const icon = reward.type === 'gems' ? '💎' : '💰';
+            this.showToast(`${icon} ${this.formatNumber(reward.amount)} 獲得！`);
+            if (window.soundManager) window.soundManager.playChestOpen();
+            this.renderMissions();
+            this.updateDisplay();
+        }
+    }
+
+    updateAllBonusButton() {
+        if (!this.elements.claimAllBonus || !this.elements.missionsBonus) return;
+
+        const canClaim = this.game.canClaimDailyCompleteBonus();
+        const alreadyClaimed = this.game.state.dailyMissions.allClaimedBonus;
+
+        this.elements.claimAllBonus.disabled = !canClaim;
+
+        if (alreadyClaimed) {
+            this.elements.claimAllBonus.textContent = '済';
+            this.elements.claimAllBonus.classList.add('claimed');
+        } else if (canClaim) {
+            this.elements.missionsBonus.classList.add('completed');
+        }
+    }
+
+    claimAllMissionsBonus() {
+        const reward = this.game.claimDailyCompleteBonus();
+        if (reward) {
+            this.showToast(`🎁 全クリアボーナス 💎 ${reward.amount} 獲得！`);
+            if (window.soundManager) window.soundManager.playRebirth();
+            this.renderMissions();
+            this.updateDisplay();
+        }
     }
 }
 

@@ -95,6 +95,10 @@
                 <span class="nav-icon">🌟</span>
                 <span class="nav-label">召喚</span>
             </button>
+            <button class="nav-btn" data-tab="missions">
+                <span class="nav-icon">📋</span>
+                <span class="nav-label">任務</span>
+            </button>
         </nav>
 
         <!-- タブパネル -->
@@ -287,6 +291,33 @@
                     </div>
                     <div id="owned-heroes-list" class="owned-heroes-grid"></div>
                 </div>
+            </div>
+
+            <!-- 任務タブ -->
+            <div id="missions-panel" class="tab-panel">
+                <div class="panel-header">
+                    <h2>📋 デイリー任務</h2>
+                    <div class="missions-progress">
+                        <span id="missions-completed">0</span>/<span id="missions-total">6</span> 完了
+                    </div>
+                </div>
+
+                <!-- 任務リスト -->
+                <div id="missions-list" class="missions-list"></div>
+
+                <!-- 全クリアボーナス -->
+                <div id="missions-bonus" class="missions-bonus">
+                    <div class="bonus-info">
+                        <span class="bonus-icon">🎁</span>
+                        <span class="bonus-text">全任務クリアボーナス</span>
+                    </div>
+                    <div class="bonus-reward">
+                        <span>💎 20</span>
+                    </div>
+                    <button id="claim-all-bonus" class="btn-claim" disabled>受取</button>
+                </div>
+
+                <p class="missions-reset-note">※ 毎日0:00にリセットされます</p>
             </div>
         </div>
 

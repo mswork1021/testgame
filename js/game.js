@@ -78,7 +78,15 @@ class Game {
             // 召喚システム
             summonedHeroes: {},  // { heroId: level }
             gachaPityCount: 0,   // 天井カウンター
-            battleHeroes: []     // バトル画面に表示するキャラID（最大6体）
+            battleHeroes: [],    // バトル画面に表示するキャラID（最大6体）
+
+            // デイリーミッション
+            dailyMissions: {
+                lastResetDate: null,      // 最後にリセットした日付
+                progress: {},             // { missionId: currentProgress }
+                claimed: {},              // { missionId: true }
+                allClaimedBonus: false    // 全クリアボーナス受取済み
+            }
         };
 
         // 現在のモンスター
@@ -132,6 +140,17 @@ class Game {
                 this.state.artifactLevels[art.id] = 0;
             }
         });
+
+        // デイリーミッション初期化
+        if (!this.state.dailyMissions) {
+            this.state.dailyMissions = {
+                lastResetDate: null,
+                progress: {},
+                claimed: {},
+                allClaimedBonus: false
+            };
+        }
+        this.checkDailyMissionReset();
 
         // 最初のモンスター生成
         this.spawnMonster();
@@ -534,6 +553,7 @@ class Game {
         if (!this.currentMonster) return;
 
         this.state.totalTaps++;
+        this.updateDailyMissionProgress('tap', 1);
         const damage = this.getTapDamage();
         const isCritical = this.rollCritical();
         const finalDamage = isCritical ? damage * (this.getCriticalDamage() / 100) : damage;
@@ -733,6 +753,7 @@ class Game {
             // 統計更新
             this.state.monstersKilled++;
             this.state.totalMonstersKilled++;
+            this.updateDailyMissionProgress('kill', 1);
             console.log(`[DEBUG] モンスター撃破 #${this.state.monstersKilled}`);
 
             // 実績チェック
@@ -750,6 +771,7 @@ class Game {
             goldReward = Math.floor(goldReward * this.getGoldMultiplier() * traits.goldBonus * rareMultiplier);
             this.state.gold += goldReward;
             this.state.totalGoldEarned += goldReward;
+            this.updateDailyMissionProgress('gold', goldReward);
 
             // ドロップチェック（特性とレアボーナス適用）
             try {
@@ -818,6 +840,7 @@ class Game {
     advanceStage() {
         this.state.currentStage++;
         this.state.monstersKilled = 0;
+        this.updateDailyMissionProgress('stage', 1);
 
         if (this.state.currentStage > this.state.maxStageReached) {
             this.state.maxStageReached = this.state.currentStage;
@@ -972,6 +995,7 @@ class Game {
         if (this.state.gold >= cost) {
             this.state.gold -= cost;
             this.state.heroLevels[heroId] = (this.state.heroLevels[heroId] || 0) + 1;
+            this.updateDailyMissionProgress('upgrade', 1);
             return true;
         }
         return false;
@@ -988,6 +1012,7 @@ class Game {
         if (this.state.gold >= cost) {
             this.state.gold -= cost;
             this.state.companionLevels[companionId] = (this.state.companionLevels[companionId] || 0) + 1;
+            this.updateDailyMissionProgress('upgrade', 1);
             return true;
         }
         return false;
@@ -1492,6 +1517,7 @@ class Game {
 
         this.state.gems -= cost;
         const result = this.performSummon(1);
+        this.updateDailyMissionProgress('summon', 1);
         return result;
     }
 
@@ -1502,6 +1528,7 @@ class Game {
 
         this.state.gems -= cost;
         const result = this.performSummon(GameData.GACHA.MULTI_COUNT);
+        this.updateDailyMissionProgress('summon', 1);
         return result;
     }
 
@@ -1703,6 +1730,127 @@ class Game {
     isHeroInBattle(heroId) {
         if (!this.state.battleHeroes) return false;
         return this.state.battleHeroes.includes(heroId);
+    }
+
+    // ========================================
+    // デイリーミッション
+    // ========================================
+
+    // デイリーミッションの初期化・リセットチェック
+    checkDailyMissionReset() {
+        const today = new Date().toDateString();
+        const lastReset = this.state.dailyMissions.lastResetDate;
+
+        if (lastReset !== today) {
+            // 日付が変わったのでリセット
+            this.state.dailyMissions = {
+                lastResetDate: today,
+                progress: {},
+                claimed: {},
+                allClaimedBonus: false
+            };
+            return true; // リセットされた
+        }
+        return false;
+    }
+
+    // ミッション進捗を更新
+    updateDailyMissionProgress(type, amount = 1) {
+        if (!this.state.dailyMissions.progress) {
+            this.state.dailyMissions.progress = {};
+        }
+
+        // 該当タイプのミッションを探して進捗更新
+        GameData.DAILY_MISSIONS.forEach(mission => {
+            if (mission.type === type) {
+                const current = this.state.dailyMissions.progress[mission.id] || 0;
+                this.state.dailyMissions.progress[mission.id] = current + amount;
+            }
+        });
+    }
+
+    // ミッションの進捗を取得
+    getDailyMissionProgress(missionId) {
+        return this.state.dailyMissions.progress[missionId] || 0;
+    }
+
+    // ミッションが完了しているか
+    isDailyMissionComplete(missionId) {
+        const mission = GameData.DAILY_MISSIONS.find(m => m.id === missionId);
+        if (!mission) return false;
+        return this.getDailyMissionProgress(missionId) >= mission.target;
+    }
+
+    // ミッション報酬を受け取り済みか
+    isDailyMissionClaimed(missionId) {
+        return this.state.dailyMissions.claimed[missionId] === true;
+    }
+
+    // ミッション報酬を受け取る
+    claimDailyMissionReward(missionId) {
+        if (!this.isDailyMissionComplete(missionId)) return null;
+        if (this.isDailyMissionClaimed(missionId)) return null;
+
+        const mission = GameData.DAILY_MISSIONS.find(m => m.id === missionId);
+        if (!mission) return null;
+
+        // 報酬付与
+        this.giveReward(mission.reward);
+
+        // 受取済みにする
+        this.state.dailyMissions.claimed[missionId] = true;
+
+        return mission.reward;
+    }
+
+    // 全ミッションクリアボーナスを受け取れるか
+    canClaimDailyCompleteBonus() {
+        if (this.state.dailyMissions.allClaimedBonus) return false;
+
+        // 全ミッションが完了かつ受取済みかチェック
+        return GameData.DAILY_MISSIONS.every(mission =>
+            this.isDailyMissionClaimed(mission.id)
+        );
+    }
+
+    // 全ミッションクリアボーナスを受け取る
+    claimDailyCompleteBonus() {
+        if (!this.canClaimDailyCompleteBonus()) return null;
+
+        this.giveReward(GameData.DAILY_COMPLETE_BONUS);
+        this.state.dailyMissions.allClaimedBonus = true;
+
+        return GameData.DAILY_COMPLETE_BONUS;
+    }
+
+    // 報酬を付与
+    giveReward(reward) {
+        switch (reward.type) {
+            case 'gold':
+                this.state.gold += reward.amount;
+                break;
+            case 'gems':
+                this.state.gems += reward.amount;
+                break;
+            case 'souls':
+                this.state.souls += reward.amount;
+                break;
+        }
+    }
+
+    // デイリーミッション一覧を取得（進捗情報付き）
+    getDailyMissions() {
+        return GameData.DAILY_MISSIONS.map(mission => ({
+            ...mission,
+            progress: this.getDailyMissionProgress(mission.id),
+            isComplete: this.isDailyMissionComplete(mission.id),
+            isClaimed: this.isDailyMissionClaimed(mission.id)
+        }));
+    }
+
+    // 完了済みミッション数を取得
+    getCompletedDailyMissionCount() {
+        return GameData.DAILY_MISSIONS.filter(m => this.isDailyMissionClaimed(m.id)).length;
     }
 }
 
