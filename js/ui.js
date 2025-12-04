@@ -3480,11 +3480,11 @@ class UI {
 
             html += `
                 <div class="achievement-item ${statusClass}" data-achievement-id="${achievement.id}">
-                    <div class="achievement-icon">${achievement.icon}</div>
+                    <div class="achievement-icon">${achievement.emoji}</div>
                     <div class="achievement-info">
                         <div class="achievement-name">${achievement.name}</div>
                         <div class="achievement-desc">${achievement.description}</div>
-                        <div class="achievement-reward">報酬: 💎${achievement.reward.gems}</div>
+                        <div class="achievement-reward">報酬: 💎${achievement.reward.amount}</div>
                     </div>
                     <button class="achievement-claim-btn ${statusClass}" ${!isUnlocked || isClaimed ? 'disabled' : ''}>
                         ${statusText}
@@ -3501,7 +3501,12 @@ class UI {
             if (btn && !btn.disabled) {
                 const item = btn.closest('.achievement-item');
                 const achievementId = item.dataset.achievementId;
-                this.claimAchievementReward(achievementId);
+                const result = this.game.claimAchievement(achievementId);
+                if (result) {
+                    this.showToast(`🎉 ${result.name} 達成！ 💎${result.reward.amount}獲得！`);
+                    if (window.soundManager) window.soundManager.playLevelUp();
+                    this.updateDisplay();
+                }
                 this.renderAchievementsModal();
             }
         };
