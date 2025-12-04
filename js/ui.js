@@ -8,6 +8,9 @@ class UI {
         this.elements = {};
         this.currentTab = 'heroes';
         this.selectedItem = null;
+        // 塔交換所のレンダリング状態フラグ
+        this.towerShopRendered = false;
+        this.towerShopEventBound = false;
     }
 
     // ========================================
@@ -1372,6 +1375,8 @@ class UI {
         if (tabId === 'collection') this.renderCollection();
         if (tabId === 'rebirth') this.renderAchievements();
         if (tabId === 'missions') this.renderMissions();
+        // 塔タブ切り替え時はショップを再レンダリング
+        if (tabId === 'tower') this.towerShopRendered = false;
         if (tabId === 'shop') this.renderShop();
         if (tabId === 'tower') this.renderTower();
     }
@@ -3130,15 +3135,18 @@ class UI {
             this.elements.towerBuyAttemptBtn.disabled = !this.game.canBuyExtraAttempt();
         }
 
-        // 塔交換所をレンダリング
-        this.renderTowerShop();
+        // 塔交換所をレンダリング（初回のみ）または状態更新
+        if (!this.towerShopRendered) {
+            this.renderTowerShop();
+        } else {
+            this.updateTowerShopState();
+        }
     }
 
-    // 塔交換所レンダリング
+    // 塔交換所レンダリング（初回または購入後のみ呼ぶ）
     renderTowerShop() {
         if (!this.elements.towerShopList) return;
 
-        const medals = this.game.state.towerMedals || 0;
         let html = '';
 
         GameData.TOWER_SHOP.forEach(item => {
@@ -3152,7 +3160,7 @@ class UI {
             }
 
             html += `
-                <div class="tower-shop-item ${isSoldOut ? 'sold-out' : ''}">
+                <div class="tower-shop-item ${isSoldOut ? 'sold-out' : ''}" data-item-id="${item.id}">
                     <span class="item-icon">${item.icon}</span>
                     <div class="item-info">
                         <div class="item-name">${item.name}</div>
@@ -3171,12 +3179,54 @@ class UI {
 
         this.elements.towerShopList.innerHTML = html;
 
-        // イベントバインド
-        this.elements.towerShopList.querySelectorAll('.btn-exchange').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const itemId = e.target.dataset.itemId;
-                this.onTowerShopPurchase(itemId);
+        // イベント委譲（一度だけバインド）
+        if (!this.towerShopEventBound) {
+            this.elements.towerShopList.addEventListener('click', (e) => {
+                const btn = e.target.closest('.btn-exchange');
+                if (btn && !btn.disabled) {
+                    const itemId = btn.dataset.itemId;
+                    this.onTowerShopPurchase(itemId);
+                }
             });
+            this.towerShopEventBound = true;
+        }
+
+        this.towerShopRendered = true;
+    }
+
+    // 塔交換所の状態だけ更新（ボタンの有効/無効、残り回数）
+    updateTowerShopState() {
+        if (!this.elements.towerShopList) return;
+
+        GameData.TOWER_SHOP.forEach(item => {
+            const remaining = this.game.getTowerShopItemRemaining(item.id);
+            const canBuy = this.game.canPurchaseTowerShopItem(item.id);
+            const isSoldOut = item.limit > 0 && remaining <= 0;
+
+            const itemEl = this.elements.towerShopList.querySelector(`.tower-shop-item[data-item-id="${item.id}"]`);
+            if (!itemEl) return;
+
+            // ボタンの状態更新
+            const btn = itemEl.querySelector('.btn-exchange');
+            if (btn) {
+                btn.disabled = !canBuy;
+                btn.textContent = isSoldOut ? '売切' : '交換';
+            }
+
+            // 売り切れクラス
+            if (isSoldOut) {
+                itemEl.classList.add('sold-out');
+            } else {
+                itemEl.classList.remove('sold-out');
+            }
+
+            // 残り回数更新
+            if (item.limit > 0) {
+                const limitEl = itemEl.querySelector('.item-limit');
+                if (limitEl) {
+                    limitEl.textContent = `残り${remaining}回`;
+                }
+            }
         });
     }
 
@@ -3211,6 +3261,8 @@ class UI {
             }
             this.showToast(`✨ ${item.name}を交換！\n${rewardText}を獲得！`);
             if (window.soundManager) window.soundManager.playChestOpen();
+            // 購入後は強制的に再レンダリング
+            this.towerShopRendered = false;
             this.renderTower();
             this.updateDisplay();
         }
