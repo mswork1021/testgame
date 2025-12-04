@@ -4879,3 +4879,238 @@ button:focus {
     background: rgba(248,113,113,0.1);
     border-radius: 8px;
 }
+
+/* ========================================
+   無限の塔
+   ======================================== */
+.tower-attempts {
+    font-size: 14px;
+    color: #60a5fa;
+}
+
+.tower-info-card {
+    background: linear-gradient(135deg, rgba(139,92,246,0.2) 0%, rgba(79,70,229,0.2) 100%);
+    border: 2px solid rgba(139,92,246,0.5);
+    border-radius: 16px;
+    padding: 20px;
+    margin: 10px 0;
+    text-align: center;
+}
+
+.tower-floor-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.floor-label {
+    font-size: 12px;
+    color: #a78bfa;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.floor-number {
+    font-size: 48px;
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 0 0 20px rgba(139,92,246,0.8);
+}
+
+.tower-max-floor {
+    font-size: 14px;
+    color: #888;
+    margin-top: 8px;
+}
+
+.tower-reward-preview {
+    background: rgba(30,30,40,0.8);
+    border-radius: 12px;
+    padding: 12px;
+    margin: 10px 0;
+}
+
+.tower-reward-preview h3 {
+    font-size: 14px;
+    color: #888;
+    margin-bottom: 8px;
+}
+
+.tower-rewards {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.reward-item {
+    font-size: 16px;
+    padding: 4px 12px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 20px;
+}
+
+/* タワーバトルエリア */
+.tower-battle-area {
+    background: linear-gradient(180deg, rgba(220,38,38,0.15) 0%, rgba(30,30,40,0.9) 100%);
+    border: 2px solid rgba(220,38,38,0.5);
+    border-radius: 16px;
+    padding: 16px;
+    margin: 10px 0;
+}
+
+.tower-boss-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.tower-boss-name {
+    font-size: 18px;
+    font-weight: bold;
+    color: #f87171;
+}
+
+.tower-timer {
+    font-size: 16px;
+    color: #fbbf24;
+    background: rgba(251,191,36,0.2);
+    padding: 4px 12px;
+    border-radius: 20px;
+}
+
+.tower-boss-hp-bar {
+    position: relative;
+    height: 24px;
+    background: rgba(0,0,0,0.5);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.tower-boss-hp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #dc2626 0%, #f87171 100%);
+    transition: width 0.1s ease;
+    width: 100%;
+}
+
+.tower-boss-hp-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12px;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 0 4px rgba(0,0,0,0.8);
+}
+
+.tower-boss-display {
+    width: 120px;
+    height: 120px;
+    margin: 10px auto;
+    cursor: pointer;
+    transition: transform 0.1s ease;
+}
+
+.tower-boss-display:active {
+    transform: scale(0.9);
+}
+
+.tower-boss-display svg {
+    width: 100%;
+    height: 100%;
+}
+
+/* タワーコントロール */
+.tower-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.tower-start-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px 24px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #fff;
+    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tower-start-btn:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 20px rgba(139,92,246,0.5);
+}
+
+.tower-start-btn:disabled {
+    background: #444;
+    color: #888;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.tower-start-btn .btn-icon {
+    font-size: 24px;
+}
+
+.tower-buy-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    font-size: 14px;
+    color: #fbbf24;
+    background: rgba(251,191,36,0.1);
+    border: 1px solid rgba(251,191,36,0.3);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tower-buy-btn:hover {
+    background: rgba(251,191,36,0.2);
+}
+
+.tower-buy-btn .cost {
+    font-weight: bold;
+}
+
+.tower-note {
+    text-align: center;
+    font-size: 11px;
+    color: #666;
+    margin-top: 16px;
+}
+
+/* 諦めるボタン */
+.btn-danger {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+    color: #888;
+    background: rgba(107,114,128,0.2);
+    border: 1px solid rgba(107,114,128,0.3);
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: all 0.2s ease;
+}
+
+.btn-danger:hover {
+    background: rgba(220,38,38,0.2);
+    border-color: rgba(220,38,38,0.5);
+    color: #f87171;
+}

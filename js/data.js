@@ -1633,6 +1633,43 @@ const GameData = {
                 icon: '📅'
             }
         ]
+    },
+
+    // 無限の塔
+    TOWER: {
+        // 基本設定
+        DAILY_ATTEMPTS: 3,           // 1日の無料挑戦回数
+        EXTRA_ATTEMPT_COST: 10,      // 追加挑戦のジェム消費
+        BOSS_TIME_LIMIT: 30,         // ボス戦の制限時間（秒）
+
+        // 階層ボーナス（10階ごと）
+        MILESTONE_FLOORS: [10, 25, 50, 100, 200],
+
+        // 報酬計算
+        getFloorReward(floor) {
+            const baseGold = 500 + (floor * 100);
+            const baseGems = floor % 10 === 0 ? Math.floor(floor / 10) * 5 : 0;
+            const baseSouls = floor >= 50 ? Math.floor(floor / 50) * 10 : 0;
+            return {
+                gold: baseGold,
+                gems: baseGems,
+                souls: baseSouls
+            };
+        },
+
+        // ボスHP計算（階層に応じて増加）
+        getBossHp(floor) {
+            return Math.floor(100 * Math.pow(1.15, floor - 1));
+        },
+
+        // ボス名生成
+        getBossName(floor) {
+            const prefixes = ['影の', '炎の', '氷の', '雷の', '闇の', '光の', '古代の', '魔王'];
+            const names = ['ゴーレム', 'ドラゴン', '魔獣', '死神', '巨人', '騎士', '魔導士', '帝王'];
+            const prefix = prefixes[Math.floor(floor / 10) % prefixes.length];
+            const name = names[Math.floor(floor / 5) % names.length];
+            return `${prefix}${name}`;
+        }
     }
 };
 

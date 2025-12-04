@@ -93,6 +93,18 @@ class Game {
                 purchasedPacks: {},       // { packId: true } 1回限定パック用
                 weeklyPassEnd: null,      // 週間パス終了日時
                 weeklyPassLastClaim: null // 週間パス最後の受取日
+            },
+
+            // 無限の塔
+            tower: {
+                currentFloor: 1,          // 現在の挑戦階層
+                maxFloor: 0,              // 最高到達階層
+                dailyAttempts: 3,         // 本日の残り挑戦回数
+                lastResetDate: null,      // 最後のリセット日
+                inProgress: false,        // 挑戦中フラグ
+                currentBossHp: 0,         // 現在のボスHP
+                currentBossMaxHp: 0,      // ボスの最大HP
+                timeLeft: 0               // 残り時間
             }
         };
 
@@ -121,6 +133,14 @@ class Game {
         this.onLuckyTimeStart = null;
         this.onLuckyTimeEnd = null;
         this.onLuckyTimeStockUpdate = null;  // ストック変化時
+
+        // タワーコールバック
+        this.onTowerBossDefeated = null;
+        this.onTowerBossFailed = null;
+        this.onTowerUpdate = null;
+
+        // タワータイマー
+        this.towerTimerId = null;
     }
 
     // ========================================
@@ -158,6 +178,21 @@ class Game {
             };
         }
         this.checkDailyMissionReset();
+
+        // タワー初期化
+        if (!this.state.tower) {
+            this.state.tower = {
+                currentFloor: 1,
+                maxFloor: 0,
+                dailyAttempts: GameData.TOWER.DAILY_ATTEMPTS,
+                lastResetDate: null,
+                inProgress: false,
+                currentBossHp: 0,
+                currentBossMaxHp: 0,
+                timeLeft: 0
+            };
+        }
+        this.checkTowerReset();
 
         // 最初のモンスター生成
         this.spawnMonster();
@@ -1992,6 +2027,202 @@ class Game {
     isSpecialPackPurchased(packId) {
         this.initShop();
         return this.state.shop.purchasedPacks[packId] === true;
+    }
+
+    // ========================================
+    // 無限の塔
+    // ========================================
+
+    // タワーの日次リセットチェック
+    checkTowerReset() {
+        const today = new Date().toDateString();
+        if (this.state.tower.lastResetDate !== today) {
+            this.state.tower.dailyAttempts = GameData.TOWER.DAILY_ATTEMPTS;
+            this.state.tower.lastResetDate = today;
+            return true;
+        }
+        return false;
+    }
+
+    // 挑戦可能かチェック
+    canStartTowerChallenge() {
+        if (this.state.tower.inProgress) return false;
+        return this.state.tower.dailyAttempts > 0;
+    }
+
+    // 追加挑戦可能かチェック（ジェム消費）
+    canBuyExtraAttempt() {
+        return this.state.gems >= GameData.TOWER.EXTRA_ATTEMPT_COST;
+    }
+
+    // 追加挑戦を購入
+    buyExtraAttempt() {
+        if (!this.canBuyExtraAttempt()) return false;
+        this.state.gems -= GameData.TOWER.EXTRA_ATTEMPT_COST;
+        this.state.tower.dailyAttempts++;
+        return true;
+    }
+
+    // タワー挑戦開始
+    startTowerChallenge() {
+        if (!this.canStartTowerChallenge()) return false;
+
+        this.state.tower.dailyAttempts--;
+        this.state.tower.inProgress = true;
+
+        // ボス生成
+        const floor = this.state.tower.currentFloor;
+        this.state.tower.currentBossMaxHp = GameData.TOWER.getBossHp(floor);
+        this.state.tower.currentBossHp = this.state.tower.currentBossMaxHp;
+        this.state.tower.timeLeft = GameData.TOWER.BOSS_TIME_LIMIT;
+
+        // タイマー開始
+        this.startTowerTimer();
+
+        return true;
+    }
+
+    // タワータイマー開始
+    startTowerTimer() {
+        this.stopTowerTimer();
+        this.towerTimerId = setInterval(() => {
+            this.towerTick();
+        }, 100);
+    }
+
+    // タワータイマー停止
+    stopTowerTimer() {
+        if (this.towerTimerId) {
+            clearInterval(this.towerTimerId);
+            this.towerTimerId = null;
+        }
+    }
+
+    // タワーのtick処理
+    towerTick() {
+        if (!this.state.tower.inProgress) {
+            this.stopTowerTimer();
+            return;
+        }
+
+        // 時間減少
+        this.state.tower.timeLeft -= 0.1;
+
+        // DPSダメージ適用
+        const dps = this.getTotalDPS();
+        if (dps > 0) {
+            this.attackTowerBoss(dps * 0.1);
+        }
+
+        // タイムアウトチェック
+        if (this.state.tower.timeLeft <= 0) {
+            this.failTowerBoss();
+        }
+
+        // UI更新
+        if (this.onTowerUpdate) {
+            this.onTowerUpdate();
+        }
+    }
+
+    // タワーボスへのダメージ
+    attackTowerBoss(damage) {
+        if (!this.state.tower.inProgress) return;
+
+        this.state.tower.currentBossHp -= damage;
+
+        if (this.state.tower.currentBossHp <= 0) {
+            this.defeatTowerBoss();
+        }
+    }
+
+    // タワーボスへのタップダメージ
+    tapTowerBoss() {
+        if (!this.state.tower.inProgress) return;
+
+        const damage = this.getTapDamage();
+        const isCritical = this.rollCritical();
+        const finalDamage = isCritical ? damage * (this.getCriticalDamage() / 100) : damage;
+
+        this.attackTowerBoss(finalDamage);
+
+        // タップカウント
+        this.state.totalTaps++;
+        this.updateDailyMissionProgress('tap', 1);
+    }
+
+    // タワーボス撃破
+    defeatTowerBoss() {
+        this.stopTowerTimer();
+        this.state.tower.inProgress = false;
+
+        const floor = this.state.tower.currentFloor;
+        const reward = GameData.TOWER.getFloorReward(floor);
+
+        // 報酬付与
+        this.state.gold += reward.gold;
+        this.state.totalGoldEarned += reward.gold;
+        if (reward.gems > 0) {
+            this.state.gems += reward.gems;
+        }
+        if (reward.souls > 0) {
+            this.state.souls += reward.souls;
+        }
+
+        // 最高階層更新
+        if (floor > this.state.tower.maxFloor) {
+            this.state.tower.maxFloor = floor;
+        }
+
+        // 次の階層へ
+        this.state.tower.currentFloor++;
+
+        // コールバック
+        if (this.onTowerBossDefeated) {
+            this.onTowerBossDefeated(floor, reward);
+        }
+
+        return reward;
+    }
+
+    // タワーボス失敗
+    failTowerBoss() {
+        this.stopTowerTimer();
+        this.state.tower.inProgress = false;
+
+        const floor = this.state.tower.currentFloor;
+
+        // コールバック
+        if (this.onTowerBossFailed) {
+            this.onTowerBossFailed(floor);
+        }
+    }
+
+    // 挑戦を諦める
+    abandonTowerChallenge() {
+        if (!this.state.tower.inProgress) return false;
+        this.failTowerBoss();
+        return true;
+    }
+
+    // 現在のタワーボス名を取得
+    getTowerBossName() {
+        return GameData.TOWER.getBossName(this.state.tower.currentFloor);
+    }
+
+    // タワー情報を取得
+    getTowerInfo() {
+        return {
+            currentFloor: this.state.tower.currentFloor,
+            maxFloor: this.state.tower.maxFloor,
+            dailyAttempts: this.state.tower.dailyAttempts,
+            inProgress: this.state.tower.inProgress,
+            currentBossHp: this.state.tower.currentBossHp,
+            currentBossMaxHp: this.state.tower.currentBossMaxHp,
+            timeLeft: this.state.tower.timeLeft,
+            bossName: this.getTowerBossName(),
+            nextReward: GameData.TOWER.getFloorReward(this.state.tower.currentFloor)
+        };
     }
 }
 
