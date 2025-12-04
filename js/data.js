@@ -296,11 +296,11 @@ const GameData = {
         }
     ],
 
-    // ヒーロー（タップダメージ強化）
+    // 型（タップダメージ強化）
     HEROES: [
         {
             id: 'warrior',
-            name: '戦士',
+            name: '剣術修行',
             emoji: '⚔️',
             baseDamage: 1,
             baseCost: 10,
@@ -308,7 +308,7 @@ const GameData = {
         },
         {
             id: 'archer',
-            name: '弓使い',
+            name: '弓術修行',
             emoji: '🏹',
             baseDamage: 5,
             baseCost: 100,
@@ -316,23 +316,23 @@ const GameData = {
         },
         {
             id: 'mage',
-            name: '魔法使い',
-            emoji: '🧙',
+            name: '魔術修行',
+            emoji: '🔮',
             baseDamage: 25,
             baseCost: 1000,
             description: 'タップダメージ +{damage}'
         },
         {
             id: 'knight',
-            name: '騎士',
-            emoji: '🛡️',
+            name: '武道修行',
+            emoji: '🥋',
             baseDamage: 100,
             baseCost: 10000,
             description: 'タップダメージ +{damage}'
         },
         {
             id: 'ninja',
-            name: '忍者',
+            name: '忍術修行',
             emoji: '🥷',
             baseDamage: 400,
             baseCost: 100000,
@@ -340,35 +340,35 @@ const GameData = {
         }
     ],
 
-    // 仲間（自動DPS）
+    // 秘技（自動DPS）
     COMPANIONS: [
         {
             id: 'squire',
-            name: '従者',
-            emoji: '👦',
+            name: '気功',
+            emoji: '🌀',
             baseDps: 1,
             baseCost: 50,
             description: '自動DPS +{dps}'
         },
         {
             id: 'wolf',
-            name: 'オオカミ',
-            emoji: '🐕',
+            name: '練気',
+            emoji: '💨',
             baseDps: 5,
             baseCost: 500,
             description: '自動DPS +{dps}'
         },
         {
             id: 'golem',
-            name: 'ゴーレム',
-            emoji: '🤖',
+            name: '剛力',
+            emoji: '💪',
             baseDps: 25,
             baseCost: 5000,
             description: '自動DPS +{dps}'
         },
         {
             id: 'dragon',
-            name: 'ドラゴン',
+            name: '龍撃',
             emoji: '🐲',
             baseDps: 100,
             baseCost: 50000,
@@ -376,7 +376,7 @@ const GameData = {
         },
         {
             id: 'phoenix',
-            name: 'フェニックス',
+            name: '不死鳥',
             emoji: '🔥',
             baseDps: 400,
             baseCost: 500000,

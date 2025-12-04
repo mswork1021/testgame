@@ -908,7 +908,7 @@ class UI {
     renderHeroes() {
         if (!this.elements.heroesList) return;
 
-        let html = '<h3 style="margin-bottom: 8px; color: #b8b8b8;">タップダメージ強化</h3>';
+        let html = '<h3 style="margin-bottom: 8px; color: #b8b8b8;">🥋 型（タップ強化）</h3>';
 
         // ヒーロー
         GameData.HEROES.forEach(hero => {
@@ -931,7 +931,7 @@ class UI {
             `;
         });
 
-        html += '<h3 style="margin: 16px 0 8px; color: #b8b8b8;">自動攻撃仲間</h3>';
+        html += '<h3 style="margin: 16px 0 8px; color: #b8b8b8;">🌀 秘技（自動DPS）</h3>';
 
         // 仲間
         GameData.COMPANIONS.forEach(comp => {
@@ -1345,7 +1345,7 @@ class UI {
 
         const souls = this.game.getPendingSouls();
         const skillPoints = this.game.getPendingSkillPoints();
-        if (confirm(`転生しますか？\n\n獲得ソウル: ${this.formatNumber(souls)}\n獲得スキルポイント: ${skillPoints}\n\n※ゴールド、ヒーロー、仲間がリセットされます`)) {
+        if (confirm(`転生しますか？\n\n獲得ソウル: ${this.formatNumber(souls)}\n獲得スキルポイント: ${skillPoints}\n\n※ゴールド、修行、秘技がリセットされます`)) {
             const gained = this.game.rebirth();
 
             // 転生音
