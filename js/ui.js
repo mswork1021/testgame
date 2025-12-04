@@ -954,6 +954,11 @@ class UI {
         if (this.currentTab === 'missions') {
             this.renderMissions();
         }
+
+        // 塔タブがアクティブなら再描画
+        if (this.currentTab === 'tower') {
+            this.renderTower();
+        }
     }
 
     // ========================================
@@ -3180,7 +3185,31 @@ class UI {
         const result = this.game.purchaseTowerShopItem(itemId);
         if (result.success) {
             const item = result.item;
-            this.showToast(`🏅 ${item.name}を獲得！`);
+            // より分かりやすいメッセージ
+            let rewardText = '';
+            switch (item.reward.type) {
+                case 'gold':
+                    rewardText = `💰${this.formatNumber(item.reward.amount)}ゴールド`;
+                    break;
+                case 'gems':
+                    rewardText = `💎${item.reward.amount}ジェム`;
+                    break;
+                case 'souls':
+                    rewardText = `👻${item.reward.amount}ソウル`;
+                    break;
+                case 'lucky':
+                    rewardText = 'ラッキータイム+1ストック';
+                    break;
+                case 'summon':
+                    rewardText = '💎5ジェム（召喚1回分）';
+                    break;
+                case 'buff':
+                    rewardText = item.desc;
+                    break;
+                default:
+                    rewardText = item.desc;
+            }
+            this.showToast(`✨ ${item.name}を交換！\n${rewardText}を獲得！`);
             if (window.soundManager) window.soundManager.playChestOpen();
             this.renderTower();
             this.updateDisplay();
