@@ -105,6 +105,19 @@ class Game {
                 currentBossHp: 0,         // 現在のボスHP
                 currentBossMaxHp: 0,      // ボスの最大HP
                 timeLeft: 0               // 残り時間
+            },
+
+            // 塔メダル（専用通貨）
+            towerMedals: 0,
+
+            // 塔交換所購入履歴
+            towerShopPurchases: {},  // { itemId: count }
+
+            // 塔バフ（永続効果）
+            towerBuffs: {
+                tapDamage: 0,   // タップダメージ+%
+                dps: 0,         // DPS+%
+                goldBonus: 0    // ゴールド獲得+%
             }
         };
 
@@ -670,6 +683,9 @@ class Game {
             multiplier *= tapMultiplier;
         }
 
+        // 塔バフ: タップダメージ%
+        multiplier += this.getTowerBuff('tapDamage') / 100;
+
         return Math.floor(baseDamage * multiplier);
     }
 
@@ -705,6 +721,9 @@ class Game {
 
         // スキルツリー: 全攻撃力%
         multiplier += this.getSkillTreeEffect('allDamagePercent') / 100;
+
+        // 塔バフ: DPS%
+        multiplier += this.getTowerBuff('dps') / 100;
 
         return Math.floor(baseDps * multiplier);
     }
@@ -875,6 +894,9 @@ class Game {
         if (this.isLuckyTimeActive()) {
             multiplier *= 2;
         }
+
+        // 塔バフ: ゴールド獲得%
+        multiplier += this.getTowerBuff('goldBonus') / 100;
 
         return multiplier;
     }
@@ -2159,15 +2181,9 @@ class Game {
         const floor = this.state.tower.currentFloor;
         const reward = GameData.TOWER.getFloorReward(floor);
 
-        // 報酬付与
-        this.state.gold += reward.gold;
-        this.state.totalGoldEarned += reward.gold;
-        if (reward.gems > 0) {
-            this.state.gems += reward.gems;
-        }
-        if (reward.souls > 0) {
-            this.state.souls += reward.souls;
-        }
+        // メダル付与
+        if (!this.state.towerMedals) this.state.towerMedals = 0;
+        this.state.towerMedals += reward.medals;
 
         // 最高階層更新
         if (floor > this.state.tower.maxFloor) {
@@ -2221,8 +2237,101 @@ class Game {
             currentBossMaxHp: this.state.tower.currentBossMaxHp,
             timeLeft: this.state.tower.timeLeft,
             bossName: this.getTowerBossName(),
-            nextReward: GameData.TOWER.getFloorReward(this.state.tower.currentFloor)
+            nextReward: GameData.TOWER.getFloorReward(this.state.tower.currentFloor),
+            medals: this.state.towerMedals || 0
         };
+    }
+
+    // ========================================
+    // 塔交換所
+    // ========================================
+
+    // 塔交換所の初期化
+    initTowerShop() {
+        if (!this.state.towerMedals) this.state.towerMedals = 0;
+        if (!this.state.towerShopPurchases) this.state.towerShopPurchases = {};
+        if (!this.state.towerBuffs) {
+            this.state.towerBuffs = { tapDamage: 0, dps: 0, goldBonus: 0 };
+        }
+    }
+
+    // アイテム購入可能チェック
+    canPurchaseTowerShopItem(itemId) {
+        this.initTowerShop();
+        const item = GameData.TOWER_SHOP.find(i => i.id === itemId);
+        if (!item) return false;
+
+        // メダル足りるか
+        if (this.state.towerMedals < item.cost) return false;
+
+        // 購入制限チェック
+        if (item.limit > 0) {
+            const purchased = this.state.towerShopPurchases[itemId] || 0;
+            if (purchased >= item.limit) return false;
+        }
+
+        return true;
+    }
+
+    // アイテム購入
+    purchaseTowerShopItem(itemId) {
+        if (!this.canPurchaseTowerShopItem(itemId)) return { success: false };
+
+        const item = GameData.TOWER_SHOP.find(i => i.id === itemId);
+
+        // メダル消費
+        this.state.towerMedals -= item.cost;
+
+        // 購入回数記録
+        if (!this.state.towerShopPurchases[itemId]) {
+            this.state.towerShopPurchases[itemId] = 0;
+        }
+        this.state.towerShopPurchases[itemId]++;
+
+        // 報酬付与
+        const reward = item.reward;
+        switch (reward.type) {
+            case 'gold':
+                this.state.gold += reward.amount;
+                break;
+            case 'gems':
+                this.state.gems += reward.amount;
+                break;
+            case 'souls':
+                this.state.souls += reward.amount;
+                break;
+            case 'lucky':
+                this.state.luckyTimeStock = (this.state.luckyTimeStock || 0) + reward.amount;
+                break;
+            case 'summon':
+                // 召喚チケット（ジェム相当として追加）
+                this.state.gems += 5 * reward.amount;
+                break;
+            case 'buff':
+                // 永続バフ
+                if (!this.state.towerBuffs) {
+                    this.state.towerBuffs = { tapDamage: 0, dps: 0, goldBonus: 0 };
+                }
+                this.state.towerBuffs[reward.stat] += reward.amount;
+                break;
+        }
+
+        return { success: true, item, reward };
+    }
+
+    // アイテムの残り購入回数を取得
+    getTowerShopItemRemaining(itemId) {
+        this.initTowerShop();
+        const item = GameData.TOWER_SHOP.find(i => i.id === itemId);
+        if (!item || item.limit < 0) return -1; // 無制限
+        const purchased = this.state.towerShopPurchases[itemId] || 0;
+        return item.limit - purchased;
+    }
+
+    // 塔バフを取得
+    getTowerBuff(type) {
+        this.initTowerShop();
+        return this.state.towerBuffs[type] || 0;
     }
 }
 

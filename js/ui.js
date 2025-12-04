@@ -160,20 +160,17 @@ class UI {
         this.elements.gemPacksList = document.getElementById('gem-packs-list');
 
         // タワー
+        this.elements.towerMedals = document.getElementById('tower-medals');
         this.elements.towerAttempts = document.getElementById('tower-attempts');
         this.elements.towerCurrentFloor = document.getElementById('tower-current-floor');
         this.elements.towerMaxFloor = document.getElementById('tower-max-floor');
         this.elements.towerNextReward = document.getElementById('tower-next-reward');
         this.elements.towerBattleArea = document.getElementById('tower-battle-area');
-        this.elements.towerBossName = document.getElementById('tower-boss-name');
-        this.elements.towerTimeLeft = document.getElementById('tower-time-left');
-        this.elements.towerBossHpFill = document.getElementById('tower-boss-hp-fill');
-        this.elements.towerBossHpText = document.getElementById('tower-boss-hp-text');
-        this.elements.towerBossDisplay = document.getElementById('tower-boss-display');
         this.elements.towerControls = document.getElementById('tower-controls');
         this.elements.towerStartBtn = document.getElementById('tower-start-btn');
         this.elements.towerBuyAttemptBtn = document.getElementById('tower-buy-attempt-btn');
         this.elements.towerAbandonBtn = document.getElementById('tower-abandon-btn');
+        this.elements.towerShopList = document.getElementById('tower-shop-list');
     }
 
     bindEvents() {
@@ -435,7 +432,12 @@ class UI {
                 this.initSoundSettings();
             }
 
-            this.game.tap();
+            // タワーモード中はタワーボスを攻撃
+            if (this.game.state.tower && this.game.state.tower.inProgress) {
+                this.game.tapTowerBoss();
+            } else {
+                this.game.tap();
+            }
 
             // コンボカウント更新
             this.comboCount = (this.comboCount || 0) + 1;
@@ -848,19 +850,45 @@ class UI {
         this.elements.soulsDisplay.textContent = this.formatNumber(this.game.state.souls);
         this.elements.gemsDisplay.textContent = this.formatNumber(this.game.state.gems);
 
-        // ステージ
-        const isBoss = this.game.isBossFight;
-        const stageText = isBoss
-            ? `⚔️ BOSS - ステージ ${this.game.state.currentStage}`
-            : `ステージ ${this.game.state.currentStage}`;
-        this.elements.stageDisplay.textContent = stageText;
+        // タワーモードチェック
+        const inTowerMode = this.game.state.tower && this.game.state.tower.inProgress;
 
-        // 進捗バー
-        const progress = (this.game.state.monstersKilled / GameData.BALANCE.MONSTERS_PER_STAGE) * 100;
-        this.elements.stageProgress.style.width = progress + '%';
+        // ステージ表示
+        if (inTowerMode) {
+            const towerInfo = this.game.getTowerInfo();
+            this.elements.stageDisplay.textContent = `🗼 無限の塔 ${towerInfo.currentFloor}F`;
+            this.elements.stageProgress.style.width = '100%';
+        } else {
+            const isBoss = this.game.isBossFight;
+            const stageText = isBoss
+                ? `⚔️ BOSS - ステージ ${this.game.state.currentStage}`
+                : `ステージ ${this.game.state.currentStage}`;
+            this.elements.stageDisplay.textContent = stageText;
+            const progress = (this.game.state.monstersKilled / GameData.BALANCE.MONSTERS_PER_STAGE) * 100;
+            this.elements.stageProgress.style.width = progress + '%';
+        }
 
-        // モンスター情報
-        if (this.game.currentMonster) {
+        // モンスター情報（タワーモード対応）
+        if (inTowerMode) {
+            const towerInfo = this.game.getTowerInfo();
+            // タワーボスを表示
+            const bossIndex = (towerInfo.currentFloor - 1) % GameData.BOSSES.length;
+            const boss = GameData.BOSSES[bossIndex];
+            this.elements.monsterEmoji.innerHTML = boss.svg;
+            this.elements.monsterName.innerHTML = `<span class="boss-name">${towerInfo.bossName}</span>`;
+            this.elements.monster.className = 'monster boss tower-boss';
+            this.elements.monster.style.setProperty('--monster-color', '#8b5cf6');
+
+            const hpPercent = Math.max(0, (towerInfo.currentBossHp / towerInfo.currentBossMaxHp) * 100);
+            this.elements.monsterHpFill.style.width = hpPercent + '%';
+            this.elements.monsterHpText.textContent =
+                this.formatNumber(Math.max(0, Math.ceil(towerInfo.currentBossHp))) + '/' +
+                this.formatNumber(towerInfo.currentBossMaxHp);
+
+            // タワーボスタイマー
+            this.elements.bossTimer.classList.remove('hidden');
+            this.elements.bossTimeLeft.textContent = Math.ceil(towerInfo.timeLeft);
+        } else if (this.game.currentMonster) {
             const monster = this.game.currentMonster;
             // SVGモンスターを表示
             this.elements.monsterEmoji.innerHTML = monster.svg;
@@ -887,14 +915,14 @@ class UI {
             this.elements.monsterHpText.textContent =
                 this.formatNumber(Math.max(0, Math.ceil(monster.currentHp))) + '/' +
                 this.formatNumber(monster.maxHp);
-        }
 
-        // ボスタイマー
-        if (this.game.isBossFight && this.game.bossTimeLeft > 0) {
-            this.elements.bossTimer.classList.remove('hidden');
-            this.elements.bossTimeLeft.textContent = Math.ceil(this.game.bossTimeLeft);
-        } else {
-            this.elements.bossTimer.classList.add('hidden');
+            // 通常ボスタイマー
+            if (this.game.isBossFight && this.game.bossTimeLeft > 0) {
+                this.elements.bossTimer.classList.remove('hidden');
+                this.elements.bossTimeLeft.textContent = Math.ceil(this.game.bossTimeLeft);
+            } else {
+                this.elements.bossTimer.classList.add('hidden');
+            }
         }
 
         // DPS
@@ -920,6 +948,11 @@ class UI {
         // ヒーロータブがアクティブなら再描画（常に実行）
         if (this.currentTab === 'heroes') {
             this.renderHeroes();
+        }
+
+        // 任務タブがアクティブなら再描画
+        if (this.currentTab === 'missions') {
+            this.renderMissions();
         }
     }
 
@@ -3046,6 +3079,11 @@ class UI {
     renderTower() {
         const info = this.game.getTowerInfo();
 
+        // メダル表示
+        if (this.elements.towerMedals) {
+            this.elements.towerMedals.textContent = this.formatNumber(info.medals);
+        }
+
         // 挑戦回数
         if (this.elements.towerAttempts) {
             this.elements.towerAttempts.textContent = info.dailyAttempts;
@@ -3064,21 +3102,14 @@ class UI {
         // 次の報酬
         if (this.elements.towerNextReward) {
             const reward = info.nextReward;
-            let rewardHtml = `<span class="reward-item">💰 ${reward.gold}</span>`;
-            if (reward.gems > 0) {
-                rewardHtml += `<span class="reward-item">💎 ${reward.gems}</span>`;
-            }
-            if (reward.souls > 0) {
-                rewardHtml += `<span class="reward-item">👻 ${reward.souls}</span>`;
-            }
+            let rewardHtml = `<span class="reward-item">🏅 ${reward.medals}</span>`;
             this.elements.towerNextReward.innerHTML = rewardHtml;
         }
 
-        // バトルエリアと操作パネルの表示切替
+        // 挑戦中は「上のバトル画面をタップ！」を表示
         if (info.inProgress) {
             this.elements.towerBattleArea?.classList.remove('hidden');
             this.elements.towerControls?.classList.add('hidden');
-            this.updateTowerBattle();
         } else {
             this.elements.towerBattleArea?.classList.add('hidden');
             this.elements.towerControls?.classList.remove('hidden');
@@ -3092,6 +3123,67 @@ class UI {
         // 追加挑戦ボタンの状態
         if (this.elements.towerBuyAttemptBtn) {
             this.elements.towerBuyAttemptBtn.disabled = !this.game.canBuyExtraAttempt();
+        }
+
+        // 塔交換所をレンダリング
+        this.renderTowerShop();
+    }
+
+    // 塔交換所レンダリング
+    renderTowerShop() {
+        if (!this.elements.towerShopList) return;
+
+        const medals = this.game.state.towerMedals || 0;
+        let html = '';
+
+        GameData.TOWER_SHOP.forEach(item => {
+            const remaining = this.game.getTowerShopItemRemaining(item.id);
+            const canBuy = this.game.canPurchaseTowerShopItem(item.id);
+            const isSoldOut = item.limit > 0 && remaining <= 0;
+
+            let limitText = '';
+            if (item.limit > 0) {
+                limitText = `残り${remaining}回`;
+            }
+
+            html += `
+                <div class="tower-shop-item ${isSoldOut ? 'sold-out' : ''}">
+                    <span class="item-icon">${item.icon}</span>
+                    <div class="item-info">
+                        <div class="item-name">${item.name}</div>
+                        <div class="item-desc">${item.desc}</div>
+                        ${limitText ? `<div class="item-limit">${limitText}</div>` : ''}
+                    </div>
+                    <span class="item-cost">🏅 ${item.cost}</span>
+                    <button class="btn-exchange"
+                            data-item-id="${item.id}"
+                            ${canBuy ? '' : 'disabled'}>
+                        ${isSoldOut ? '売切' : '交換'}
+                    </button>
+                </div>
+            `;
+        });
+
+        this.elements.towerShopList.innerHTML = html;
+
+        // イベントバインド
+        this.elements.towerShopList.querySelectorAll('.btn-exchange').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const itemId = e.target.dataset.itemId;
+                this.onTowerShopPurchase(itemId);
+            });
+        });
+    }
+
+    // 塔交換所購入
+    onTowerShopPurchase(itemId) {
+        const result = this.game.purchaseTowerShopItem(itemId);
+        if (result.success) {
+            const item = result.item;
+            this.showToast(`🏅 ${item.name}を獲得！`);
+            if (window.soundManager) window.soundManager.playChestOpen();
+            this.renderTower();
+            this.updateDisplay();
         }
     }
 
@@ -3129,17 +3221,12 @@ class UI {
 
     onTowerStart() {
         if (this.game.startTowerChallenge()) {
-            this.showToast(`⚔️ ${this.game.getTowerInfo().currentFloor}Fに挑戦！`);
+            const info = this.game.getTowerInfo();
+            this.showToast(`⚔️ ${info.currentFloor}Fに挑戦！`);
             if (window.soundManager) window.soundManager.playChestOpen();
 
-            // ボスSVGをセット
-            const info = this.game.getTowerInfo();
-            const bossIndex = (info.currentFloor - 1) % GameData.BOSSES.length;
-            const boss = GameData.BOSSES[bossIndex];
-            if (this.elements.towerBossDisplay) {
-                this.elements.towerBossDisplay.innerHTML = boss.svg;
-            }
-
+            // メイン画面を即座に更新（タワーボスを表示）
+            this.updateDisplay();
             this.renderTower();
         }
     }
@@ -3158,6 +3245,7 @@ class UI {
     onTowerAbandon() {
         if (confirm('挑戦を諦めますか？')) {
             this.game.abandonTowerChallenge();
+            this.updateDisplay(); // メイン画面を通常モンスターに戻す
             this.renderTower();
         }
     }
@@ -3178,17 +3266,8 @@ class UI {
     }
 
     onTowerBossDefeated(floor, reward) {
-        let msg = `🎉 ${floor}F クリア！ 💰${reward.gold}`;
-        if (reward.gems > 0) msg += ` 💎${reward.gems}`;
-        if (reward.souls > 0) msg += ` 👻${reward.souls}`;
-
-        this.showToast(msg);
+        this.showToast(`🎉 ${floor}F クリア！ 🏅${reward.medals}メダル獲得！`);
         if (window.soundManager) window.soundManager.playLevelUp();
-
-        // ボスSVGをクリア（次回再セット用）
-        if (this.elements.towerBossDisplay) {
-            this.elements.towerBossDisplay.innerHTML = '';
-        }
 
         this.renderTower();
         this.updateDisplay();
