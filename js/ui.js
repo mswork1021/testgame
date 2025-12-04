@@ -133,6 +133,18 @@ class UI {
         this.elements.summonResultModal = document.getElementById('summon-result-modal');
         this.elements.summonResultDisplay = document.getElementById('summon-result-display');
         this.elements.closeSummonResult = document.getElementById('close-summon-result');
+
+        // キャラ詳細モーダル
+        this.elements.heroDetailModal = document.getElementById('hero-detail-modal');
+        this.elements.heroDetailImage = document.getElementById('hero-detail-image');
+        this.elements.heroDetailName = document.getElementById('hero-detail-name');
+        this.elements.heroDetailStars = document.getElementById('hero-detail-stars');
+        this.elements.heroDetailLevel = document.getElementById('hero-detail-level');
+        this.elements.heroDetailDesc = document.getElementById('hero-detail-desc');
+        this.elements.heroDetailStats = document.getElementById('hero-detail-stats');
+        this.elements.heroDetailDupe = document.getElementById('hero-detail-dupe');
+        this.elements.heroBattleToggle = document.getElementById('hero-battle-toggle');
+        this.elements.closeHeroDetail = document.getElementById('close-hero-detail');
     }
 
     bindEvents() {
@@ -261,6 +273,16 @@ class UI {
         if (this.elements.closeSummonResult) {
             addTouchAndClick(this.elements.closeSummonResult, () => this.closeSummonResultModal());
         }
+
+        // キャラ詳細モーダル
+        if (this.elements.closeHeroDetail) {
+            addTouchAndClick(this.elements.closeHeroDetail, () => this.closeHeroDetailModal());
+        }
+        if (this.elements.heroBattleToggle) {
+            this.elements.heroBattleToggle.addEventListener('change', (e) => {
+                this.onBattleToggleChange(e.target.checked);
+            });
+        }
     }
 
     setupGameCallbacks() {
@@ -322,6 +344,11 @@ class UI {
         // ラッキータイムストック更新
         this.game.onLuckyTimeStockUpdate = (stock) => {
             this.updateLuckyTimeStockIndicator();
+        };
+
+        // 仲間攻撃エフェクト
+        this.game.onHeroAttack = () => {
+            this.triggerHeroAttackEffects();
         };
     }
 
@@ -2259,11 +2286,13 @@ class UI {
             const rarityClass = hero.rarity.toLowerCase();
 
             if (owned) {
+                const inBattle = this.game.isHeroInBattle(hero.id);
                 html += `
-                    <div class="hero-card ${rarityClass}" data-hero-id="${hero.id}">
+                    <div class="hero-card ${rarityClass}${inBattle ? ' in-battle' : ''}" data-hero-id="${hero.id}">
                         ${this.getHeroImageHtml(hero)}
                         <span class="hero-card-level">Lv.${owned.level}</span>
                         <span class="hero-card-stars">${this.getRarityStars(hero.rarity)}</span>
+                        ${inBattle ? '<span class="battle-indicator">⚔</span>' : ''}
                     </div>
                 `;
             } else {
@@ -2272,39 +2301,48 @@ class UI {
         });
 
         this.elements.ownedHeroesList.innerHTML = html;
+
+        // タップイベントをバインド
+        this.elements.ownedHeroesList.querySelectorAll('.hero-card[data-hero-id]').forEach(card => {
+            card.addEventListener('click', (e) => {
+                this.showHeroDetailModal(card.dataset.heroId);
+            });
+            card.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                this.showHeroDetailModal(card.dataset.heroId);
+            });
+        });
     }
 
     renderBattleHeroes() {
         if (!this.elements.summonedHeroesLeft || !this.elements.summonedHeroesRight) return;
 
-        const ownedHeroes = this.game.getOwnedHeroes();
-        if (ownedHeroes.length === 0) {
+        // バトルに選択されたキャラを取得
+        const battleHeroes = this.game.getBattleHeroes();
+        if (battleHeroes.length === 0) {
             this.elements.summonedHeroesLeft.innerHTML = '';
             this.elements.summonedHeroesRight.innerHTML = '';
             return;
         }
 
-        // レアリティでソート（高い順）
-        const rarityOrder = ['LEGENDARY', 'EPIC', 'RARE', 'UNCOMMON', 'COMMON'];
-        ownedHeroes.sort((a, b) => rarityOrder.indexOf(a.rarity) - rarityOrder.indexOf(b.rarity));
-
         // 左右に分配（最大各3体）
-        const leftHeroes = ownedHeroes.filter((_, i) => i % 2 === 0).slice(0, 3);
-        const rightHeroes = ownedHeroes.filter((_, i) => i % 2 === 1).slice(0, 3);
+        const leftHeroes = battleHeroes.filter((_, i) => i % 2 === 0).slice(0, 3);
+        const rightHeroes = battleHeroes.filter((_, i) => i % 2 === 1).slice(0, 3);
 
         this.elements.summonedHeroesLeft.innerHTML = leftHeroes.map(hero =>
-            this.getBattleHeroHtml(hero)
+            this.getBattleHeroHtml(hero, 'left')
         ).join('');
 
         this.elements.summonedHeroesRight.innerHTML = rightHeroes.map(hero =>
-            this.getBattleHeroHtml(hero)
+            this.getBattleHeroHtml(hero, 'right')
         ).join('');
     }
 
-    getBattleHeroHtml(hero) {
+    getBattleHeroHtml(hero, side = 'left') {
         const rarityClass = hero.rarity.toLowerCase();
+        const dps = this.game.getHeroDPS(hero.id);
         return `
-            <div class="battle-hero ${rarityClass}" title="${hero.name} Lv.${hero.level}">
+            <div class="battle-hero ${rarityClass}" data-hero-id="${hero.id}" data-side="${side}" title="${hero.name} Lv.${hero.level} (DPS: ${dps})">
                 ${this.getHeroImageHtml(hero, true)}
             </div>
         `;
@@ -2388,6 +2426,202 @@ class UI {
         if (this.elements.summonResultModal) {
             this.elements.summonResultModal.classList.add('hidden');
         }
+    }
+
+    // ========================================
+    // キャラ詳細モーダル
+    // ========================================
+
+    showHeroDetailModal(heroId) {
+        if (!this.elements.heroDetailModal) return;
+
+        const hero = GameData.SUMMON_HEROES.find(h => h.id === heroId);
+        if (!hero) return;
+
+        const ownedHeroes = this.game.getOwnedHeroes();
+        const owned = ownedHeroes.find(h => h.id === heroId);
+        if (!owned) return;
+
+        this.currentDetailHeroId = heroId;
+
+        // 画像
+        if (this.elements.heroDetailImage) {
+            this.elements.heroDetailImage.innerHTML = `
+                <div class="hero-detail-placeholder" style="background-color: ${hero.color}">
+                    ${hero.name.charAt(0)}
+                </div>
+            `;
+        }
+
+        // 名前
+        if (this.elements.heroDetailName) {
+            this.elements.heroDetailName.textContent = hero.name;
+        }
+
+        // レアリティ（星）
+        if (this.elements.heroDetailStars) {
+            this.elements.heroDetailStars.textContent = this.getRarityStars(hero.rarity);
+            this.elements.heroDetailStars.className = `hero-detail-stars ${hero.rarity.toLowerCase()}`;
+        }
+
+        // レベル
+        if (this.elements.heroDetailLevel) {
+            this.elements.heroDetailLevel.textContent = `Lv.${owned.level}`;
+        }
+
+        // 説明
+        if (this.elements.heroDetailDesc) {
+            this.elements.heroDetailDesc.textContent = this.getHeroDescription(hero);
+        }
+
+        // ステータス
+        if (this.elements.heroDetailStats) {
+            const dps = this.game.getHeroDPS(heroId);
+            const effectValue = hero.effect.baseValue + (hero.effect.perLevel * (owned.level - 1));
+            this.elements.heroDetailStats.innerHTML = `
+                <div class="stat-row">
+                    <span class="stat-label">DPS</span>
+                    <span class="stat-value">${this.formatNumber(dps)}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">${this.getEffectLabel(hero.effect.type)}</span>
+                    <span class="stat-value">+${effectValue}${hero.effect.type.includes('Rate') || hero.effect.type.includes('Percent') ? '%' : ''}</span>
+                </div>
+            `;
+        }
+
+        // 重複説明
+        if (this.elements.heroDetailDupe) {
+            const nextLevelBonus = hero.effect.perLevel;
+            this.elements.heroDetailDupe.innerHTML = `
+                <p>同じキャラを召喚すると...</p>
+                <ul>
+                    <li>レベルが+1上昇</li>
+                    <li>DPSが増加</li>
+                    <li>${this.getEffectLabel(hero.effect.type)}が+${nextLevelBonus}上昇</li>
+                </ul>
+            `;
+        }
+
+        // バトル参加チェックボックス
+        if (this.elements.heroBattleToggle) {
+            this.elements.heroBattleToggle.checked = this.game.isHeroInBattle(heroId);
+        }
+
+        this.elements.heroDetailModal.classList.remove('hidden');
+    }
+
+    closeHeroDetailModal() {
+        if (this.elements.heroDetailModal) {
+            this.elements.heroDetailModal.classList.add('hidden');
+        }
+        this.currentDetailHeroId = null;
+    }
+
+    onBattleToggleChange(isChecked) {
+        if (!this.currentDetailHeroId) return;
+
+        const result = this.game.toggleBattleHero(this.currentDetailHeroId);
+
+        if (result === false && isChecked) {
+            // 最大6体を超えた
+            this.showToast('バトルに参加できるのは最大6体までです');
+            this.elements.heroBattleToggle.checked = false;
+        }
+
+        // UI更新
+        this.renderOwnedHeroes();
+        this.renderBattleHeroes();
+        this.updateTotalDps();
+    }
+
+    getHeroDescription(hero) {
+        const descriptions = {
+            'novice_swordsman': '基本的な剣術を習得した見習い戦士。確実なダメージを与える。',
+            'apprentice_mage': '魔法の基礎を学び始めた若き魔道士。魔力で攻撃する。',
+            'young_archer': '弓矢の扱いに長けた若き射手。遠距離から敵を狙う。',
+            'village_healer': '村の傷を癒す癒し手。回復の心を持つ。',
+            'wandering_thief': '旅を続ける義賊。素早い動きで敵を翻弄する。',
+            'forest_scout': '森に住む斥候。自然の力を借りて戦う。',
+            'battle_knight': '戦場を駆ける騎士。強力な攻撃で敵を打ち砕く。',
+            'fire_sorceress': '炎を操る魔女。燃え盛る魔法で敵を焼き尽くす。',
+            'shadow_assassin': '影に潜む暗殺者。確実に急所を突く。',
+            'holy_priest': '神聖な力を持つ神官。光の力で味方を導く。',
+            'dragon_warrior': '竜の力を宿す戦士。伝説の力で敵を圧倒する。',
+            'archmage': '究極の魔法を極めし大魔道士。全てを滅する魔力を持つ。',
+            'celestial_guardian': '天界から降りし守護者。神の力で全てを守護する。'
+        };
+        return descriptions[hero.id] || '謎に包まれた冒険者。';
+    }
+
+    getEffectLabel(effectType) {
+        const labels = {
+            'tapDamage': 'タップダメージ',
+            'critRate': 'クリティカル率',
+            'critDamage': 'クリティカルダメージ',
+            'goldBonus': 'ゴールドボーナス',
+            'dpsBonus': 'DPSボーナス'
+        };
+        return labels[effectType] || effectType;
+    }
+
+    // ========================================
+    // 仲間攻撃エフェクト
+    // ========================================
+
+    triggerHeroAttackEffects() {
+        // バトル画面の仲間にランダムで攻撃エフェクトを発動
+        const battleHeroes = document.querySelectorAll('.battle-hero');
+        if (battleHeroes.length === 0) return;
+
+        // ランダムに1体選んで攻撃させる
+        const randomHero = battleHeroes[Math.floor(Math.random() * battleHeroes.length)];
+        const side = randomHero.dataset.side;
+
+        randomHero.classList.add('attacking');
+        randomHero.classList.add(side === 'left' ? 'attack-left' : 'attack-right');
+
+        // 攻撃エフェクトのパーティクル
+        this.showHeroAttackParticle(randomHero, side);
+
+        setTimeout(() => {
+            randomHero.classList.remove('attacking', 'attack-left', 'attack-right');
+        }, 300);
+    }
+
+    showHeroAttackParticle(heroElement, side) {
+        const rect = heroElement.getBoundingClientRect();
+        const battleRect = this.elements.battleArea.getBoundingClientRect();
+
+        const particle = document.createElement('div');
+        particle.className = 'hero-attack-particle';
+
+        // パーティクルの開始位置
+        const startX = rect.left - battleRect.left + rect.width / 2;
+        const startY = rect.top - battleRect.top + rect.height / 2;
+
+        // モンスターへ向かう方向
+        const targetX = side === 'left' ? startX + 80 : startX - 80;
+        const targetY = startY - 20;
+
+        particle.style.left = startX + 'px';
+        particle.style.top = startY + 'px';
+        particle.style.setProperty('--target-x', (targetX - startX) + 'px');
+        particle.style.setProperty('--target-y', (targetY - startY) + 'px');
+
+        this.elements.battleArea.appendChild(particle);
+        setTimeout(() => particle.remove(), 400);
+    }
+
+    // DPS更新時に攻撃エフェクトをトリガー
+    updateTotalDps() {
+        if (!this.elements.totalDps) return;
+
+        const baseDps = this.game.calculateTotalDPS();
+        const summonDps = this.game.getSummonHeroesDPS();
+        const totalDps = baseDps + summonDps;
+
+        this.elements.totalDps.textContent = this.formatNumber(totalDps) + '/秒';
     }
 }
 

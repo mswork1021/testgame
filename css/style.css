@@ -3802,16 +3802,20 @@ button:focus {
 
 .banner-title {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 24px;
+    font-size: 22px;
     color: #ffd700;
     text-shadow: 0 0 20px rgba(255,215,0,0.5);
-    letter-spacing: 4px;
+    letter-spacing: 2px;
     margin-bottom: 12px;
+    position: relative;
+    z-index: 2;
 }
 
 .banner-rates {
     display: flex;
     justify-content: center;
+    position: relative;
+    z-index: 2;
     flex-wrap: wrap;
     gap: 8px;
 }
@@ -3956,15 +3960,15 @@ button:focus {
 .owned-heroes-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
+    gap: 6px;
     padding: 0 8px 12px;
-    max-height: 200px;
+    max-height: 180px;
     overflow-y: auto;
 }
 
 /* キャラカード */
 .hero-card {
-    aspect-ratio: 1;
+    min-height: 70px;
     border-radius: 8px;
     display: flex;
     flex-direction: column;
@@ -3974,6 +3978,7 @@ button:focus {
     overflow: hidden;
     cursor: pointer;
     transition: transform 0.2s ease;
+    padding: 4px;
 }
 
 .hero-card:active {
@@ -4212,3 +4217,241 @@ button:focus {
     0% { transform: scale(0.8); opacity: 0; }
     100% { transform: scale(1); opacity: 1; }
 }
+
+/* キャラ詳細モーダル */
+.hero-detail-content {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border: 2px solid #ffd700;
+    max-width: 320px;
+    padding: 16px;
+}
+
+.hero-detail-header {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.hero-detail-image {
+    width: 80px;
+    height: 80px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    font-weight: bold;
+    color: #fff;
+}
+
+.hero-detail-info h2 {
+    margin: 0 0 4px 0;
+    font-size: 18px;
+}
+
+.hero-detail-stars {
+    color: #ffd700;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.hero-detail-level {
+    font-size: 14px;
+    color: #ffd700;
+    font-weight: bold;
+}
+
+.hero-detail-description {
+    font-size: 12px;
+    color: #aaa;
+    margin: 0 0 12px 0;
+    font-style: italic;
+}
+
+.hero-detail-stats {
+    background: rgba(0,0,0,0.3);
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 12px;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+}
+
+.stat-label {
+    color: #888;
+}
+
+.stat-value {
+    color: #4ade80;
+    font-weight: bold;
+}
+
+.hero-detail-dupe-info {
+    background: rgba(255,215,0,0.1);
+    border: 1px solid rgba(255,215,0,0.3);
+    border-radius: 8px;
+    padding: 8px;
+    margin-bottom: 12px;
+}
+
+.hero-detail-dupe-info p {
+    margin: 0;
+    font-size: 11px;
+    color: #ffd700;
+}
+
+.hero-detail-battle-toggle {
+    margin-bottom: 12px;
+    padding: 8px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 8px;
+}
+
+.hero-detail-battle-toggle label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.hero-detail-battle-toggle input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: #ffd700;
+}
+
+/* 攻撃エフェクト */
+.hero-attack-effect {
+    position: absolute;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.attack-slash {
+    width: 40px;
+    height: 40px;
+    background: radial-gradient(ellipse at center, rgba(255,255,255,0.8) 0%, rgba(255,200,100,0.5) 40%, transparent 70%);
+    border-radius: 50%;
+    animation: attackFlash 0.3s ease-out forwards;
+}
+
+@keyframes attackFlash {
+    0% { transform: scale(0.5); opacity: 1; }
+    100% { transform: scale(1.5); opacity: 0; }
+}
+
+.battle-hero.attacking {
+    animation: heroAttack 0.3s ease-out;
+}
+
+@keyframes heroAttack {
+    0% { transform: translateX(0); }
+    30% { transform: translateX(10px); }
+    100% { transform: translateX(0); }
+}
+
+.battle-hero.left.attacking {
+    animation: heroAttackLeft 0.3s ease-out;
+}
+
+@keyframes heroAttackLeft {
+    0% { transform: translateX(0); }
+    30% { transform: translateX(15px); }
+    100% { transform: translateX(0); }
+}
+
+.battle-hero.right.attacking {
+    animation: heroAttackRight 0.3s ease-out;
+}
+
+@keyframes heroAttackRight {
+    0% { transform: translateX(0); }
+    30% { transform: translateX(-15px); }
+    100% { transform: translateX(0); }
+}
+
+/* 攻撃エフェクト - 方向別 */
+.battle-hero.attack-left {
+    animation: heroAttackLeft 0.3s ease-out;
+}
+
+.battle-hero.attack-right {
+    animation: heroAttackRight 0.3s ease-out;
+}
+
+/* 攻撃パーティクル */
+.hero-attack-particle {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: radial-gradient(circle, rgba(255,200,50,1) 0%, rgba(255,100,50,0.8) 50%, transparent 100%);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 100;
+    animation: attackParticle 0.4s ease-out forwards;
+}
+
+@keyframes attackParticle {
+    0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--target-x), var(--target-y)) scale(0.3);
+        opacity: 0;
+    }
+}
+
+/* バトル参加インジケーター */
+.hero-card.in-battle {
+    border: 2px solid #4ade80;
+    box-shadow: 0 0 8px rgba(74,222,128,0.5);
+}
+
+.battle-indicator {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    font-size: 10px;
+    color: #4ade80;
+    text-shadow: 0 0 4px rgba(0,0,0,0.8);
+}
+
+/* キャラ詳細プレースホルダー */
+.hero-detail-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    font-weight: bold;
+    color: #fff;
+    border-radius: 12px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+/* キャラ詳細の重複情報リスト */
+.hero-detail-dupe-info ul {
+    margin: 8px 0 0 0;
+    padding-left: 16px;
+    font-size: 11px;
+    color: #ccc;
+}
+
+.hero-detail-dupe-info li {
+    margin: 4px 0;
+}
+
+/* レアリティ別の星色 */
+.hero-detail-stars.common { color: #9ca3af; }
+.hero-detail-stars.uncommon { color: #22c55e; }
+.hero-detail-stars.rare { color: #3b82f6; }
+.hero-detail-stars.epic { color: #a855f7; }
+.hero-detail-stars.legendary { color: #fbbf24; text-shadow: 0 0 8px rgba(251,191,36,0.5); }

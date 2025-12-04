@@ -77,7 +77,8 @@ class Game {
 
             // 召喚システム
             summonedHeroes: {},  // { heroId: level }
-            gachaPityCount: 0    // 天井カウンター
+            gachaPityCount: 0,   // 天井カウンター
+            battleHeroes: []     // バトル画面に表示するキャラID（最大6体）
         };
 
         // 現在のモンスター
@@ -163,6 +164,13 @@ class Game {
         const dps = this.getTotalDPS();
         if (dps > 0 && this.currentMonster) {
             this.dealDamage(dps * deltaTime, false);
+
+            // 攻撃エフェクト（0.5秒ごと）
+            this.attackEffectTimer = (this.attackEffectTimer || 0) + deltaTime;
+            if (this.attackEffectTimer >= 0.5 && this.getBattleHeroesDPS() > 0) {
+                this.attackEffectTimer = 0;
+                if (this.onHeroAttack) this.onHeroAttack();
+            }
         }
 
         // スキルエフェクト更新
@@ -612,6 +620,9 @@ class Game {
             baseDps += comp.baseDps * level;
         });
 
+        // 召喚キャラのDPS（バトル参加キャラのみ）
+        baseDps += this.getBattleHeroesDPS();
+
         // パーセントボーナス適用
         let multiplier = 1;
 
@@ -634,6 +645,17 @@ class Game {
         multiplier += this.getSkillTreeEffect('allDamagePercent') / 100;
 
         return Math.floor(baseDps * multiplier);
+    }
+
+    // バトル参加キャラのDPS合計
+    getBattleHeroesDPS() {
+        if (!this.state.battleHeroes || this.state.battleHeroes.length === 0) return 0;
+
+        let totalDps = 0;
+        this.state.battleHeroes.forEach(heroId => {
+            totalDps += this.getHeroDPS(heroId);
+        });
+        return totalDps;
     }
 
     // ========================================
@@ -1600,6 +1622,87 @@ class Game {
     // 召喚キャラ数を取得
     getOwnedHeroCount() {
         return Object.keys(this.state.summonedHeroes).length;
+    }
+
+    // 召喚キャラのDPS合計を取得
+    getSummonHeroesDPS() {
+        let totalDps = 0;
+        for (const heroId in this.state.summonedHeroes) {
+            const hero = GameData.SUMMON_HEROES.find(h => h.id === heroId);
+            if (hero) {
+                const level = this.state.summonedHeroes[heroId];
+                // レアリティに応じた基礎DPS
+                const baseDps = this.getHeroBaseDPS(hero.rarity);
+                // レベルで増加（レベル1で基礎、レベルごとに20%増加）
+                totalDps += baseDps * (1 + (level - 1) * 0.2);
+            }
+        }
+        return Math.floor(totalDps);
+    }
+
+    // レアリティ別基礎DPS
+    getHeroBaseDPS(rarity) {
+        const dpsTable = {
+            'COMMON': 5,
+            'UNCOMMON': 15,
+            'RARE': 40,
+            'EPIC': 100,
+            'LEGENDARY': 300
+        };
+        return dpsTable[rarity] || 5;
+    }
+
+    // 特定キャラのDPSを取得
+    getHeroDPS(heroId) {
+        const hero = GameData.SUMMON_HEROES.find(h => h.id === heroId);
+        if (!hero) return 0;
+        const level = this.state.summonedHeroes[heroId] || 0;
+        if (level === 0) return 0;
+        const baseDps = this.getHeroBaseDPS(hero.rarity);
+        return Math.floor(baseDps * (1 + (level - 1) * 0.2));
+    }
+
+    // バトル画面に表示するキャラを切り替え
+    toggleBattleHero(heroId) {
+        if (!this.state.battleHeroes) this.state.battleHeroes = [];
+
+        const index = this.state.battleHeroes.indexOf(heroId);
+        if (index >= 0) {
+            // 既に入っている場合は削除
+            this.state.battleHeroes.splice(index, 1);
+            return false;
+        } else {
+            // 最大6体まで
+            if (this.state.battleHeroes.length >= 6) {
+                return null; // 最大数に達している
+            }
+            this.state.battleHeroes.push(heroId);
+            return true;
+        }
+    }
+
+    // バトル画面に表示するキャラ一覧を取得
+    getBattleHeroes() {
+        if (!this.state.battleHeroes) this.state.battleHeroes = [];
+
+        return this.state.battleHeroes
+            .map(heroId => {
+                const hero = GameData.SUMMON_HEROES.find(h => h.id === heroId);
+                if (hero && this.state.summonedHeroes[heroId]) {
+                    return {
+                        ...hero,
+                        level: this.state.summonedHeroes[heroId]
+                    };
+                }
+                return null;
+            })
+            .filter(h => h !== null);
+    }
+
+    // キャラがバトル画面に表示されているか
+    isHeroInBattle(heroId) {
+        if (!this.state.battleHeroes) return false;
+        return this.state.battleHeroes.includes(heroId);
     }
 }
 
