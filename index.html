@@ -298,6 +298,33 @@
             </div>
         </div>
 
+        <!-- キャラ詳細モーダル -->
+        <div id="hero-detail-modal" class="modal hidden">
+            <div class="modal-content hero-detail-content">
+                <div id="hero-detail-header" class="hero-detail-header">
+                    <div id="hero-detail-image" class="hero-detail-image"></div>
+                    <div class="hero-detail-info">
+                        <h2 id="hero-detail-name">キャラ名</h2>
+                        <div id="hero-detail-stars" class="hero-detail-stars">★</div>
+                        <div id="hero-detail-level" class="hero-detail-level">Lv.1</div>
+                    </div>
+                </div>
+                <p id="hero-detail-desc" class="hero-detail-description">説明文</p>
+                <div id="hero-detail-stats" class="hero-detail-stats">
+                    <!-- 動的に生成 -->
+                </div>
+                <div id="hero-detail-dupe" class="hero-detail-dupe-info">
+                    <!-- 動的に生成 -->
+                </div>
+                <div class="hero-detail-battle-toggle">
+                    <label>
+                        <input type="checkbox" id="hero-battle-toggle"> バトル画面に表示 (最大6体)
+                    </label>
+                </div>
+                <button id="close-hero-detail" class="btn-primary">閉じる</button>
+            </div>
+        </div>
+
         <!-- オフライン報酬モーダル -->
         <div id="offline-modal" class="modal hidden">
             <div class="modal-content">
