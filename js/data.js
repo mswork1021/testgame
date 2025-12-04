@@ -1550,6 +1550,89 @@ const GameData = {
         type: 'gems',
         amount: 20,
         icon: '🎁'
+    },
+
+    // ショップ商品
+    SHOP: {
+        // ジェムパック
+        GEM_PACKS: [
+            {
+                id: 'gems_100',
+                name: '少量ジェム',
+                gems: 100,
+                price: 120,
+                bonus: 0,
+                icon: '💎'
+            },
+            {
+                id: 'gems_500',
+                name: 'お得パック',
+                gems: 500,
+                price: 480,
+                bonus: 50,
+                popular: true,
+                icon: '💎💎'
+            },
+            {
+                id: 'gems_1200',
+                name: '大量パック',
+                gems: 1200,
+                price: 960,
+                bonus: 200,
+                bestValue: true,
+                icon: '💎💎💎'
+            },
+            {
+                id: 'gems_3000',
+                name: '超大量パック',
+                gems: 3000,
+                price: 1840,
+                bonus: 600,
+                icon: '👑'
+            }
+        ],
+        // 特別パック（1回限定）
+        SPECIAL_PACKS: [
+            {
+                id: 'starter_pack',
+                name: '初心者パック',
+                description: 'お得なスターターセット！',
+                price: 160,
+                oneTime: true,
+                contents: [
+                    { type: 'gems', amount: 300 },
+                    { type: 'gold', amount: 10000 },
+                    { type: 'summonTicket', amount: 3 }
+                ],
+                icon: '🎁'
+            },
+            {
+                id: 'growth_pack',
+                name: '成長パック',
+                description: '強くなりたい方に！',
+                price: 480,
+                oneTime: true,
+                contents: [
+                    { type: 'gems', amount: 800 },
+                    { type: 'souls', amount: 100 },
+                    { type: 'summonTicket', amount: 5 }
+                ],
+                icon: '🚀'
+            }
+        ],
+        // 週間パック
+        WEEKLY_PACKS: [
+            {
+                id: 'weekly_gems',
+                name: '週間ジェムパス',
+                description: '7日間、毎日50ジェム！',
+                price: 320,
+                dailyGems: 50,
+                duration: 7,
+                totalGems: 350,
+                icon: '📅'
+            }
+        ]
     }
 };
 

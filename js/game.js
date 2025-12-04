@@ -86,6 +86,13 @@ class Game {
                 progress: {},             // { missionId: currentProgress }
                 claimed: {},              // { missionId: true }
                 allClaimedBonus: false    // 全クリアボーナス受取済み
+            },
+
+            // ショップ購入履歴
+            shop: {
+                purchasedPacks: {},       // { packId: true } 1回限定パック用
+                weeklyPassEnd: null,      // 週間パス終了日時
+                weeklyPassLastClaim: null // 週間パス最後の受取日
             }
         };
 
@@ -1851,6 +1858,140 @@ class Game {
     // 完了済みミッション数を取得
     getCompletedDailyMissionCount() {
         return GameData.DAILY_MISSIONS.filter(m => this.isDailyMissionClaimed(m.id)).length;
+    }
+
+    // ========================================
+    // ショップ
+    // ========================================
+
+    // ショップ初期化
+    initShop() {
+        if (!this.state.shop) {
+            this.state.shop = {
+                purchasedPacks: {},
+                weeklyPassEnd: null,
+                weeklyPassLastClaim: null
+            };
+        }
+    }
+
+    // ジェムパック購入（モック - 実際の課金なし）
+    purchaseGemPack(packId) {
+        const pack = GameData.SHOP.GEM_PACKS.find(p => p.id === packId);
+        if (!pack) return null;
+
+        // モック：実際には課金処理をここに入れる
+        // 今は直接ジェムを付与
+        const totalGems = pack.gems + (pack.bonus || 0);
+        this.state.gems += totalGems;
+
+        return {
+            success: true,
+            gems: totalGems,
+            pack: pack
+        };
+    }
+
+    // 特別パック購入
+    purchaseSpecialPack(packId) {
+        this.initShop();
+        const pack = GameData.SHOP.SPECIAL_PACKS.find(p => p.id === packId);
+        if (!pack) return null;
+
+        // 1回限定チェック
+        if (pack.oneTime && this.state.shop.purchasedPacks[packId]) {
+            return { success: false, reason: 'already_purchased' };
+        }
+
+        // モック：実際には課金処理をここに入れる
+        // パック内容を付与
+        pack.contents.forEach(item => {
+            this.giveReward(item);
+        });
+
+        // 1回限定なら記録
+        if (pack.oneTime) {
+            this.state.shop.purchasedPacks[packId] = true;
+        }
+
+        return {
+            success: true,
+            contents: pack.contents,
+            pack: pack
+        };
+    }
+
+    // 週間パス購入
+    purchaseWeeklyPass(packId) {
+        this.initShop();
+        const pack = GameData.SHOP.WEEKLY_PACKS.find(p => p.id === packId);
+        if (!pack) return null;
+
+        // 既にアクティブかチェック
+        if (this.isWeeklyPassActive()) {
+            return { success: false, reason: 'already_active' };
+        }
+
+        // モック：実際には課金処理をここに入れる
+        // パス開始
+        const now = Date.now();
+        this.state.shop.weeklyPassEnd = now + (pack.duration * 24 * 60 * 60 * 1000);
+        this.state.shop.weeklyPassLastClaim = null;
+
+        // 初日分を即時付与
+        this.claimWeeklyPassDaily();
+
+        return {
+            success: true,
+            pack: pack
+        };
+    }
+
+    // 週間パスがアクティブか
+    isWeeklyPassActive() {
+        this.initShop();
+        return this.state.shop.weeklyPassEnd && Date.now() < this.state.shop.weeklyPassEnd;
+    }
+
+    // 週間パスの今日分を受け取れるか
+    canClaimWeeklyPassDaily() {
+        if (!this.isWeeklyPassActive()) return false;
+
+        const lastClaim = this.state.shop.weeklyPassLastClaim;
+        if (!lastClaim) return true;
+
+        const today = new Date().toDateString();
+        const lastClaimDate = new Date(lastClaim).toDateString();
+        return today !== lastClaimDate;
+    }
+
+    // 週間パスの今日分を受け取る
+    claimWeeklyPassDaily() {
+        if (!this.canClaimWeeklyPassDaily()) return null;
+
+        const pack = GameData.SHOP.WEEKLY_PACKS[0];
+        if (!pack) return null;
+
+        this.state.gems += pack.dailyGems;
+        this.state.shop.weeklyPassLastClaim = Date.now();
+
+        return {
+            success: true,
+            gems: pack.dailyGems
+        };
+    }
+
+    // 週間パスの残り日数
+    getWeeklyPassDaysLeft() {
+        if (!this.isWeeklyPassActive()) return 0;
+        const msLeft = this.state.shop.weeklyPassEnd - Date.now();
+        return Math.ceil(msLeft / (24 * 60 * 60 * 1000));
+    }
+
+    // 特別パックが購入済みか
+    isSpecialPackPurchased(packId) {
+        this.initShop();
+        return this.state.shop.purchasedPacks[packId] === true;
     }
 }
 

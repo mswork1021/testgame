@@ -152,6 +152,12 @@ class UI {
         this.elements.missionsTotal = document.getElementById('missions-total');
         this.elements.missionsBonus = document.getElementById('missions-bonus');
         this.elements.claimAllBonus = document.getElementById('claim-all-bonus');
+
+        // ショップ
+        this.elements.shopGemsDisplay = document.getElementById('shop-gems-display');
+        this.elements.weeklyPassContent = document.getElementById('weekly-pass-content');
+        this.elements.specialPacksList = document.getElementById('special-packs-list');
+        this.elements.gemPacksList = document.getElementById('gem-packs-list');
     }
 
     bindEvents() {
@@ -1274,6 +1280,7 @@ class UI {
         if (tabId === 'collection') this.renderCollection();
         if (tabId === 'rebirth') this.renderAchievements();
         if (tabId === 'missions') this.renderMissions();
+        if (tabId === 'shop') this.renderShop();
     }
 
     // ========================================
@@ -2755,6 +2762,227 @@ class UI {
             this.renderMissions();
             this.updateDisplay();
         }
+    }
+
+    // ========================================
+    // ショップ
+    // ========================================
+
+    renderShop() {
+        // ジェム表示更新
+        if (this.elements.shopGemsDisplay) {
+            this.elements.shopGemsDisplay.textContent = this.formatNumber(this.game.state.gems);
+        }
+
+        // 週間パス
+        this.renderWeeklyPass();
+
+        // 特別パック
+        this.renderSpecialPacks();
+
+        // ジェムパック
+        this.renderGemPacks();
+    }
+
+    renderWeeklyPass() {
+        if (!this.elements.weeklyPassContent) return;
+
+        const pack = GameData.SHOP.WEEKLY_PACKS[0];
+        if (!pack) return;
+
+        const isActive = this.game.isWeeklyPassActive();
+        const canClaim = this.game.canClaimWeeklyPassDaily();
+        const daysLeft = this.game.getWeeklyPassDaysLeft();
+
+        let html = `<div class="weekly-pass-card">`;
+
+        if (isActive) {
+            html += `
+                <div class="weekly-pass-header">
+                    <span class="weekly-pass-title">${pack.icon} ${pack.name}</span>
+                    <span class="weekly-pass-status">アクティブ</span>
+                </div>
+                <div class="weekly-pass-info">
+                    <span class="weekly-pass-reward">毎日 💎 ${pack.dailyGems}</span>
+                    <span class="weekly-pass-days">残り ${daysLeft} 日</span>
+                </div>
+                <button class="btn-claim-daily" ${!canClaim ? 'disabled' : ''} data-action="claim-daily">
+                    ${canClaim ? '今日分を受け取る' : '受取済み'}
+                </button>
+            `;
+        } else {
+            html += `
+                <div class="weekly-pass-header">
+                    <span class="weekly-pass-title">${pack.icon} ${pack.name}</span>
+                    <span class="weekly-pass-status inactive">未購入</span>
+                </div>
+                <div class="weekly-pass-info">
+                    <span class="weekly-pass-reward">${pack.duration}日間で 💎 ${pack.totalGems}</span>
+                    <span class="weekly-pass-days">${pack.description}</span>
+                </div>
+                <button class="btn-purchase" data-pack-type="weekly" data-pack-id="${pack.id}">
+                    ¥${pack.price} で購入
+                </button>
+            `;
+        }
+
+        html += `</div>`;
+        this.elements.weeklyPassContent.innerHTML = html;
+
+        // イベントバインド
+        this.bindShopButtons(this.elements.weeklyPassContent);
+    }
+
+    renderSpecialPacks() {
+        if (!this.elements.specialPacksList) return;
+
+        let html = '';
+        GameData.SHOP.SPECIAL_PACKS.forEach(pack => {
+            const isPurchased = this.game.isSpecialPackPurchased(pack.id);
+            const itemClass = isPurchased ? 'shop-item purchased' : 'shop-item';
+
+            const contentsText = pack.contents.map(c => {
+                const icon = c.type === 'gems' ? '💎' : c.type === 'gold' ? '💰' : c.type === 'souls' ? '👻' : '🎫';
+                return `${icon}${c.amount}`;
+            }).join(' + ');
+
+            html += `
+                <div class="${itemClass}" data-pack-id="${pack.id}">
+                    ${pack.oneTime ? '<span class="shop-item-badge">1回限定</span>' : ''}
+                    <div class="shop-item-icon">${pack.icon}</div>
+                    <div class="shop-item-name">${pack.name}</div>
+                    <div class="shop-item-contents">${contentsText}</div>
+                    <button class="btn-purchase ${isPurchased ? 'purchased' : ''}"
+                            data-pack-type="special" data-pack-id="${pack.id}"
+                            ${isPurchased ? 'disabled' : ''}>
+                        ${isPurchased ? '購入済み' : `¥${pack.price}`}
+                    </button>
+                </div>
+            `;
+        });
+
+        this.elements.specialPacksList.innerHTML = html;
+        this.bindShopButtons(this.elements.specialPacksList);
+    }
+
+    renderGemPacks() {
+        if (!this.elements.gemPacksList) return;
+
+        let html = '';
+        GameData.SHOP.GEM_PACKS.forEach(pack => {
+            const itemClass = pack.popular ? 'shop-item popular' : (pack.bestValue ? 'shop-item best-value' : 'shop-item');
+            const badge = pack.popular ? '<span class="shop-item-badge">人気</span>' :
+                          (pack.bestValue ? '<span class="shop-item-badge best">お得</span>' : '');
+            const totalGems = pack.gems + (pack.bonus || 0);
+
+            html += `
+                <div class="${itemClass}" data-pack-id="${pack.id}">
+                    ${badge}
+                    <div class="shop-item-icon">${pack.icon}</div>
+                    <div class="shop-item-name">${pack.name}</div>
+                    <div class="shop-item-amount">💎 ${this.formatNumber(totalGems)}</div>
+                    ${pack.bonus > 0 ? `<div class="shop-item-bonus">+${pack.bonus} ボーナス!</div>` : ''}
+                    <button class="btn-purchase" data-pack-type="gems" data-pack-id="${pack.id}">
+                        ¥${pack.price}
+                    </button>
+                </div>
+            `;
+        });
+
+        this.elements.gemPacksList.innerHTML = html;
+        this.bindShopButtons(this.elements.gemPacksList);
+    }
+
+    bindShopButtons(container) {
+        const addTouchAndClick = (el, handler) => {
+            el.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                handler();
+            });
+            el.addEventListener('click', (e) => {
+                if (!e.defaultPrevented) handler();
+            });
+        };
+
+        // 購入ボタン
+        container.querySelectorAll('.btn-purchase').forEach(btn => {
+            if (btn.disabled) return;
+            const packType = btn.dataset.packType;
+            const packId = btn.dataset.packId;
+            addTouchAndClick(btn, () => this.onPurchase(packType, packId));
+        });
+
+        // 日次受取ボタン
+        container.querySelectorAll('.btn-claim-daily').forEach(btn => {
+            if (btn.disabled) return;
+            addTouchAndClick(btn, () => this.onClaimWeeklyPassDaily());
+        });
+    }
+
+    onPurchase(packType, packId) {
+        // 確認ダイアログ
+        const packName = this.getPackName(packType, packId);
+        if (!confirm(`「${packName}」を購入しますか？\n\n※テストモードのため実際の課金は発生しません`)) {
+            return;
+        }
+
+        let result;
+        switch (packType) {
+            case 'gems':
+                result = this.game.purchaseGemPack(packId);
+                if (result && result.success) {
+                    this.showToast(`💎 ${this.formatNumber(result.gems)} ジェム獲得！`);
+                }
+                break;
+            case 'special':
+                result = this.game.purchaseSpecialPack(packId);
+                if (result && result.success) {
+                    this.showToast(`🎁 ${packName} を獲得！`);
+                } else if (result && result.reason === 'already_purchased') {
+                    this.showToast('既に購入済みです');
+                }
+                break;
+            case 'weekly':
+                result = this.game.purchaseWeeklyPass(packId);
+                if (result && result.success) {
+                    this.showToast(`📅 週間パスを開始！`);
+                } else if (result && result.reason === 'already_active') {
+                    this.showToast('既にアクティブです');
+                }
+                break;
+        }
+
+        if (result && result.success) {
+            if (window.soundManager) window.soundManager.playChestOpen();
+            this.renderShop();
+            this.updateDisplay();
+        }
+    }
+
+    onClaimWeeklyPassDaily() {
+        const result = this.game.claimWeeklyPassDaily();
+        if (result && result.success) {
+            this.showToast(`💎 ${result.gems} ジェム獲得！（週間パス）`);
+            if (window.soundManager) window.soundManager.playChestOpen();
+            this.renderShop();
+            this.updateDisplay();
+        }
+    }
+
+    getPackName(packType, packId) {
+        let pack;
+        switch (packType) {
+            case 'gems':
+                pack = GameData.SHOP.GEM_PACKS.find(p => p.id === packId);
+                break;
+            case 'special':
+                pack = GameData.SHOP.SPECIAL_PACKS.find(p => p.id === packId);
+                break;
+            case 'weekly':
+                pack = GameData.SHOP.WEEKLY_PACKS.find(p => p.id === packId);
+                break;
+        }
+        return pack ? pack.name : packId;
     }
 }
 

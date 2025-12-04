@@ -99,6 +99,10 @@
                 <span class="nav-icon">📋</span>
                 <span class="nav-label">任務</span>
             </button>
+            <button class="nav-btn" data-tab="shop">
+                <span class="nav-icon">🛒</span>
+                <span class="nav-label">ショップ</span>
+            </button>
         </nav>
 
         <!-- タブパネル -->
@@ -318,6 +322,36 @@
                 </div>
 
                 <p class="missions-reset-note">※ 毎日0:00にリセットされます</p>
+            </div>
+
+            <!-- ショップタブ -->
+            <div id="shop-panel" class="tab-panel">
+                <div class="panel-header">
+                    <h2>🛒 ショップ</h2>
+                    <div class="shop-gems">
+                        💎 <span id="shop-gems-display">0</span>
+                    </div>
+                </div>
+
+                <!-- 週間パス -->
+                <div class="shop-section" id="weekly-pass-section">
+                    <h3>📅 週間パス</h3>
+                    <div id="weekly-pass-content"></div>
+                </div>
+
+                <!-- 特別パック -->
+                <div class="shop-section">
+                    <h3>🎁 特別パック</h3>
+                    <div id="special-packs-list" class="shop-packs-grid"></div>
+                </div>
+
+                <!-- ジェムパック -->
+                <div class="shop-section">
+                    <h3>💎 ジェム購入</h3>
+                    <div id="gem-packs-list" class="shop-packs-grid"></div>
+                </div>
+
+                <p class="shop-note">※ 現在テストモードです。実際の課金は発生しません。</p>
             </div>
         </div>
 
