@@ -43,6 +43,9 @@
                 <span id="boss-time-left">30</span>
             </div>
 
+            <!-- 召喚キャラ表示エリア（左） -->
+            <div id="summoned-heroes-left" class="summoned-heroes-side left"></div>
+
             <div id="monster-container">
                 <div id="monster-hp-bar">
                     <div id="monster-hp-fill"></div>
@@ -53,6 +56,9 @@
                 </div>
                 <div id="monster-name">スライム</div>
             </div>
+
+            <!-- 召喚キャラ表示エリア（右） -->
+            <div id="summoned-heroes-right" class="summoned-heroes-side right"></div>
 
             <div id="damage-numbers"></div>
             <div id="loot-popup" class="hidden"></div>
@@ -84,6 +90,10 @@
             <button class="nav-btn" data-tab="rebirth">
                 <span class="nav-icon">🔄</span>
                 <span class="nav-label">転生</span>
+            </button>
+            <button class="nav-btn" data-tab="summon">
+                <span class="nav-icon">🌟</span>
+                <span class="nav-label">召喚</span>
             </button>
         </nav>
 
@@ -224,6 +234,67 @@
                     </div>
                     <p class="save-note">※ 自動セーブ: 30秒ごと / ページ離脱時</p>
                 </div>
+            </div>
+
+            <!-- 召喚タブ -->
+            <div id="summon-panel" class="tab-panel">
+                <div class="panel-header summon-header">
+                    <h2>🌟 仲間召喚</h2>
+                    <div class="gems-display">💎 <span id="summon-gems">0</span></div>
+                </div>
+
+                <!-- 召喚バナー -->
+                <div class="summon-banner">
+                    <div class="banner-title">★ 仲間ガチャ ★</div>
+                    <div class="banner-rates">
+                        <span class="rate rate-common">★50%</span>
+                        <span class="rate rate-uncommon">★★30%</span>
+                        <span class="rate rate-rare">★★★14%</span>
+                        <span class="rate rate-epic">★★★★5%</span>
+                        <span class="rate rate-legendary">★★★★★1%</span>
+                    </div>
+                </div>
+
+                <!-- 天井カウンター -->
+                <div class="pity-counter">
+                    <div class="pity-info">
+                        <span>天井まで: <strong id="pity-count">0</strong>/100</span>
+                        <span class="pity-note">※100連で★★★★★確定</span>
+                    </div>
+                    <div class="pity-bar">
+                        <div id="pity-fill" class="pity-fill"></div>
+                    </div>
+                </div>
+
+                <!-- 召喚ボタン -->
+                <div class="summon-buttons">
+                    <button id="summon-single-btn" class="summon-btn single">
+                        <span class="summon-btn-title">単発召喚</span>
+                        <span class="summon-btn-cost">💎 5</span>
+                    </button>
+                    <button id="summon-multi-btn" class="summon-btn multi">
+                        <span class="summon-btn-title">10連召喚</span>
+                        <span class="summon-btn-cost">💎 45</span>
+                        <span class="summon-btn-bonus">+1回ボーナス!</span>
+                    </button>
+                </div>
+
+                <!-- 所持キャラ一覧 -->
+                <div class="owned-heroes-section">
+                    <div class="panel-header">
+                        <h3>所持キャラ</h3>
+                        <span id="owned-heroes-count">0/13</span>
+                    </div>
+                    <div id="owned-heroes-list" class="owned-heroes-grid"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 召喚結果モーダル -->
+        <div id="summon-result-modal" class="modal hidden">
+            <div class="modal-content summon-result-content">
+                <div id="summon-result-display" class="summon-result-display"></div>
+                <button id="close-summon-result" class="btn-primary">OK</button>
             </div>
         </div>
 

@@ -73,7 +73,11 @@ class Game {
             luckyTimeStock: 0,
 
             // 宝箱から獲得した未開封報酬（一括開封用）
-            pendingTreasureRewards: []
+            pendingTreasureRewards: [],
+
+            // 召喚システム
+            summonedHeroes: {},  // { heroId: level }
+            gachaPityCount: 0    // 天井カウンター
         };
 
         // 現在のモンスター
@@ -1453,6 +1457,149 @@ class Game {
         return this.state.unlockedAchievements.filter(
             id => !this.state.claimedAchievements.includes(id)
         ).length;
+    }
+
+    // ========================================
+    // 召喚システム
+    // ========================================
+
+    // 単発召喚
+    summonSingle() {
+        const cost = GameData.GACHA.SINGLE_COST;
+        if (this.state.gems < cost) return null;
+
+        this.state.gems -= cost;
+        const result = this.performSummon(1);
+        return result;
+    }
+
+    // 10連召喚
+    summonMulti() {
+        const cost = GameData.GACHA.MULTI_COST;
+        if (this.state.gems < cost) return null;
+
+        this.state.gems -= cost;
+        const result = this.performSummon(GameData.GACHA.MULTI_COUNT);
+        return result;
+    }
+
+    // 召喚実行
+    performSummon(count) {
+        const results = [];
+
+        for (let i = 0; i < count; i++) {
+            this.state.gachaPityCount++;
+            const hero = this.rollGacha();
+            const isNew = !this.state.summonedHeroes[hero.id];
+
+            if (isNew) {
+                this.state.summonedHeroes[hero.id] = 1;
+            } else {
+                this.state.summonedHeroes[hero.id]++;
+            }
+
+            results.push({
+                hero: hero,
+                isNew: isNew,
+                level: this.state.summonedHeroes[hero.id]
+            });
+
+            // 天井100でリセット
+            if (this.state.gachaPityCount >= GameData.GACHA.PITY_100) {
+                this.state.gachaPityCount = 0;
+            }
+        }
+
+        return results;
+    }
+
+    // ガチャを回す（レアリティ決定→キャラ決定）
+    rollGacha() {
+        let rarity = this.determineRarity();
+
+        // 天井チェック: 100連で★★★★★確定
+        if (this.state.gachaPityCount >= GameData.GACHA.PITY_100) {
+            rarity = 'LEGENDARY';
+        }
+        // 10連ごとに★★★以上確定
+        else if (this.state.gachaPityCount % GameData.GACHA.PITY_10 === 0 && this.state.gachaPityCount > 0) {
+            if (rarity === 'COMMON' || rarity === 'UNCOMMON') {
+                rarity = 'RARE';
+            }
+        }
+
+        // そのレアリティのキャラからランダム選択
+        const heroesOfRarity = GameData.SUMMON_HEROES.filter(h => h.rarity === rarity);
+        const hero = heroesOfRarity[Math.floor(Math.random() * heroesOfRarity.length)];
+
+        return hero;
+    }
+
+    // レアリティ決定
+    determineRarity() {
+        const roll = Math.random() * 100;
+        const rates = GameData.GACHA.RATES;
+
+        let cumulative = 0;
+        cumulative += rates.LEGENDARY;
+        if (roll < cumulative) return 'LEGENDARY';
+
+        cumulative += rates.EPIC;
+        if (roll < cumulative) return 'EPIC';
+
+        cumulative += rates.RARE;
+        if (roll < cumulative) return 'RARE';
+
+        cumulative += rates.UNCOMMON;
+        if (roll < cumulative) return 'UNCOMMON';
+
+        return 'COMMON';
+    }
+
+    // 所持キャラ一覧を取得
+    getOwnedHeroes() {
+        const owned = [];
+        for (const heroId in this.state.summonedHeroes) {
+            const hero = GameData.SUMMON_HEROES.find(h => h.id === heroId);
+            if (hero) {
+                owned.push({
+                    ...hero,
+                    level: this.state.summonedHeroes[heroId]
+                });
+            }
+        }
+        return owned;
+    }
+
+    // 召喚キャラからのボーナス計算
+    getSummonHeroBonus(effectType) {
+        let bonus = 0;
+        for (const heroId in this.state.summonedHeroes) {
+            const hero = GameData.SUMMON_HEROES.find(h => h.id === heroId);
+            if (hero && hero.effect.type === effectType) {
+                const level = this.state.summonedHeroes[heroId];
+                bonus += hero.effect.baseValue + (hero.effect.perLevel * (level - 1));
+            }
+        }
+        return bonus;
+    }
+
+    // 全ステータスボーナス（覇王など）
+    getAllStatsBonus() {
+        let bonus = 0;
+        for (const heroId in this.state.summonedHeroes) {
+            const hero = GameData.SUMMON_HEROES.find(h => h.id === heroId);
+            if (hero && hero.effect.type === 'allStats') {
+                const level = this.state.summonedHeroes[heroId];
+                bonus += hero.effect.baseValue + (hero.effect.perLevel * (level - 1));
+            }
+        }
+        return bonus;
+    }
+
+    // 召喚キャラ数を取得
+    getOwnedHeroCount() {
+        return Object.keys(this.state.summonedHeroes).length;
     }
 }
 

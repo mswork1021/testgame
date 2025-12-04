@@ -119,6 +119,20 @@ class UI {
         this.elements.unlockedAchievements = document.getElementById('unlocked-achievements');
         this.elements.totalAchievements = document.getElementById('total-achievements');
         this.elements.achievementsList = document.getElementById('achievements-list');
+
+        // 召喚システム
+        this.elements.summonGems = document.getElementById('summon-gems');
+        this.elements.pityCount = document.getElementById('pity-count');
+        this.elements.pityFill = document.getElementById('pity-fill');
+        this.elements.summonSingleBtn = document.getElementById('summon-single-btn');
+        this.elements.summonMultiBtn = document.getElementById('summon-multi-btn');
+        this.elements.ownedHeroesList = document.getElementById('owned-heroes-list');
+        this.elements.ownedHeroesCount = document.getElementById('owned-heroes-count');
+        this.elements.summonedHeroesLeft = document.getElementById('summoned-heroes-left');
+        this.elements.summonedHeroesRight = document.getElementById('summoned-heroes-right');
+        this.elements.summonResultModal = document.getElementById('summon-result-modal');
+        this.elements.summonResultDisplay = document.getElementById('summon-result-display');
+        this.elements.closeSummonResult = document.getElementById('close-summon-result');
     }
 
     bindEvents() {
@@ -236,6 +250,17 @@ class UI {
                 this.renderCollection();
             });
         });
+
+        // 召喚ボタン
+        if (this.elements.summonSingleBtn) {
+            addTouchAndClick(this.elements.summonSingleBtn, () => this.onSummonSingle());
+        }
+        if (this.elements.summonMultiBtn) {
+            addTouchAndClick(this.elements.summonMultiBtn, () => this.onSummonMulti());
+        }
+        if (this.elements.closeSummonResult) {
+            addTouchAndClick(this.elements.closeSummonResult, () => this.closeSummonResultModal());
+        }
     }
 
     setupGameCallbacks() {
@@ -811,6 +836,8 @@ class UI {
         try { this.renderInventory(); } catch(e) { console.error('renderInventory error:', e); }
         try { this.renderCollection(); } catch(e) { console.error('renderCollection error:', e); }
         try { this.renderAchievements(); } catch(e) { console.error('renderAchievements error:', e); }
+        try { this.renderSummonPanel(); } catch(e) { console.error('renderSummonPanel error:', e); }
+        try { this.renderBattleHeroes(); } catch(e) { console.error('renderBattleHeroes error:', e); }
         try { this.updateDisplay(); } catch(e) { console.error('updateDisplay error:', e); }
         // 宝箱・ラッキータイムストック表示
         try { this.updateTreasureChestIndicator(); } catch(e) { console.error('updateTreasureChestIndicator error:', e); }
@@ -2180,6 +2207,187 @@ class UI {
 
         muteBtn.textContent = window.soundManager.isMuted ? '🔇' : '🔊';
         muteBtn.classList.toggle('muted', window.soundManager.isMuted);
+    }
+
+    // ========================================
+    // 召喚システム
+    // ========================================
+
+    renderSummonPanel() {
+        // ジェム表示
+        if (this.elements.summonGems) {
+            this.elements.summonGems.textContent = this.formatNumber(this.game.state.gems);
+        }
+
+        // 天井カウンター
+        if (this.elements.pityCount) {
+            this.elements.pityCount.textContent = this.game.state.gachaPityCount || 0;
+        }
+        if (this.elements.pityFill) {
+            const pityPercent = ((this.game.state.gachaPityCount || 0) / GameData.GACHA.PITY_100) * 100;
+            this.elements.pityFill.style.width = `${pityPercent}%`;
+        }
+
+        // ボタン状態
+        if (this.elements.summonSingleBtn) {
+            this.elements.summonSingleBtn.disabled = this.game.state.gems < GameData.GACHA.SINGLE_COST;
+        }
+        if (this.elements.summonMultiBtn) {
+            this.elements.summonMultiBtn.disabled = this.game.state.gems < GameData.GACHA.MULTI_COST;
+        }
+
+        // 所持キャラ一覧
+        this.renderOwnedHeroes();
+    }
+
+    renderOwnedHeroes() {
+        if (!this.elements.ownedHeroesList) return;
+
+        const ownedHeroes = this.game.getOwnedHeroes();
+        const totalHeroes = GameData.SUMMON_HEROES.length;
+
+        // カウント表示
+        if (this.elements.ownedHeroesCount) {
+            this.elements.ownedHeroesCount.textContent = `${ownedHeroes.length}/${totalHeroes}`;
+        }
+
+        let html = '';
+
+        // 全キャラをループ（所持していないものは?表示）
+        GameData.SUMMON_HEROES.forEach(hero => {
+            const owned = ownedHeroes.find(h => h.id === hero.id);
+            const rarityClass = hero.rarity.toLowerCase();
+
+            if (owned) {
+                html += `
+                    <div class="hero-card ${rarityClass}" data-hero-id="${hero.id}">
+                        ${this.getHeroImageHtml(hero)}
+                        <span class="hero-card-level">Lv.${owned.level}</span>
+                        <span class="hero-card-stars">${this.getRarityStars(hero.rarity)}</span>
+                    </div>
+                `;
+            } else {
+                html += `<div class="hero-card locked"></div>`;
+            }
+        });
+
+        this.elements.ownedHeroesList.innerHTML = html;
+    }
+
+    renderBattleHeroes() {
+        if (!this.elements.summonedHeroesLeft || !this.elements.summonedHeroesRight) return;
+
+        const ownedHeroes = this.game.getOwnedHeroes();
+        if (ownedHeroes.length === 0) {
+            this.elements.summonedHeroesLeft.innerHTML = '';
+            this.elements.summonedHeroesRight.innerHTML = '';
+            return;
+        }
+
+        // レアリティでソート（高い順）
+        const rarityOrder = ['LEGENDARY', 'EPIC', 'RARE', 'UNCOMMON', 'COMMON'];
+        ownedHeroes.sort((a, b) => rarityOrder.indexOf(a.rarity) - rarityOrder.indexOf(b.rarity));
+
+        // 左右に分配（最大各3体）
+        const leftHeroes = ownedHeroes.filter((_, i) => i % 2 === 0).slice(0, 3);
+        const rightHeroes = ownedHeroes.filter((_, i) => i % 2 === 1).slice(0, 3);
+
+        this.elements.summonedHeroesLeft.innerHTML = leftHeroes.map(hero =>
+            this.getBattleHeroHtml(hero)
+        ).join('');
+
+        this.elements.summonedHeroesRight.innerHTML = rightHeroes.map(hero =>
+            this.getBattleHeroHtml(hero)
+        ).join('');
+    }
+
+    getBattleHeroHtml(hero) {
+        const rarityClass = hero.rarity.toLowerCase();
+        return `
+            <div class="battle-hero ${rarityClass}" title="${hero.name} Lv.${hero.level}">
+                ${this.getHeroImageHtml(hero, true)}
+            </div>
+        `;
+    }
+
+    getHeroImageHtml(hero, isBattle = false) {
+        const imgClass = isBattle ? 'battle-hero-image' : 'hero-card-image';
+        const placeholderClass = isBattle ? 'battle-hero-placeholder' : 'hero-card-placeholder';
+
+        // 画像ファイルがあればimg、なければプレースホルダー
+        return `
+            <div class="${placeholderClass}" style="background-color: ${hero.color}">
+                ${hero.name.charAt(0)}
+            </div>
+        `;
+        // 画像がある場合はこちらを使用:
+        // return `<img src="${hero.image}" alt="${hero.name}" class="${imgClass}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        //         <div class="${placeholderClass}" style="background-color: ${hero.color}; display: none;">${hero.name.charAt(0)}</div>`;
+    }
+
+    getRarityStars(rarity) {
+        const stars = {
+            'COMMON': '★',
+            'UNCOMMON': '★★',
+            'RARE': '★★★',
+            'EPIC': '★★★★',
+            'LEGENDARY': '★★★★★'
+        };
+        return stars[rarity] || '★';
+    }
+
+    onSummonSingle() {
+        const results = this.game.summonSingle();
+        if (results) {
+            this.showSummonResult(results);
+            if (window.soundManager) window.soundManager.playChestOpen();
+        } else {
+            this.showToast('ジェムが足りません');
+        }
+    }
+
+    onSummonMulti() {
+        const results = this.game.summonMulti();
+        if (results) {
+            this.showSummonResult(results);
+            if (window.soundManager) window.soundManager.playChestOpen();
+        } else {
+            this.showToast('ジェムが足りません');
+        }
+    }
+
+    showSummonResult(results) {
+        if (!this.elements.summonResultModal || !this.elements.summonResultDisplay) return;
+
+        let html = '';
+        results.forEach((result, index) => {
+            const hero = result.hero;
+            const rarityClass = hero.rarity.toLowerCase();
+            const badge = result.isNew
+                ? '<span class="new-badge">NEW!</span>'
+                : `<span class="dupe-badge">+1</span>`;
+
+            html += `
+                <div class="summon-result-card ${rarityClass}" style="animation-delay: ${index * 0.1}s">
+                    ${this.getHeroImageHtml(hero)}
+                    <div class="hero-name">${hero.name}</div>
+                    ${badge}
+                </div>
+            `;
+        });
+
+        this.elements.summonResultDisplay.innerHTML = html;
+        this.elements.summonResultModal.classList.remove('hidden');
+
+        // 更新
+        this.renderSummonPanel();
+        this.renderBattleHeroes();
+    }
+
+    closeSummonResultModal() {
+        if (this.elements.summonResultModal) {
+            this.elements.summonResultModal.classList.add('hidden');
+        }
     }
 }
 
