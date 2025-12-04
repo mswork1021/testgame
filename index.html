@@ -95,6 +95,18 @@
                 <span class="nav-icon">🌟</span>
                 <span class="nav-label">召喚</span>
             </button>
+            <button class="nav-btn" data-tab="missions">
+                <span class="nav-icon">📋</span>
+                <span class="nav-label">任務</span>
+            </button>
+            <button class="nav-btn" data-tab="shop">
+                <span class="nav-icon">🛒</span>
+                <span class="nav-label">ショップ</span>
+            </button>
+            <button class="nav-btn" data-tab="tower">
+                <span class="nav-icon">🗼</span>
+                <span class="nav-label">塔</span>
+            </button>
         </nav>
 
         <!-- タブパネル -->
@@ -288,6 +300,125 @@
                     <div id="owned-heroes-list" class="owned-heroes-grid"></div>
                 </div>
             </div>
+
+            <!-- 任務タブ -->
+            <div id="missions-panel" class="tab-panel">
+                <div class="panel-header">
+                    <h2>📋 デイリー任務</h2>
+                    <div class="missions-progress">
+                        <span id="missions-completed">0</span>/<span id="missions-total">6</span> 完了
+                    </div>
+                </div>
+
+                <!-- 任務リスト -->
+                <div id="missions-list" class="missions-list"></div>
+
+                <!-- 全クリアボーナス -->
+                <div id="missions-bonus" class="missions-bonus">
+                    <div class="bonus-info">
+                        <span class="bonus-icon">🎁</span>
+                        <span class="bonus-text">全任務クリアボーナス</span>
+                    </div>
+                    <div class="bonus-reward">
+                        <span>💎 20</span>
+                    </div>
+                    <button id="claim-all-bonus" class="btn-claim" disabled>受取</button>
+                </div>
+
+                <p class="missions-reset-note">※ 毎日0:00にリセットされます</p>
+            </div>
+
+            <!-- ショップタブ -->
+            <div id="shop-panel" class="tab-panel">
+                <div class="panel-header">
+                    <h2>🛒 ショップ</h2>
+                    <div class="shop-gems">
+                        💎 <span id="shop-gems-display">0</span>
+                    </div>
+                </div>
+
+                <!-- 週間パス -->
+                <div class="shop-section" id="weekly-pass-section">
+                    <h3>📅 週間パス</h3>
+                    <div id="weekly-pass-content"></div>
+                </div>
+
+                <!-- 特別パック -->
+                <div class="shop-section">
+                    <h3>🎁 特別パック</h3>
+                    <div id="special-packs-list" class="shop-packs-grid"></div>
+                </div>
+
+                <!-- ジェムパック -->
+                <div class="shop-section">
+                    <h3>💎 ジェム購入</h3>
+                    <div id="gem-packs-list" class="shop-packs-grid"></div>
+                </div>
+
+                <p class="shop-note">※ 現在テストモードです。実際の課金は発生しません。</p>
+            </div>
+
+            <!-- 無限の塔タブ -->
+            <div id="tower-panel" class="tab-panel">
+                <div class="panel-header">
+                    <h2>🗼 無限の塔</h2>
+                    <div class="tower-attempts">
+                        残り挑戦: <span id="tower-attempts">3</span>回
+                    </div>
+                </div>
+
+                <!-- 塔情報 -->
+                <div class="tower-info-card">
+                    <div class="tower-floor-display">
+                        <span class="floor-label">現在の階層</span>
+                        <span id="tower-current-floor" class="floor-number">1F</span>
+                    </div>
+                    <div class="tower-max-floor">
+                        最高到達: <span id="tower-max-floor">0</span>F
+                    </div>
+                </div>
+
+                <!-- 次の報酬 -->
+                <div class="tower-reward-preview">
+                    <h3>クリア報酬</h3>
+                    <div id="tower-next-reward" class="tower-rewards">
+                        <span class="reward-item">💰 600</span>
+                    </div>
+                </div>
+
+                <!-- バトルエリア（挑戦中のみ表示） -->
+                <div id="tower-battle-area" class="tower-battle-area hidden">
+                    <div class="tower-boss-info">
+                        <span id="tower-boss-name" class="tower-boss-name">影のゴーレム</span>
+                        <div class="tower-timer">
+                            <span class="timer-icon">⏱️</span>
+                            <span id="tower-time-left">30</span>秒
+                        </div>
+                    </div>
+                    <div class="tower-boss-hp-bar">
+                        <div id="tower-boss-hp-fill" class="tower-boss-hp-fill"></div>
+                        <span id="tower-boss-hp-text" class="tower-boss-hp-text">100/100</span>
+                    </div>
+                    <div id="tower-boss-display" class="tower-boss-display">
+                        <!-- ボスSVGがここに -->
+                    </div>
+                    <button id="tower-abandon-btn" class="btn-danger">諦める</button>
+                </div>
+
+                <!-- コントロール（挑戦前のみ表示） -->
+                <div id="tower-controls" class="tower-controls">
+                    <button id="tower-start-btn" class="tower-start-btn">
+                        <span class="btn-icon">⚔️</span>
+                        <span>挑戦する</span>
+                    </button>
+                    <button id="tower-buy-attempt-btn" class="tower-buy-btn">
+                        <span>追加挑戦</span>
+                        <span class="cost">💎 10</span>
+                    </button>
+                </div>
+
+                <p class="tower-note">※ 挑戦回数は毎日0:00にリセット</p>
+            </div>
         </div>
 
         <!-- 召喚結果モーダル -->
@@ -397,6 +528,6 @@
     <script src="js/ui.js"></script>
     <script src="js/save.js"></script>
     <script src="js/main.js"></script>
-    <div id="debug-version" style="position:fixed;bottom:5px;left:5px;font-size:10px;color:#666;z-index:9999;">v2.32</div>
+    <div id="debug-version" style="position:fixed;bottom:5px;left:5px;font-size:10px;color:#666;z-index:9999;">v2.33</div>
 </body>
 </html>

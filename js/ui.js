@@ -145,6 +145,35 @@ class UI {
         this.elements.heroDetailDupe = document.getElementById('hero-detail-dupe');
         this.elements.heroBattleToggle = document.getElementById('hero-battle-toggle');
         this.elements.closeHeroDetail = document.getElementById('close-hero-detail');
+
+        // デイリー任務
+        this.elements.missionsList = document.getElementById('missions-list');
+        this.elements.missionsCompleted = document.getElementById('missions-completed');
+        this.elements.missionsTotal = document.getElementById('missions-total');
+        this.elements.missionsBonus = document.getElementById('missions-bonus');
+        this.elements.claimAllBonus = document.getElementById('claim-all-bonus');
+
+        // ショップ
+        this.elements.shopGemsDisplay = document.getElementById('shop-gems-display');
+        this.elements.weeklyPassContent = document.getElementById('weekly-pass-content');
+        this.elements.specialPacksList = document.getElementById('special-packs-list');
+        this.elements.gemPacksList = document.getElementById('gem-packs-list');
+
+        // タワー
+        this.elements.towerAttempts = document.getElementById('tower-attempts');
+        this.elements.towerCurrentFloor = document.getElementById('tower-current-floor');
+        this.elements.towerMaxFloor = document.getElementById('tower-max-floor');
+        this.elements.towerNextReward = document.getElementById('tower-next-reward');
+        this.elements.towerBattleArea = document.getElementById('tower-battle-area');
+        this.elements.towerBossName = document.getElementById('tower-boss-name');
+        this.elements.towerTimeLeft = document.getElementById('tower-time-left');
+        this.elements.towerBossHpFill = document.getElementById('tower-boss-hp-fill');
+        this.elements.towerBossHpText = document.getElementById('tower-boss-hp-text');
+        this.elements.towerBossDisplay = document.getElementById('tower-boss-display');
+        this.elements.towerControls = document.getElementById('tower-controls');
+        this.elements.towerStartBtn = document.getElementById('tower-start-btn');
+        this.elements.towerBuyAttemptBtn = document.getElementById('tower-buy-attempt-btn');
+        this.elements.towerAbandonBtn = document.getElementById('tower-abandon-btn');
     }
 
     bindEvents() {
@@ -283,6 +312,34 @@ class UI {
                 this.onBattleToggleChange(e.target.checked);
             });
         }
+
+        // デイリー任務の全クリアボーナス
+        if (this.elements.claimAllBonus) {
+            addTouchAndClick(this.elements.claimAllBonus, () => this.claimAllMissionsBonus());
+        }
+
+        // タワー
+        if (this.elements.towerStartBtn) {
+            addTouchAndClick(this.elements.towerStartBtn, () => this.onTowerStart());
+        }
+        if (this.elements.towerBuyAttemptBtn) {
+            addTouchAndClick(this.elements.towerBuyAttemptBtn, () => this.onTowerBuyAttempt());
+        }
+        if (this.elements.towerAbandonBtn) {
+            addTouchAndClick(this.elements.towerAbandonBtn, () => this.onTowerAbandon());
+        }
+        if (this.elements.towerBossDisplay) {
+            // タワーボスをタップ
+            this.elements.towerBossDisplay.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                this.onTowerTap();
+            }, { passive: false });
+            this.elements.towerBossDisplay.addEventListener('click', (e) => {
+                if (!('ontouchstart' in window)) {
+                    this.onTowerTap();
+                }
+            });
+        }
     }
 
     setupGameCallbacks() {
@@ -349,6 +406,21 @@ class UI {
         // 仲間攻撃エフェクト
         this.game.onHeroAttack = () => {
             this.triggerHeroAttackEffects();
+        };
+
+        // タワー：ボス撃破
+        this.game.onTowerBossDefeated = (floor, reward) => {
+            this.onTowerBossDefeated(floor, reward);
+        };
+
+        // タワー：ボス失敗
+        this.game.onTowerBossFailed = (floor) => {
+            this.onTowerBossFailed(floor);
+        };
+
+        // タワー：更新
+        this.game.onTowerUpdate = () => {
+            this.updateTowerBattle();
         };
     }
 
@@ -1261,6 +1333,9 @@ class UI {
         if (tabId === 'skills') this.renderSkillTree();
         if (tabId === 'collection') this.renderCollection();
         if (tabId === 'rebirth') this.renderAchievements();
+        if (tabId === 'missions') this.renderMissions();
+        if (tabId === 'shop') this.renderShop();
+        if (tabId === 'tower') this.renderTower();
     }
 
     // ========================================
@@ -2622,6 +2697,512 @@ class UI {
         const totalDps = baseDps + summonDps;
 
         this.elements.totalDps.textContent = this.formatNumber(totalDps) + '/秒';
+    }
+
+    // ========================================
+    // デイリー任務
+    // ========================================
+
+    renderMissions() {
+        if (!this.elements.missionsList) return;
+
+        const missions = this.game.getDailyMissions();
+        const completedCount = this.game.getCompletedDailyMissionCount();
+        const totalCount = missions.length;
+
+        // 進捗表示更新
+        if (this.elements.missionsCompleted) {
+            this.elements.missionsCompleted.textContent = completedCount;
+        }
+        if (this.elements.missionsTotal) {
+            this.elements.missionsTotal.textContent = totalCount;
+        }
+
+        // ミッションリスト生成
+        let html = '';
+        missions.forEach(mission => {
+            const progress = Math.min(mission.progress, mission.target);
+            const percent = Math.floor((progress / mission.target) * 100);
+            const statusClass = mission.isClaimed ? 'claimed' : (mission.isComplete ? 'completed' : '');
+            const rewardIcon = mission.reward.type === 'gems' ? '💎' : '💰';
+            const rewardClass = mission.reward.type === 'gems' ? 'gems' : 'gold';
+
+            html += `
+                <div class="mission-item ${statusClass}" data-mission-id="${mission.id}">
+                    <div class="mission-icon">${mission.icon}</div>
+                    <div class="mission-info">
+                        <div class="mission-name">${mission.name}</div>
+                        <div class="mission-desc">${mission.description}</div>
+                        <div class="mission-progress-bar">
+                            <div class="mission-progress-fill" style="width: ${percent}%"></div>
+                        </div>
+                        <div class="mission-progress-text">${this.formatNumber(progress)} / ${this.formatNumber(mission.target)}</div>
+                    </div>
+                    <div class="mission-reward">
+                        <span class="reward-amount ${rewardClass}">${rewardIcon} ${this.formatNumber(mission.reward.amount)}</span>
+                        ${this.getMissionButtonHtml(mission)}
+                    </div>
+                </div>
+            `;
+        });
+
+        this.elements.missionsList.innerHTML = html;
+
+        // ボタンイベントをバインド
+        this.bindMissionButtons();
+
+        // 全クリアボーナス更新
+        this.updateAllBonusButton();
+    }
+
+    getMissionButtonHtml(mission) {
+        if (mission.isClaimed) {
+            return '<button class="btn-claim claimed" disabled>済</button>';
+        } else if (mission.isComplete) {
+            return '<button class="btn-claim" data-action="claim">受取</button>';
+        } else {
+            return '<button class="btn-claim" disabled>未達成</button>';
+        }
+    }
+
+    bindMissionButtons() {
+        const addTouchAndClick = (el, handler) => {
+            el.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                handler();
+            });
+            el.addEventListener('click', (e) => {
+                if (!e.defaultPrevented) handler();
+            });
+        };
+
+        this.elements.missionsList.querySelectorAll('.btn-claim[data-action="claim"]').forEach(btn => {
+            const missionId = btn.closest('.mission-item').dataset.missionId;
+            addTouchAndClick(btn, () => this.claimMissionReward(missionId));
+        });
+    }
+
+    claimMissionReward(missionId) {
+        const reward = this.game.claimDailyMissionReward(missionId);
+        if (reward) {
+            const icon = reward.type === 'gems' ? '💎' : '💰';
+            this.showToast(`${icon} ${this.formatNumber(reward.amount)} 獲得！`);
+            if (window.soundManager) window.soundManager.playChestOpen();
+            this.renderMissions();
+            this.updateDisplay();
+        }
+    }
+
+    updateAllBonusButton() {
+        if (!this.elements.claimAllBonus || !this.elements.missionsBonus) return;
+
+        const canClaim = this.game.canClaimDailyCompleteBonus();
+        const alreadyClaimed = this.game.state.dailyMissions.allClaimedBonus;
+
+        this.elements.claimAllBonus.disabled = !canClaim;
+
+        if (alreadyClaimed) {
+            this.elements.claimAllBonus.textContent = '済';
+            this.elements.claimAllBonus.classList.add('claimed');
+        } else if (canClaim) {
+            this.elements.missionsBonus.classList.add('completed');
+        }
+    }
+
+    claimAllMissionsBonus() {
+        const reward = this.game.claimDailyCompleteBonus();
+        if (reward) {
+            this.showToast(`🎁 全クリアボーナス 💎 ${reward.amount} 獲得！`);
+            if (window.soundManager) window.soundManager.playRebirth();
+            this.renderMissions();
+            this.updateDisplay();
+        }
+    }
+
+    // ========================================
+    // ショップ
+    // ========================================
+
+    renderShop() {
+        // ジェム表示更新
+        if (this.elements.shopGemsDisplay) {
+            this.elements.shopGemsDisplay.textContent = this.formatNumber(this.game.state.gems);
+        }
+
+        // 週間パス
+        this.renderWeeklyPass();
+
+        // 特別パック
+        this.renderSpecialPacks();
+
+        // ジェムパック
+        this.renderGemPacks();
+    }
+
+    renderWeeklyPass() {
+        if (!this.elements.weeklyPassContent) return;
+
+        const pack = GameData.SHOP.WEEKLY_PACKS[0];
+        if (!pack) return;
+
+        const isActive = this.game.isWeeklyPassActive();
+        const canClaim = this.game.canClaimWeeklyPassDaily();
+        const daysLeft = this.game.getWeeklyPassDaysLeft();
+
+        let html = `<div class="weekly-pass-card">`;
+
+        if (isActive) {
+            html += `
+                <div class="weekly-pass-header">
+                    <span class="weekly-pass-title">${pack.icon} ${pack.name}</span>
+                    <span class="weekly-pass-status">アクティブ</span>
+                </div>
+                <div class="weekly-pass-info">
+                    <span class="weekly-pass-reward">毎日 💎 ${pack.dailyGems}</span>
+                    <span class="weekly-pass-days">残り ${daysLeft} 日</span>
+                </div>
+                <button class="btn-claim-daily" ${!canClaim ? 'disabled' : ''} data-action="claim-daily">
+                    ${canClaim ? '今日分を受け取る' : '受取済み'}
+                </button>
+            `;
+        } else {
+            html += `
+                <div class="weekly-pass-header">
+                    <span class="weekly-pass-title">${pack.icon} ${pack.name}</span>
+                    <span class="weekly-pass-status inactive">未購入</span>
+                </div>
+                <div class="weekly-pass-info">
+                    <span class="weekly-pass-reward">${pack.duration}日間で 💎 ${pack.totalGems}</span>
+                    <span class="weekly-pass-days">${pack.description}</span>
+                </div>
+                <button class="btn-purchase" data-pack-type="weekly" data-pack-id="${pack.id}">
+                    ¥${pack.price} で購入
+                </button>
+            `;
+        }
+
+        html += `</div>`;
+        this.elements.weeklyPassContent.innerHTML = html;
+
+        // イベントバインド
+        this.bindShopButtons(this.elements.weeklyPassContent);
+    }
+
+    renderSpecialPacks() {
+        if (!this.elements.specialPacksList) return;
+
+        let html = '';
+        GameData.SHOP.SPECIAL_PACKS.forEach(pack => {
+            const isPurchased = this.game.isSpecialPackPurchased(pack.id);
+            const itemClass = isPurchased ? 'shop-item purchased' : 'shop-item';
+
+            const contentsText = pack.contents.map(c => {
+                const icon = c.type === 'gems' ? '💎' : c.type === 'gold' ? '💰' : c.type === 'souls' ? '👻' : '🎫';
+                return `${icon}${c.amount}`;
+            }).join(' + ');
+
+            html += `
+                <div class="${itemClass}" data-pack-id="${pack.id}">
+                    ${pack.oneTime ? '<span class="shop-item-badge">1回限定</span>' : ''}
+                    <div class="shop-item-icon">${pack.icon}</div>
+                    <div class="shop-item-name">${pack.name}</div>
+                    <div class="shop-item-contents">${contentsText}</div>
+                    <button class="btn-purchase ${isPurchased ? 'purchased' : ''}"
+                            data-pack-type="special" data-pack-id="${pack.id}"
+                            ${isPurchased ? 'disabled' : ''}>
+                        ${isPurchased ? '購入済み' : `¥${pack.price}`}
+                    </button>
+                </div>
+            `;
+        });
+
+        this.elements.specialPacksList.innerHTML = html;
+        this.bindShopButtons(this.elements.specialPacksList);
+    }
+
+    renderGemPacks() {
+        if (!this.elements.gemPacksList) return;
+
+        let html = '';
+        GameData.SHOP.GEM_PACKS.forEach(pack => {
+            const itemClass = pack.popular ? 'shop-item popular' : (pack.bestValue ? 'shop-item best-value' : 'shop-item');
+            const badge = pack.popular ? '<span class="shop-item-badge">人気</span>' :
+                          (pack.bestValue ? '<span class="shop-item-badge best">お得</span>' : '');
+            const totalGems = pack.gems + (pack.bonus || 0);
+
+            html += `
+                <div class="${itemClass}" data-pack-id="${pack.id}">
+                    ${badge}
+                    <div class="shop-item-icon">${pack.icon}</div>
+                    <div class="shop-item-name">${pack.name}</div>
+                    <div class="shop-item-amount">💎 ${this.formatNumber(totalGems)}</div>
+                    ${pack.bonus > 0 ? `<div class="shop-item-bonus">+${pack.bonus} ボーナス!</div>` : ''}
+                    <button class="btn-purchase" data-pack-type="gems" data-pack-id="${pack.id}">
+                        ¥${pack.price}
+                    </button>
+                </div>
+            `;
+        });
+
+        this.elements.gemPacksList.innerHTML = html;
+        this.bindShopButtons(this.elements.gemPacksList);
+    }
+
+    bindShopButtons(container) {
+        const addTouchAndClick = (el, handler) => {
+            el.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                handler();
+            });
+            el.addEventListener('click', (e) => {
+                if (!e.defaultPrevented) handler();
+            });
+        };
+
+        // 購入ボタン
+        container.querySelectorAll('.btn-purchase').forEach(btn => {
+            if (btn.disabled) return;
+            const packType = btn.dataset.packType;
+            const packId = btn.dataset.packId;
+            addTouchAndClick(btn, () => this.onPurchase(packType, packId));
+        });
+
+        // 日次受取ボタン
+        container.querySelectorAll('.btn-claim-daily').forEach(btn => {
+            if (btn.disabled) return;
+            addTouchAndClick(btn, () => this.onClaimWeeklyPassDaily());
+        });
+    }
+
+    onPurchase(packType, packId) {
+        // 確認ダイアログ
+        const packName = this.getPackName(packType, packId);
+        if (!confirm(`「${packName}」を購入しますか？\n\n※テストモードのため実際の課金は発生しません`)) {
+            return;
+        }
+
+        let result;
+        switch (packType) {
+            case 'gems':
+                result = this.game.purchaseGemPack(packId);
+                if (result && result.success) {
+                    this.showToast(`💎 ${this.formatNumber(result.gems)} ジェム獲得！`);
+                }
+                break;
+            case 'special':
+                result = this.game.purchaseSpecialPack(packId);
+                if (result && result.success) {
+                    this.showToast(`🎁 ${packName} を獲得！`);
+                } else if (result && result.reason === 'already_purchased') {
+                    this.showToast('既に購入済みです');
+                }
+                break;
+            case 'weekly':
+                result = this.game.purchaseWeeklyPass(packId);
+                if (result && result.success) {
+                    this.showToast(`📅 週間パスを開始！`);
+                } else if (result && result.reason === 'already_active') {
+                    this.showToast('既にアクティブです');
+                }
+                break;
+        }
+
+        if (result && result.success) {
+            if (window.soundManager) window.soundManager.playChestOpen();
+            this.renderShop();
+            this.updateDisplay();
+        }
+    }
+
+    onClaimWeeklyPassDaily() {
+        const result = this.game.claimWeeklyPassDaily();
+        if (result && result.success) {
+            this.showToast(`💎 ${result.gems} ジェム獲得！（週間パス）`);
+            if (window.soundManager) window.soundManager.playChestOpen();
+            this.renderShop();
+            this.updateDisplay();
+        }
+    }
+
+    getPackName(packType, packId) {
+        let pack;
+        switch (packType) {
+            case 'gems':
+                pack = GameData.SHOP.GEM_PACKS.find(p => p.id === packId);
+                break;
+            case 'special':
+                pack = GameData.SHOP.SPECIAL_PACKS.find(p => p.id === packId);
+                break;
+            case 'weekly':
+                pack = GameData.SHOP.WEEKLY_PACKS.find(p => p.id === packId);
+                break;
+        }
+        return pack ? pack.name : packId;
+    }
+
+    // ========================================
+    // 無限の塔
+    // ========================================
+    renderTower() {
+        const info = this.game.getTowerInfo();
+
+        // 挑戦回数
+        if (this.elements.towerAttempts) {
+            this.elements.towerAttempts.textContent = info.dailyAttempts;
+        }
+
+        // 現在の階層
+        if (this.elements.towerCurrentFloor) {
+            this.elements.towerCurrentFloor.textContent = `${info.currentFloor}F`;
+        }
+
+        // 最高到達階層
+        if (this.elements.towerMaxFloor) {
+            this.elements.towerMaxFloor.textContent = info.maxFloor;
+        }
+
+        // 次の報酬
+        if (this.elements.towerNextReward) {
+            const reward = info.nextReward;
+            let rewardHtml = `<span class="reward-item">💰 ${reward.gold}</span>`;
+            if (reward.gems > 0) {
+                rewardHtml += `<span class="reward-item">💎 ${reward.gems}</span>`;
+            }
+            if (reward.souls > 0) {
+                rewardHtml += `<span class="reward-item">👻 ${reward.souls}</span>`;
+            }
+            this.elements.towerNextReward.innerHTML = rewardHtml;
+        }
+
+        // バトルエリアと操作パネルの表示切替
+        if (info.inProgress) {
+            this.elements.towerBattleArea?.classList.remove('hidden');
+            this.elements.towerControls?.classList.add('hidden');
+            this.updateTowerBattle();
+        } else {
+            this.elements.towerBattleArea?.classList.add('hidden');
+            this.elements.towerControls?.classList.remove('hidden');
+        }
+
+        // 挑戦ボタンの状態
+        if (this.elements.towerStartBtn) {
+            this.elements.towerStartBtn.disabled = !this.game.canStartTowerChallenge();
+        }
+
+        // 追加挑戦ボタンの状態
+        if (this.elements.towerBuyAttemptBtn) {
+            this.elements.towerBuyAttemptBtn.disabled = !this.game.canBuyExtraAttempt();
+        }
+    }
+
+    updateTowerBattle() {
+        const info = this.game.getTowerInfo();
+
+        // ボス名
+        if (this.elements.towerBossName) {
+            this.elements.towerBossName.textContent = info.bossName;
+        }
+
+        // 残り時間
+        if (this.elements.towerTimeLeft) {
+            this.elements.towerTimeLeft.textContent = Math.ceil(info.timeLeft);
+        }
+
+        // HPバー
+        if (this.elements.towerBossHpFill) {
+            const hpPercent = Math.max(0, (info.currentBossHp / info.currentBossMaxHp) * 100);
+            this.elements.towerBossHpFill.style.width = hpPercent + '%';
+        }
+
+        // HPテキスト
+        if (this.elements.towerBossHpText) {
+            this.elements.towerBossHpText.textContent = `${Math.ceil(Math.max(0, info.currentBossHp))}/${info.currentBossMaxHp}`;
+        }
+
+        // ボス表示（ランダムなボスSVGを使用）
+        if (this.elements.towerBossDisplay && !this.elements.towerBossDisplay.innerHTML) {
+            const bossIndex = info.currentFloor % GameData.BOSSES.length;
+            const boss = GameData.BOSSES[bossIndex];
+            this.elements.towerBossDisplay.innerHTML = boss.svg;
+        }
+    }
+
+    onTowerStart() {
+        if (this.game.startTowerChallenge()) {
+            this.showToast(`⚔️ ${this.game.getTowerInfo().currentFloor}Fに挑戦！`);
+            if (window.soundManager) window.soundManager.playChestOpen();
+
+            // ボスSVGをセット
+            const info = this.game.getTowerInfo();
+            const bossIndex = (info.currentFloor - 1) % GameData.BOSSES.length;
+            const boss = GameData.BOSSES[bossIndex];
+            if (this.elements.towerBossDisplay) {
+                this.elements.towerBossDisplay.innerHTML = boss.svg;
+            }
+
+            this.renderTower();
+        }
+    }
+
+    onTowerBuyAttempt() {
+        if (this.game.buyExtraAttempt()) {
+            this.showToast('💎 追加挑戦を購入しました');
+            if (window.soundManager) window.soundManager.playChestOpen();
+            this.renderTower();
+            this.updateDisplay();
+        } else {
+            this.showToast('ジェムが足りません');
+        }
+    }
+
+    onTowerAbandon() {
+        if (confirm('挑戦を諦めますか？')) {
+            this.game.abandonTowerChallenge();
+            this.renderTower();
+        }
+    }
+
+    onTowerTap() {
+        this.game.tapTowerBoss();
+
+        // タップエフェクト
+        if (this.elements.towerBossDisplay) {
+            this.elements.towerBossDisplay.classList.add('hit');
+            setTimeout(() => {
+                this.elements.towerBossDisplay.classList.remove('hit');
+            }, 100);
+        }
+
+        // タップ音
+        if (window.soundManager) window.soundManager.playTap();
+    }
+
+    onTowerBossDefeated(floor, reward) {
+        let msg = `🎉 ${floor}F クリア！ 💰${reward.gold}`;
+        if (reward.gems > 0) msg += ` 💎${reward.gems}`;
+        if (reward.souls > 0) msg += ` 👻${reward.souls}`;
+
+        this.showToast(msg);
+        if (window.soundManager) window.soundManager.playLevelUp();
+
+        // ボスSVGをクリア（次回再セット用）
+        if (this.elements.towerBossDisplay) {
+            this.elements.towerBossDisplay.innerHTML = '';
+        }
+
+        this.renderTower();
+        this.updateDisplay();
+    }
+
+    onTowerBossFailed(floor) {
+        this.showToast(`😢 ${floor}F 失敗...`);
+
+        // ボスSVGをクリア
+        if (this.elements.towerBossDisplay) {
+            this.elements.towerBossDisplay.innerHTML = '';
+        }
+
+        this.renderTower();
     }
 }
 

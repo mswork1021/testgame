@@ -1485,7 +1485,192 @@ const GameData = {
             image: 'assets/characters/emperor.png',
             color: '#800080'
         }
-    ]
+    ],
+
+    // デイリーミッション
+    DAILY_MISSIONS: [
+        {
+            id: 'tap_100',
+            name: 'タップ修行',
+            description: '100回タップする',
+            type: 'tap',
+            target: 100,
+            reward: { type: 'gold', amount: 500 },
+            icon: '👆'
+        },
+        {
+            id: 'kill_50',
+            name: 'モンスター討伐',
+            description: 'モンスターを50体倒す',
+            type: 'kill',
+            target: 50,
+            reward: { type: 'gold', amount: 1000 },
+            icon: '⚔️'
+        },
+        {
+            id: 'gold_10000',
+            name: 'ゴールド収集',
+            description: 'ゴールドを10,000獲得する',
+            type: 'gold',
+            target: 10000,
+            reward: { type: 'gems', amount: 5 },
+            icon: '💰'
+        },
+        {
+            id: 'stage_5',
+            name: 'ステージ攻略',
+            description: 'ステージを5つクリアする',
+            type: 'stage',
+            target: 5,
+            reward: { type: 'gems', amount: 5 },
+            icon: '🏰'
+        },
+        {
+            id: 'upgrade_3',
+            name: '強化訓練',
+            description: '修行・秘技を3回強化する',
+            type: 'upgrade',
+            target: 3,
+            reward: { type: 'gold', amount: 2000 },
+            icon: '⬆️'
+        },
+        {
+            id: 'summon_1',
+            name: '召喚の儀',
+            description: '召喚を1回行う',
+            type: 'summon',
+            target: 1,
+            reward: { type: 'gems', amount: 10 },
+            icon: '🌟'
+        }
+    ],
+
+    // デイリーミッション全クリアボーナス
+    DAILY_COMPLETE_BONUS: {
+        type: 'gems',
+        amount: 20,
+        icon: '🎁'
+    },
+
+    // ショップ商品
+    SHOP: {
+        // ジェムパック
+        GEM_PACKS: [
+            {
+                id: 'gems_100',
+                name: '少量ジェム',
+                gems: 100,
+                price: 120,
+                bonus: 0,
+                icon: '💎'
+            },
+            {
+                id: 'gems_500',
+                name: 'お得パック',
+                gems: 500,
+                price: 480,
+                bonus: 50,
+                popular: true,
+                icon: '💎💎'
+            },
+            {
+                id: 'gems_1200',
+                name: '大量パック',
+                gems: 1200,
+                price: 960,
+                bonus: 200,
+                bestValue: true,
+                icon: '💎💎💎'
+            },
+            {
+                id: 'gems_3000',
+                name: '超大量パック',
+                gems: 3000,
+                price: 1840,
+                bonus: 600,
+                icon: '👑'
+            }
+        ],
+        // 特別パック（1回限定）
+        SPECIAL_PACKS: [
+            {
+                id: 'starter_pack',
+                name: '初心者パック',
+                description: 'お得なスターターセット！',
+                price: 160,
+                oneTime: true,
+                contents: [
+                    { type: 'gems', amount: 300 },
+                    { type: 'gold', amount: 10000 },
+                    { type: 'summonTicket', amount: 3 }
+                ],
+                icon: '🎁'
+            },
+            {
+                id: 'growth_pack',
+                name: '成長パック',
+                description: '強くなりたい方に！',
+                price: 480,
+                oneTime: true,
+                contents: [
+                    { type: 'gems', amount: 800 },
+                    { type: 'souls', amount: 100 },
+                    { type: 'summonTicket', amount: 5 }
+                ],
+                icon: '🚀'
+            }
+        ],
+        // 週間パック
+        WEEKLY_PACKS: [
+            {
+                id: 'weekly_gems',
+                name: '週間ジェムパス',
+                description: '7日間、毎日50ジェム！',
+                price: 320,
+                dailyGems: 50,
+                duration: 7,
+                totalGems: 350,
+                icon: '📅'
+            }
+        ]
+    },
+
+    // 無限の塔
+    TOWER: {
+        // 基本設定
+        DAILY_ATTEMPTS: 3,           // 1日の無料挑戦回数
+        EXTRA_ATTEMPT_COST: 10,      // 追加挑戦のジェム消費
+        BOSS_TIME_LIMIT: 30,         // ボス戦の制限時間（秒）
+
+        // 階層ボーナス（10階ごと）
+        MILESTONE_FLOORS: [10, 25, 50, 100, 200],
+
+        // 報酬計算
+        getFloorReward(floor) {
+            const baseGold = 500 + (floor * 100);
+            const baseGems = floor % 10 === 0 ? Math.floor(floor / 10) * 5 : 0;
+            const baseSouls = floor >= 50 ? Math.floor(floor / 50) * 10 : 0;
+            return {
+                gold: baseGold,
+                gems: baseGems,
+                souls: baseSouls
+            };
+        },
+
+        // ボスHP計算（階層に応じて増加）
+        getBossHp(floor) {
+            return Math.floor(100 * Math.pow(1.15, floor - 1));
+        },
+
+        // ボス名生成
+        getBossName(floor) {
+            const prefixes = ['影の', '炎の', '氷の', '雷の', '闇の', '光の', '古代の', '魔王'];
+            const names = ['ゴーレム', 'ドラゴン', '魔獣', '死神', '巨人', '騎士', '魔導士', '帝王'];
+            const prefix = prefixes[Math.floor(floor / 10) % prefixes.length];
+            const name = names[Math.floor(floor / 5) % names.length];
+            return `${prefix}${name}`;
+        }
+    }
 };
 
 // グローバルにエクスポート
