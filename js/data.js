@@ -1336,6 +1336,155 @@ const GameData = {
             requirement: { type: 'hasRarity', value: 'LEGENDARY' },
             reward: { type: 'gems', amount: 25 }
         }
+    ],
+
+    // ========================================
+    // 召喚システム
+    // ========================================
+    GACHA: {
+        // コスト
+        SINGLE_COST: 5,      // 単発: 5ジェム
+        MULTI_COST: 45,      // 10連: 45ジェム (10連+1回ボーナス)
+        MULTI_COUNT: 11,     // 10連で11体
+
+        // 天井システム
+        PITY_10: 10,         // 10連ごとに★★★以上確定
+        PITY_100: 100,       // 100連で★★★★★確定
+
+        // レアリティ別排出率 (%)
+        RATES: {
+            COMMON: 50,      // ★
+            UNCOMMON: 30,    // ★★
+            RARE: 14,        // ★★★
+            EPIC: 5,         // ★★★★
+            LEGENDARY: 1     // ★★★★★
+        }
+    },
+
+    // 召喚キャラクター
+    SUMMON_HEROES: [
+        // ★ コモン
+        {
+            id: 'novice_swordsman',
+            name: '見習い剣士',
+            rarity: 'COMMON',
+            description: '剣の修行を始めたばかりの若者',
+            effect: { type: 'tapDamage', baseValue: 5, perLevel: 2 },
+            image: 'assets/characters/novice_swordsman.png',
+            color: '#8B4513'
+        },
+        {
+            id: 'novice_archer',
+            name: '見習い弓兵',
+            rarity: 'COMMON',
+            description: '弓の才能を持つ村の若者',
+            effect: { type: 'dps', baseValue: 3, perLevel: 1 },
+            image: 'assets/characters/novice_archer.png',
+            color: '#228B22'
+        },
+        {
+            id: 'novice_mage',
+            name: '見習い魔法使い',
+            rarity: 'COMMON',
+            description: '魔法学院の新入生',
+            effect: { type: 'critChance', baseValue: 1, perLevel: 0.5 },
+            image: 'assets/characters/novice_mage.png',
+            color: '#4169E1'
+        },
+        // ★★ アンコモン
+        {
+            id: 'knight',
+            name: '騎士',
+            rarity: 'UNCOMMON',
+            description: '王国に仕える正式な騎士',
+            effect: { type: 'tapDamage', baseValue: 10, perLevel: 4 },
+            image: 'assets/characters/knight.png',
+            color: '#708090'
+        },
+        {
+            id: 'ranger',
+            name: 'レンジャー',
+            rarity: 'UNCOMMON',
+            description: '森を守る熟練の狩人',
+            effect: { type: 'dps', baseValue: 8, perLevel: 3 },
+            image: 'assets/characters/ranger.png',
+            color: '#2E8B57'
+        },
+        {
+            id: 'priest',
+            name: '僧侶',
+            rarity: 'UNCOMMON',
+            description: '神殿に仕える癒し手',
+            effect: { type: 'goldBonus', baseValue: 5, perLevel: 2 },
+            image: 'assets/characters/priest.png',
+            color: '#F0E68C'
+        },
+        // ★★★ レア
+        {
+            id: 'hero',
+            name: '勇者',
+            rarity: 'RARE',
+            description: '伝説に語られる勇敢な戦士',
+            effect: { type: 'allDamage', baseValue: 10, perLevel: 5 },
+            image: 'assets/characters/hero.png',
+            color: '#4682B4'
+        },
+        {
+            id: 'elf',
+            name: 'エルフ',
+            rarity: 'RARE',
+            description: '森の民、優雅な弓の名手',
+            effect: { type: 'critDamage', baseValue: 15, perLevel: 7 },
+            image: 'assets/characters/elf.png',
+            color: '#98FB98'
+        },
+        {
+            id: 'ninja',
+            name: '忍者',
+            rarity: 'RARE',
+            description: '影に潜む暗殺者',
+            effect: { type: 'critChance', baseValue: 5, perLevel: 2 },
+            image: 'assets/characters/ninja.png',
+            color: '#2F4F4F'
+        },
+        // ★★★★ エピック
+        {
+            id: 'dragon_knight',
+            name: 'ドラゴンナイト',
+            rarity: 'EPIC',
+            description: '竜の力を宿した騎士',
+            effect: { type: 'allDamage', baseValue: 25, perLevel: 10 },
+            image: 'assets/characters/dragon_knight.png',
+            color: '#8B0000'
+        },
+        {
+            id: 'princess_knight',
+            name: '姫騎士',
+            rarity: 'EPIC',
+            description: '王国を守る美しき剣姫',
+            effect: { type: 'bossTime', baseValue: 5, perLevel: 2 },
+            image: 'assets/characters/princess_knight.png',
+            color: '#FF69B4'
+        },
+        // ★★★★★ レジェンダリー
+        {
+            id: 'light_warrior',
+            name: '光の戦士',
+            rarity: 'LEGENDARY',
+            description: '神に選ばれし聖なる騎士',
+            effect: { type: 'allDamage', baseValue: 50, perLevel: 20 },
+            image: 'assets/characters/light_warrior.png',
+            color: '#FFD700'
+        },
+        {
+            id: 'emperor',
+            name: '覇王',
+            rarity: 'LEGENDARY',
+            description: '全てを統べる絶対的な支配者',
+            effect: { type: 'allStats', baseValue: 30, perLevel: 15 },
+            image: 'assets/characters/emperor.png',
+            color: '#800080'
+        }
     ]
 };
 
