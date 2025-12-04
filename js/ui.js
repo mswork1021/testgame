@@ -174,6 +174,19 @@ class UI {
         this.elements.towerBuyAttemptBtn = document.getElementById('tower-buy-attempt-btn');
         this.elements.towerAbandonBtn = document.getElementById('tower-abandon-btn');
         this.elements.towerShopList = document.getElementById('tower-shop-list');
+
+        // 設定モーダル
+        this.elements.settingsBtn = document.getElementById('settings-btn');
+        this.elements.settingsModal = document.getElementById('settings-modal');
+        this.elements.closeSettings = document.getElementById('close-settings');
+
+        // 実績モーダル
+        this.elements.achievementsBtn = document.getElementById('achievements-btn');
+        this.elements.achievementsModal = document.getElementById('achievements-modal');
+        this.elements.closeAchievements = document.getElementById('close-achievements');
+        this.elements.modalAchievementsList = document.getElementById('modal-achievements-list');
+        this.elements.modalUnlockedAchievements = document.getElementById('modal-unlocked-achievements');
+        this.elements.modalTotalAchievements = document.getElementById('modal-total-achievements');
     }
 
     bindEvents() {
@@ -264,6 +277,22 @@ class UI {
         }
         if (this.elements.refreshBtn) {
             addTouchAndClick(this.elements.refreshBtn, () => this.onRefresh());
+        }
+
+        // 設定モーダル
+        if (this.elements.settingsBtn) {
+            addTouchAndClick(this.elements.settingsBtn, () => this.openSettingsModal());
+        }
+        if (this.elements.closeSettings) {
+            addTouchAndClick(this.elements.closeSettings, () => this.closeSettingsModal());
+        }
+
+        // 実績モーダル
+        if (this.elements.achievementsBtn) {
+            addTouchAndClick(this.elements.achievementsBtn, () => this.openAchievementsModal());
+        }
+        if (this.elements.closeAchievements) {
+            addTouchAndClick(this.elements.closeAchievements, () => this.closeAchievementsModal());
         }
 
         // インベントリ管理ボタン
@@ -3363,6 +3392,119 @@ class UI {
         }
 
         this.renderTower();
+    }
+
+    // ========================================
+    // 設定モーダル
+    // ========================================
+    openSettingsModal() {
+        if (this.elements.settingsModal) {
+            this.elements.settingsModal.classList.remove('hidden');
+        }
+    }
+
+    closeSettingsModal() {
+        if (this.elements.settingsModal) {
+            this.elements.settingsModal.classList.add('hidden');
+        }
+    }
+
+    // ========================================
+    // 実績モーダル
+    // ========================================
+    openAchievementsModal() {
+        this.renderAchievementsModal();
+        if (this.elements.achievementsModal) {
+            this.elements.achievementsModal.classList.remove('hidden');
+        }
+    }
+
+    closeAchievementsModal() {
+        if (this.elements.achievementsModal) {
+            this.elements.achievementsModal.classList.add('hidden');
+        }
+    }
+
+    renderAchievementsModal() {
+        if (!this.elements.modalAchievementsList) return;
+
+        // セーフティチェック
+        if (!this.game.state.unlockedAchievements) this.game.state.unlockedAchievements = [];
+        if (!this.game.state.claimedAchievements) this.game.state.claimedAchievements = [];
+
+        const unlockedCount = this.game.state.unlockedAchievements.length;
+        const totalCount = GameData.ACHIEVEMENTS.length;
+
+        if (this.elements.modalUnlockedAchievements) {
+            this.elements.modalUnlockedAchievements.textContent = unlockedCount;
+        }
+        if (this.elements.modalTotalAchievements) {
+            this.elements.modalTotalAchievements.textContent = totalCount;
+        }
+
+        let html = '';
+
+        // 未受取 > 未達成 の順でソート
+        const sortedAchievements = [...GameData.ACHIEVEMENTS].sort((a, b) => {
+            const aUnlocked = this.game.state.unlockedAchievements.includes(a.id);
+            const aClaimed = this.game.state.claimedAchievements.includes(a.id);
+            const bUnlocked = this.game.state.unlockedAchievements.includes(b.id);
+            const bClaimed = this.game.state.claimedAchievements.includes(b.id);
+
+            // 未受取（解放済みだが未受取）を最優先
+            if (aUnlocked && !aClaimed && !(bUnlocked && !bClaimed)) return -1;
+            if (bUnlocked && !bClaimed && !(aUnlocked && !aClaimed)) return 1;
+            // 次に達成済み
+            if (aUnlocked && !bUnlocked) return -1;
+            if (bUnlocked && !aUnlocked) return 1;
+            return 0;
+        });
+
+        sortedAchievements.forEach(achievement => {
+            const isUnlocked = this.game.state.unlockedAchievements.includes(achievement.id);
+            const isClaimed = this.game.state.claimedAchievements.includes(achievement.id);
+
+            let statusClass = '';
+            let statusText = '';
+
+            if (isClaimed) {
+                statusClass = 'claimed';
+                statusText = '✓';
+            } else if (isUnlocked) {
+                statusClass = 'unlocked';
+                statusText = '受取';
+            } else {
+                statusClass = 'locked';
+                statusText = '🔒';
+            }
+
+            html += `
+                <div class="achievement-item ${statusClass}" data-achievement-id="${achievement.id}">
+                    <div class="achievement-icon">${achievement.icon}</div>
+                    <div class="achievement-info">
+                        <div class="achievement-name">${achievement.name}</div>
+                        <div class="achievement-desc">${achievement.description}</div>
+                        <div class="achievement-reward">報酬: 💎${achievement.reward.gems}</div>
+                    </div>
+                    <button class="achievement-claim-btn ${statusClass}" ${!isUnlocked || isClaimed ? 'disabled' : ''}>
+                        ${statusText}
+                    </button>
+                </div>
+            `;
+        });
+
+        this.elements.modalAchievementsList.innerHTML = html;
+
+        // イベント委譲で報酬受取
+        this.elements.modalAchievementsList.onclick = (e) => {
+            const btn = e.target.closest('.achievement-claim-btn');
+            if (btn && !btn.disabled) {
+                const item = btn.closest('.achievement-item');
+                const achievementId = item.dataset.achievementId;
+                this.claimAchievementReward(achievementId);
+                this.renderAchievementsModal();
+            }
+        };
     }
 }
 

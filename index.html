@@ -27,6 +27,10 @@
                     <span class="icon">💎</span>
                     <span id="gems-display">0</span>
                 </div>
+                <div class="header-icons">
+                    <button id="achievements-btn" class="header-icon-btn" title="実績">🏆</button>
+                    <button id="settings-btn" class="header-icon-btn" title="設定">⚙️</button>
+                </div>
             </div>
             <div class="stage-info">
                 <span id="stage-display">ステージ 1-1</span>
@@ -204,47 +208,6 @@
                     </div>
                     <p class="artifacts-description">ソウルを使って永続的なボーナスを獲得</p>
                     <div id="artifacts-list" class="artifacts-grid"></div>
-                </div>
-
-                <!-- 実績セクション -->
-                <div class="achievements-section">
-                    <div class="panel-header">
-                        <h3>🏆 実績</h3>
-                        <div class="achievement-count"><span id="unlocked-achievements">0</span>/<span id="total-achievements">0</span></div>
-                    </div>
-                    <div id="achievements-list" class="achievements-grid"></div>
-                </div>
-
-                <div class="settings-section">
-                    <h3>⚙️ 設定</h3>
-
-                    <!-- サウンド設定 -->
-                    <div class="sound-settings">
-                        <div class="sound-setting-row">
-                            <span class="sound-label">🔊 マスター</span>
-                            <input type="range" id="master-volume" min="0" max="100" value="50" class="volume-slider">
-                            <button id="mute-btn" class="sound-btn">🔊</button>
-                        </div>
-                        <div class="sound-setting-row">
-                            <span class="sound-label">🎵 BGM</span>
-                            <input type="range" id="bgm-volume" min="0" max="100" value="30" class="volume-slider">
-                            <button id="bgm-toggle-btn" class="sound-btn">OFF</button>
-                        </div>
-                        <div class="sound-setting-row">
-                            <span class="sound-label">🔔 SE</span>
-                            <input type="range" id="sfx-volume" min="0" max="100" value="70" class="volume-slider">
-                        </div>
-                    </div>
-
-                    <div class="settings-buttons">
-                        <button id="refresh-btn" class="settings-btn refresh">
-                            🔄 更新
-                        </button>
-                        <button id="reset-btn" class="settings-btn danger">
-                            🗑️ リセット
-                        </button>
-                    </div>
-                    <p class="save-note">※ 自動セーブ: 30秒ごと / ページ離脱時</p>
                 </div>
             </div>
 
@@ -517,6 +480,65 @@
                 <div id="story-chapter-list" class="story-chapter-list"></div>
             </div>
         </div>
+
+        <!-- 設定モーダル -->
+        <div id="settings-modal" class="modal hidden">
+            <div class="modal-content settings-modal-content">
+                <div class="modal-header">
+                    <h2>⚙️ 設定</h2>
+                    <button id="close-settings" class="close-btn">✕</button>
+                </div>
+
+                <!-- サウンド設定 -->
+                <div class="settings-section-modal">
+                    <h3>🔊 サウンド</h3>
+                    <div class="sound-settings">
+                        <div class="sound-setting-row">
+                            <span class="sound-label">🔊 マスター</span>
+                            <input type="range" id="master-volume" min="0" max="100" value="50" class="volume-slider">
+                            <button id="mute-btn" class="sound-btn">🔊</button>
+                        </div>
+                        <div class="sound-setting-row">
+                            <span class="sound-label">🎵 BGM</span>
+                            <input type="range" id="bgm-volume" min="0" max="100" value="30" class="volume-slider">
+                            <button id="bgm-toggle-btn" class="sound-btn">OFF</button>
+                        </div>
+                        <div class="sound-setting-row">
+                            <span class="sound-label">🔔 SE</span>
+                            <input type="range" id="sfx-volume" min="0" max="100" value="70" class="volume-slider">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- その他設定 -->
+                <div class="settings-section-modal">
+                    <h3>📱 その他</h3>
+                    <div class="settings-buttons">
+                        <button id="refresh-btn" class="settings-btn refresh">
+                            🔄 更新
+                        </button>
+                        <button id="reset-btn" class="settings-btn danger">
+                            🗑️ リセット
+                        </button>
+                    </div>
+                    <p class="save-note">※ 自動セーブ: 30秒ごと / ページ離脱時</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 実績モーダル -->
+        <div id="achievements-modal" class="modal hidden">
+            <div class="modal-content achievements-modal-content">
+                <div class="modal-header">
+                    <h2>🏆 実績</h2>
+                    <button id="close-achievements" class="close-btn">✕</button>
+                </div>
+                <div class="achievements-progress">
+                    <span id="modal-unlocked-achievements">0</span>/<span id="modal-total-achievements">0</span> 達成
+                </div>
+                <div id="modal-achievements-list" class="achievements-grid"></div>
+            </div>
+        </div>
     </div>
 
     <script src="js/data.js"></script>
@@ -525,6 +547,6 @@
     <script src="js/ui.js"></script>
     <script src="js/save.js"></script>
     <script src="js/main.js"></script>
-    <div id="debug-version" style="position:fixed;bottom:5px;left:5px;font-size:10px;color:#666;z-index:9999;">v2.35</div>
+    <div id="debug-version" style="position:fixed;bottom:5px;left:5px;font-size:10px;color:#666;z-index:9999;">v2.36</div>
 </body>
 </html>
