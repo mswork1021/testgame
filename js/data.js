@@ -1729,6 +1729,57 @@ const GameData = {
         substatTypeReroll: { stone: 'blueCrystal', cost: 200, name: 'サブステ種類変更', desc: 'サブステ1つの種類を変更' },
         addSubstat: { stone: 'purpleGem', cost: 100, name: 'サブステ追加', desc: 'サブステータスを1つ追加' },
         addInscription: { stone: 'radiantStone', cost: 50, name: '刻印付与', desc: '強力な固有効果を付与' }
+    },
+
+    // ========================================
+    // ユーザーレベルシステム
+    // ========================================
+    USER_LEVEL: {
+        MAX_LEVEL: 100,
+
+        // レベルアップに必要な経験値（レベル1→2に必要な経験値から）
+        getExpRequired: (level) => {
+            // 基本100 × レベル^1.5
+            return Math.floor(100 * Math.pow(level, 1.5));
+        },
+
+        // 経験値獲得量
+        EXP_REWARDS: {
+            monsterKill: 1,        // 通常モンスター撃破
+            bossKill: 50,          // ボス撃破
+            stageComplete: 10,     // ステージクリア（10体撃破）
+            towerFloor: 20,        // 塔1階クリア
+            dailyMission: 30,      // デイリーミッション1つ完了
+            achievement: 100       // 実績解除
+        },
+
+        // レベルアップ報酬
+        LEVEL_REWARDS: {
+            // 通常報酬（毎レベル）
+            normal: { gems: 2 },
+
+            // 節目ボーナス（5レベルごと）
+            milestone5: { gems: 5, gold: 10000 },
+
+            // 大節目ボーナス（10レベルごと）
+            milestone10: { gems: 10, souls: 5, summonTicket: 1 },
+
+            // 特別節目（25, 50, 75, 100）
+            milestone25: { gems: 25, souls: 20, epicTicket: 1 },
+            milestone50: { gems: 50, souls: 50, legendTicket: 1 },
+            milestone75: { gems: 75, souls: 100, legendTicket: 2 },
+            milestone100: { gems: 200, souls: 200, legendTicket: 3, title: '冒険王' }
+        },
+
+        // レベル称号
+        TITLES: {
+            1: '見習い冒険者',
+            10: '駆け出し冒険者',
+            25: '一人前の冒険者',
+            50: 'ベテラン冒険者',
+            75: '伝説の冒険者',
+            100: '冒険王'
+        }
     }
 };
 

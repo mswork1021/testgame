@@ -199,6 +199,77 @@ body {
     padding-right: 50px;
 }
 
+/* ユーザーレベルバー */
+.user-level-bar {
+    padding: 4px 8px;
+    background: linear-gradient(90deg, rgba(255,215,0,0.1) 0%, rgba(255,215,0,0.05) 100%);
+    border-bottom: 1px solid rgba(255,215,0,0.3);
+}
+
+.user-level-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 2px;
+}
+
+.user-level-icon {
+    font-size: 14px;
+}
+
+#user-level-display {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--accent-gold);
+    letter-spacing: 1px;
+}
+
+.user-title {
+    font-size: 10px;
+    color: #aaa;
+    margin-left: auto;
+}
+
+.user-exp-bar {
+    height: 6px;
+    background: #1a1a1a;
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid #333;
+}
+
+.user-exp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ffd700 0%, #ffaa00 100%);
+    transition: width 0.3s ease;
+    box-shadow: 0 0 8px rgba(255,215,0,0.5);
+}
+
+.user-exp-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 8px;
+    color: #fff;
+    text-shadow: 0 0 2px #000;
+    white-space: nowrap;
+}
+
+/* レベルアップアニメーション */
+@keyframes levelUpGlow {
+    0%, 100% {
+        background: linear-gradient(90deg, rgba(255,215,0,0.1) 0%, rgba(255,215,0,0.05) 100%);
+        box-shadow: none;
+    }
+    50% {
+        background: linear-gradient(90deg, rgba(255,215,0,0.4) 0%, rgba(255,215,0,0.2) 100%);
+        box-shadow: 0 0 20px rgba(255,215,0,0.5);
+    }
+}
+
 #stage-display {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 16px;

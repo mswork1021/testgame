@@ -133,6 +133,13 @@ class Game {
             stoneExchangeWeekly: {
                 lastResetDate: null,
                 purchases: {}      // { exchangeId: count }
+            },
+
+            // ユーザーレベル
+            userLevel: {
+                level: 1,
+                exp: 0,
+                totalExp: 0        // 累計獲得経験値
             }
         };
 
@@ -856,6 +863,15 @@ class Game {
                 console.error('[DEBUG] ドロップエラー:', e);
             }
 
+            // 経験値獲得
+            try {
+                const expRewards = GameData.USER_LEVEL.EXP_REWARDS;
+                const expAmount = monster.isBoss ? expRewards.bossKill : expRewards.monsterKill;
+                this.gainExp(expAmount, monster.isBoss ? 'bossKill' : 'monsterKill');
+            } catch (e) {
+                console.error('[DEBUG] 経験値エラー:', e);
+            }
+
             // コールバック（エラーでも続行）
             try {
                 if (this.onMonsterKill) {
@@ -922,6 +938,14 @@ class Game {
 
         if (this.state.currentStage > this.state.maxStageReached) {
             this.state.maxStageReached = this.state.currentStage;
+        }
+
+        // ステージクリア経験値
+        try {
+            const expRewards = GameData.USER_LEVEL.EXP_REWARDS;
+            this.gainExp(expRewards.stageComplete, 'stageComplete');
+        } catch (e) {
+            console.error('[DEBUG] ステージクリア経験値エラー:', e);
         }
 
         this.spawnMonster();
@@ -2685,6 +2709,138 @@ class Game {
     getTowerBuff(type) {
         this.initTowerShop();
         return this.state.towerBuffs[type] || 0;
+    }
+
+    // ========================================
+    // ユーザーレベルシステム
+    // ========================================
+
+    // ユーザーレベル初期化
+    initUserLevel() {
+        if (!this.state.userLevel) {
+            this.state.userLevel = {
+                level: 1,
+                exp: 0,
+                totalExp: 0
+            };
+        }
+    }
+
+    // 経験値を獲得
+    gainExp(amount, source = 'unknown') {
+        this.initUserLevel();
+        const userLevel = GameData.USER_LEVEL;
+        const maxLevel = userLevel.MAX_LEVEL;
+
+        // 最大レベルなら経験値獲得しない
+        if (this.state.userLevel.level >= maxLevel) {
+            return { leveledUp: false, newLevel: maxLevel };
+        }
+
+        this.state.userLevel.exp += amount;
+        this.state.userLevel.totalExp += amount;
+
+        let leveledUp = false;
+        let rewards = [];
+
+        // レベルアップ処理
+        while (this.state.userLevel.level < maxLevel) {
+            const expRequired = userLevel.getExpRequired(this.state.userLevel.level);
+
+            if (this.state.userLevel.exp >= expRequired) {
+                this.state.userLevel.exp -= expRequired;
+                this.state.userLevel.level++;
+                leveledUp = true;
+
+                // 報酬を計算
+                const levelRewards = this.calculateLevelRewards(this.state.userLevel.level);
+                rewards.push({ level: this.state.userLevel.level, rewards: levelRewards });
+
+                // 報酬を付与
+                this.applyLevelRewards(levelRewards);
+
+                // コールバック
+                if (this.onLevelUp) {
+                    this.onLevelUp(this.state.userLevel.level, levelRewards);
+                }
+            } else {
+                break;
+            }
+        }
+
+        return {
+            leveledUp,
+            newLevel: this.state.userLevel.level,
+            rewards
+        };
+    }
+
+    // レベルアップ報酬を計算
+    calculateLevelRewards(level) {
+        const levelRewards = GameData.USER_LEVEL.LEVEL_REWARDS;
+        let rewards = { ...levelRewards.normal };
+
+        // 特別節目チェック
+        if (level === 100) {
+            rewards = { ...rewards, ...levelRewards.milestone100 };
+        } else if (level === 75) {
+            rewards = { ...rewards, ...levelRewards.milestone75 };
+        } else if (level === 50) {
+            rewards = { ...rewards, ...levelRewards.milestone50 };
+        } else if (level === 25) {
+            rewards = { ...rewards, ...levelRewards.milestone25 };
+        } else if (level % 10 === 0) {
+            // 10レベルごと
+            rewards = { ...rewards, ...levelRewards.milestone10 };
+        } else if (level % 5 === 0) {
+            // 5レベルごと
+            rewards = { ...rewards, ...levelRewards.milestone5 };
+        }
+
+        return rewards;
+    }
+
+    // レベルアップ報酬を付与
+    applyLevelRewards(rewards) {
+        if (rewards.gems) {
+            this.state.gems += rewards.gems;
+        }
+        if (rewards.gold) {
+            this.state.gold += rewards.gold;
+        }
+        if (rewards.souls) {
+            this.state.souls += rewards.souls;
+        }
+        // チケット系は別途処理（今後実装）
+    }
+
+    // 現在のユーザーレベル情報を取得
+    getUserLevelInfo() {
+        this.initUserLevel();
+        const level = this.state.userLevel.level;
+        const exp = this.state.userLevel.exp;
+        const expRequired = GameData.USER_LEVEL.getExpRequired(level);
+        const maxLevel = GameData.USER_LEVEL.MAX_LEVEL;
+
+        // 称号を取得
+        let title = '見習い冒険者';
+        const titles = GameData.USER_LEVEL.TITLES;
+        for (const lvl of Object.keys(titles).map(Number).sort((a, b) => b - a)) {
+            if (level >= lvl) {
+                title = titles[lvl];
+                break;
+            }
+        }
+
+        return {
+            level,
+            exp,
+            expRequired,
+            expPercent: level >= maxLevel ? 100 : Math.floor((exp / expRequired) * 100),
+            totalExp: this.state.userLevel.totalExp,
+            title,
+            isMaxLevel: level >= maxLevel
+        };
     }
 }
 

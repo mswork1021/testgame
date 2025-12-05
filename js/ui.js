@@ -32,6 +32,12 @@ class UI {
         this.elements.stageDisplay = document.getElementById('stage-display');
         this.elements.stageProgress = document.getElementById('stage-progress');
 
+        // ユーザーレベル
+        this.elements.userLevelDisplay = document.getElementById('user-level-display');
+        this.elements.userTitleDisplay = document.getElementById('user-title-display');
+        this.elements.userExpFill = document.getElementById('user-exp-fill');
+        this.elements.userExpText = document.getElementById('user-exp-text');
+
         // バトルエリア
         this.elements.bossTimer = document.getElementById('boss-timer');
         this.elements.bossTimeLeft = document.getElementById('boss-time-left');
@@ -475,6 +481,12 @@ class UI {
         // ボス戦失敗
         this.game.onBossFailed = () => {
             this.showToast('ボス戦に失敗...1ステージ戻ります');
+        };
+
+        // レベルアップ
+        this.game.onLevelUp = (level, rewards) => {
+            this.showLevelUpEffect(level, rewards);
+            this.updateUserLevelDisplay();
         };
 
         // ボス出現
@@ -966,6 +978,9 @@ class UI {
         this.elements.goldDisplay.textContent = this.formatNumber(this.game.state.gold);
         this.elements.soulsDisplay.textContent = this.formatNumber(this.game.state.souls);
         this.elements.gemsDisplay.textContent = this.formatNumber(this.game.state.gems);
+
+        // ユーザーレベル
+        this.updateUserLevelDisplay();
 
         // 装備石
         if (this.game.state.stones) {
@@ -1925,6 +1940,52 @@ class UI {
         setTimeout(() => {
             window.location.href = window.location.href.split('?')[0] + '?v=' + Date.now();
         }, 500);
+    }
+
+    // ========================================
+    // ユーザーレベル表示
+    // ========================================
+    updateUserLevelDisplay() {
+        try {
+            const info = this.game.getUserLevelInfo();
+            if (this.elements.userLevelDisplay) {
+                this.elements.userLevelDisplay.textContent = `Lv.${info.level}`;
+            }
+            if (this.elements.userTitleDisplay) {
+                this.elements.userTitleDisplay.textContent = info.title;
+            }
+            if (this.elements.userExpFill) {
+                this.elements.userExpFill.style.width = `${info.expPercent}%`;
+            }
+            if (this.elements.userExpText) {
+                if (info.isMaxLevel) {
+                    this.elements.userExpText.textContent = 'MAX';
+                } else {
+                    this.elements.userExpText.textContent = `${this.formatNumber(info.exp)} / ${this.formatNumber(info.expRequired)}`;
+                }
+            }
+        } catch (e) {
+            // 初期化前は無視
+        }
+    }
+
+    // レベルアップ演出
+    showLevelUpEffect(level, rewards) {
+        // レベルアップトースト
+        let rewardText = `⭐ Lv.${level}達成！`;
+        if (rewards.gems) rewardText += ` 💎+${rewards.gems}`;
+        if (rewards.souls) rewardText += ` 👻+${rewards.souls}`;
+        if (rewards.gold) rewardText += ` 💰+${this.formatNumber(rewards.gold)}`;
+        this.showToast(rewardText);
+
+        // レベルバーを光らせる
+        const levelBar = document.querySelector('.user-level-bar');
+        if (levelBar) {
+            levelBar.style.animation = 'levelUpGlow 0.5s ease 3';
+            setTimeout(() => {
+                levelBar.style.animation = '';
+            }, 1500);
+        }
     }
 
     // ========================================
