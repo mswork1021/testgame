@@ -1642,7 +1642,7 @@ class UI {
             console.log('[DEBUG] enhanceEquipment result:', result);
 
             if (result.success) {
-                if (window.soundManager) window.soundManager.playBuy();
+                if (window.soundManager) window.soundManager.playUpgrade();
 
                 // 先にトーストを表示（DOM更新がブロックされても表示される）
                 this.showToast(`⚔️ +${result.newLevel}に強化！`);
@@ -1674,7 +1674,7 @@ class UI {
         try {
             const result = this.game.rerollSubstatValues(this.selectedItem.id);
             if (result.success) {
-                if (window.soundManager) window.soundManager.playBuy();
+                if (window.soundManager) window.soundManager.playUpgrade();
                 // 先にトースト表示
                 let changes = [];
                 for (let i = 0; i < result.oldValues.length; i++) {
@@ -1706,7 +1706,7 @@ class UI {
             const substatIndex = this.selectedSubstatIndex || 0;
             const result = this.game.rerollSubstatType(this.selectedItem.id, substatIndex);
             if (result.success) {
-                if (window.soundManager) window.soundManager.playBuy();
+                if (window.soundManager) window.soundManager.playUpgrade();
                 this.showToast(`💙 サブステ種類変更: ${this.getStatLabel(result.oldType)} → ${this.getStatLabel(result.newType)}`);
                 this.openEquipmentModal(result.equipment);
                 this.renderEquipment();
@@ -1728,7 +1728,7 @@ class UI {
         try {
             const result = this.game.addEquipmentSubstat(this.selectedItem.id);
             if (result.success) {
-                if (window.soundManager) window.soundManager.playBuy();
+                if (window.soundManager) window.soundManager.playUpgrade();
                 this.showToast(`💜 サブステ追加: ${this.getStatLabel(result.addedSubstat.type)} +${result.addedSubstat.value}`);
                 this.openEquipmentModal(result.equipment);
                 this.renderEquipment();
@@ -3820,7 +3820,7 @@ class UI {
     onStoneExchange(exchangeId) {
         const result = this.game.executeStoneExchange(exchangeId);
         if (result.success) {
-            if (window.soundManager) window.soundManager.playBuy();
+            if (window.soundManager) window.soundManager.playUpgrade();
             this.showToast(`✨ ${result.rewardText}`);
             this.renderStoneExchangeModal();
             this.updateDisplay();
