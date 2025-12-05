@@ -1132,10 +1132,14 @@ class Game {
 
         // 全サブステータスの値を再抽選（基礎値ベース）
         const baseVal = equipment.baseValue || equipment.value;
+        // レアリティに応じた最低値を設定
+        const rarityMinimum = { COMMON: 3, UNCOMMON: 5, RARE: 8, EPIC: 12, LEGENDARY: 18 };
+        const minValue = rarityMinimum[equipment.rarity] || 3;
+
         const oldValues = equipment.substats.map(s => ({ type: s.type, value: s.value }));
         equipment.substats.forEach(substat => {
-            // 基礎値の10-25%の範囲で再抽選、最低1を保証
-            substat.value = Math.max(1, Math.floor(baseVal * (0.1 + Math.random() * 0.15)));
+            // 基礎値の15-30% + 最低値
+            substat.value = minValue + Math.floor(baseVal * (0.15 + Math.random() * 0.15));
         });
         const newValues = equipment.substats.map(s => ({ type: s.type, value: s.value }));
 
@@ -1216,8 +1220,11 @@ class Game {
 
         const newStatType = availableStats[Math.floor(Math.random() * availableStats.length)];
         const baseVal = equipment.baseValue || equipment.value;
-        // 基礎値の10-25%、最低1を保証
-        const value = Math.max(1, Math.floor(baseVal * (0.1 + Math.random() * 0.15)));
+        // レアリティに応じた最低値を設定
+        const rarityMinimum = { COMMON: 3, UNCOMMON: 5, RARE: 8, EPIC: 12, LEGENDARY: 18 };
+        const minValue = rarityMinimum[equipment.rarity] || 3;
+        // 基礎値の15-30% + 最低値
+        const value = minValue + Math.floor(baseVal * (0.15 + Math.random() * 0.15));
 
         equipment.substats.push({ type: newStatType, value });
 
