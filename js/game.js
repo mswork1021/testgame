@@ -122,7 +122,7 @@ class Game {
 
             // 装備石
             stones: {
-                ironScrap: 0,      // 鉄くず（コモン）
+                ironScrap: 10000,  // 鉄くず（コモン）テスト用
                 magicStone: 0,     // 魔石（アンコモン）
                 blueCrystal: 0,    // 蒼結晶（レア）
                 purpleGem: 0,      // 紫輝石（エピック）
