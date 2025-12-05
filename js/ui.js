@@ -1556,28 +1556,49 @@ class UI {
         this.elements.equipModalStats.innerHTML = statsHtml;
         this.elements.equipmentModal.classList.remove('hidden');
 
-        // イベント委譲でボタンクリックを処理（より確実）
-        this.elements.equipModalStats.onclick = (e) => {
-            const target = e.target;
-            if (target.tagName !== 'BUTTON' && !target.classList.contains('substat-item')) return;
+        // ボタンイベントを設定（タッチとクリック両対応）
+        const setupButton = (id, handler) => {
+            const btn = document.getElementById(id);
+            if (!btn) return;
 
-            e.preventDefault();
-            e.stopPropagation();
+            const wrappedHandler = () => {
+                if (btn.disabled) return;
+                handler();
+            };
 
-            if (target.id === 'enhance-btn' && !target.disabled) {
-                this.onEnhanceItem();
-            } else if (target.id === 'value-reroll-btn' && !target.disabled) {
-                this.onValueReroll();
-            } else if (target.id === 'type-reroll-btn' && !target.disabled) {
-                this.onTypeReroll();
-            } else if (target.id === 'add-substat-btn' && !target.disabled) {
-                this.onAddSubstat();
-            } else if (target.classList.contains('substat-item')) {
-                const idx = parseInt(target.dataset.index);
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                wrappedHandler();
+            }, { passive: false });
+
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                wrappedHandler();
+            });
+        };
+
+        setupButton('enhance-btn', () => this.onEnhanceItem());
+        setupButton('add-substat-btn', () => this.onAddSubstat());
+        setupButton('value-reroll-btn', () => this.onValueReroll());
+        setupButton('type-reroll-btn', () => this.onTypeReroll());
+
+        // サブステ選択イベント
+        const substatItems = this.elements.equipModalStats.querySelectorAll('.substat-item');
+        substatItems.forEach(el => {
+            const handler = () => {
+                const idx = parseInt(el.dataset.index);
                 this.selectedSubstatIndex = idx;
                 this.openEquipmentModal(this.selectedItem);
-            }
-        };
+            };
+            el.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                handler();
+            });
+            el.addEventListener('click', (e) => {
+                if (!e.defaultPrevented) handler();
+            });
+        });
     }
 
     closeEquipmentModal() {
