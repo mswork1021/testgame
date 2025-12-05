@@ -284,7 +284,8 @@ class UI {
 
         // 装備モーダル内の動的ボタン用イベント委譲（1回だけ設定）
         if (this.elements.equipModalStats) {
-            const handleModalAction = (e) => {
+            const self = this;
+            const handleModalAction = function(e) {
                 const target = e.target.closest('button, .substat-item');
                 if (!target) return;
 
@@ -294,17 +295,17 @@ class UI {
                 if (target.disabled) return;
 
                 if (target.id === 'enhance-btn') {
-                    this.onEnhanceItem();
+                    self.onEnhanceItem();
                 } else if (target.id === 'add-substat-btn') {
-                    this.onAddSubstat();
+                    self.onAddSubstat();
                 } else if (target.id === 'value-reroll-btn') {
-                    this.onValueReroll();
+                    self.onValueReroll();
                 } else if (target.id === 'type-reroll-btn') {
-                    this.onTypeReroll();
+                    self.onTypeReroll();
                 } else if (target.classList.contains('substat-item')) {
                     const idx = parseInt(target.dataset.index);
-                    this.selectedSubstatIndex = idx;
-                    this.openEquipmentModal(this.selectedItem);
+                    self.selectedSubstatIndex = idx;
+                    self.openEquipmentModal(self.selectedItem);
                 }
             };
 
