@@ -1206,6 +1206,10 @@ h3 {
     transition: all 0.2s ease;
     position: relative;
     min-height: 75px;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
 .inventory-item-row:active {
@@ -1236,6 +1240,7 @@ h3 {
 .inventory-item-row .item-info {
     text-align: center;
     width: 100%;
+    min-width: 0;
     overflow: hidden;
 }
 
@@ -1246,6 +1251,7 @@ h3 {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 100%;
 }
 
 .inventory-item-row .item-stat {
@@ -1677,17 +1683,30 @@ h3 {
     cursor: not-allowed;
 }
 
-/* 石能力ボタングリッド */
-.stone-ability-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+/* 石能力リスト */
+.stone-ability-list {
+    display: flex;
+    flex-direction: column;
     gap: 6px;
     margin-top: 8px;
 }
 
+.stone-ability-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ability-desc {
+    font-size: 10px;
+    color: #aaa;
+    flex: 1;
+    text-align: right;
+}
+
 .btn-stone-ability {
-    padding: 8px 6px;
-    font-size: 11px;
+    padding: 6px 8px;
+    font-size: 10px;
     font-weight: bold;
     border: 2px solid;
     border-radius: 6px;
@@ -1696,6 +1715,7 @@ h3 {
     background: linear-gradient(180deg, #ffd700 0%, #cc9900 100%);
     border-color: #ffee88;
     color: #000;
+    min-width: 110px;
 }
 
 .btn-stone-ability.magic {
@@ -2669,6 +2689,7 @@ button:focus {
 
 .collection-item {
     aspect-ratio: 1;
+    min-height: 60px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -2679,7 +2700,7 @@ button:focus {
     transition: all 0.2s ease;
     position: relative;
     min-width: 0;
-    overflow: hidden;
+    box-sizing: border-box;
 }
 
 .collection-item.discovered {
