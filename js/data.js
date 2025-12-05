@@ -1855,6 +1855,61 @@ const GameData = {
 
         // イベント履歴（過去のイベント、コレクション用）
         PAST_EVENTS: []
+    },
+
+    // ランキングシステム設定
+    RANKING: {
+        // ランキングカテゴリ
+        CATEGORIES: {
+            STAGE: { id: 'stage', name: '最高ステージ', icon: '🏔️' },
+            TOTAL_TAP: { id: 'totalTap', name: '累計タップ', icon: '👆' },
+            TOWER: { id: 'tower', name: '最高タワー階層', icon: '🗼' },
+            USER_LEVEL: { id: 'userLevel', name: 'ユーザーレベル', icon: '⭐' }
+        },
+
+        // ダミーNPCの名前（ランダム選択用）
+        NPC_NAMES: [
+            '勇者タロウ', '魔法使いハナ', '戦士ケン', '僧侶ユキ', '盗賊リン',
+            '騎士マサト', '弓使いアヤ', '忍者シュン', '侍ヒロ', '魔女ミユ',
+            'Dragonslayer', 'ShadowHunter', 'IceQueen', 'FireLord', 'StormBringer',
+            'DarkKnight', 'HolyPaladin', 'BloodMage', 'DeathBringer', 'Lightseeker',
+            '無名の冒険者', '流浪の剣士', '隠れた達人', '伝説のハンター', '謎の賢者',
+            'xXx_最強_xXx', '神降臨', '覇王丸', '紅蓮の魔王', '蒼き閃光',
+            'NoobSlayer', 'ProGamer', 'TapMaster', 'ClickGod', 'IdleKing'
+        ],
+
+        // NPCランクごとの特性
+        NPC_RANK_MULTIPLIERS: {
+            // プレイヤーより上位のNPC
+            ABOVE: {
+                stageMultiplier: { min: 1.1, max: 2.0 },
+                tapMultiplier: { min: 1.2, max: 3.0 },
+                towerMultiplier: { min: 1.1, max: 1.8 },
+                levelMultiplier: { min: 1.1, max: 1.5 }
+            },
+            // プレイヤーより下位のNPC
+            BELOW: {
+                stageMultiplier: { min: 0.3, max: 0.95 },
+                tapMultiplier: { min: 0.2, max: 0.9 },
+                towerMultiplier: { min: 0.3, max: 0.9 },
+                levelMultiplier: { min: 0.5, max: 0.95 }
+            }
+        },
+
+        // ランク報酬（週次リセット想定）
+        RANK_REWARDS: {
+            1: { gems: 100, gold: 10000, title: '覇者' },
+            2: { gems: 75, gold: 7500, title: '英雄' },
+            3: { gems: 50, gold: 5000, title: '勇士' },
+            10: { gems: 30, gold: 3000 },  // 4-10位
+            50: { gems: 15, gold: 1500 },  // 11-50位
+            100: { gems: 10, gold: 1000 }  // 51-100位
+        },
+
+        // 表示設定
+        DISPLAY_COUNT: 100,         // ランキング表示件数
+        UPDATE_INTERVAL: 60000,     // 更新間隔（ミリ秒）
+        PLAYER_NEARBY_COUNT: 5      // プレイヤー前後の表示数
     }
 };
 

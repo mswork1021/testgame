@@ -2175,6 +2175,155 @@ class Game {
         };
     }
 
+    // ========================================
+    // ランキングシステム
+    // ========================================
+
+    // ランキングデータを初期化
+    initRankingData() {
+        if (!this.state.rankingNPCs) {
+            this.state.rankingNPCs = this.generateNPCs();
+        }
+        if (!this.state.playerName) {
+            this.state.playerName = 'あなた';
+        }
+    }
+
+    // ダミーNPCを生成
+    generateNPCs() {
+        const config = GameData.RANKING;
+        const names = [...config.NPC_NAMES];
+        const npcs = [];
+
+        // 名前をシャッフル
+        for (let i = names.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [names[i], names[j]] = [names[j], names[i]];
+        }
+
+        // 99体のNPCを生成（プレイヤーを含めて100人）
+        for (let i = 0; i < 99; i++) {
+            const name = names[i % names.length] + (i >= names.length ? `_${Math.floor(i / names.length) + 1}` : '');
+            npcs.push({
+                id: `npc_${i}`,
+                name: name,
+                // 基本値はプレイヤーの初期状態を想定
+                baseStage: Math.max(1, Math.floor(Math.random() * 100) + 1),
+                baseTotalTap: Math.floor(Math.random() * 50000) + 100,
+                baseTower: Math.max(1, Math.floor(Math.random() * 30) + 1),
+                baseLevel: Math.max(1, Math.floor(Math.random() * 50) + 1),
+                // 成長係数（プレイヤーの成長に連動）
+                growthFactor: 0.3 + Math.random() * 1.4  // 0.3 ～ 1.7
+            });
+        }
+
+        return npcs;
+    }
+
+    // 指定カテゴリのランキングを取得
+    getRanking(category) {
+        this.initRankingData();
+
+        const playerScore = this.getPlayerScore(category);
+        const rankings = [];
+
+        // NPCのスコアを計算
+        this.state.rankingNPCs.forEach(npc => {
+            const score = this.calculateNPCScore(npc, category, playerScore);
+            rankings.push({
+                id: npc.id,
+                name: npc.name,
+                score: score,
+                isPlayer: false
+            });
+        });
+
+        // プレイヤーを追加
+        rankings.push({
+            id: 'player',
+            name: this.state.playerName,
+            score: playerScore,
+            isPlayer: true,
+            title: this.getUserLevelInfo().title
+        });
+
+        // スコアでソート（降順）
+        rankings.sort((a, b) => b.score - a.score);
+
+        // 順位を付与
+        rankings.forEach((entry, index) => {
+            entry.rank = index + 1;
+        });
+
+        return rankings;
+    }
+
+    // プレイヤーのスコアを取得
+    getPlayerScore(category) {
+        switch (category) {
+            case 'stage':
+                return this.state.stage;
+            case 'totalTap':
+                return this.state.totalTaps || 0;
+            case 'tower':
+                return this.state.towerMaxFloor || 1;
+            case 'userLevel':
+                return this.state.userLevel?.level || 1;
+            default:
+                return 0;
+        }
+    }
+
+    // NPCのスコアを計算（プレイヤーの進捗に基づいて動的に調整）
+    calculateNPCScore(npc, category, playerScore) {
+        let baseScore;
+
+        switch (category) {
+            case 'stage':
+                baseScore = npc.baseStage;
+                break;
+            case 'totalTap':
+                baseScore = npc.baseTotalTap;
+                break;
+            case 'tower':
+                baseScore = npc.baseTower;
+                break;
+            case 'userLevel':
+                baseScore = npc.baseLevel;
+                break;
+            default:
+                baseScore = 0;
+        }
+
+        // プレイヤーの進捗に応じてNPCスコアを調整
+        const adjustedScore = Math.floor(baseScore * npc.growthFactor * (1 + playerScore * 0.01));
+
+        // 適切な範囲に収める
+        if (category === 'userLevel') {
+            return Math.min(100, Math.max(1, adjustedScore));  // レベルは1-100
+        }
+
+        return Math.max(1, adjustedScore);
+    }
+
+    // プレイヤーの順位を取得
+    getPlayerRank(category) {
+        const rankings = this.getRanking(category);
+        const playerEntry = rankings.find(e => e.isPlayer);
+        return playerEntry ? playerEntry.rank : 0;
+    }
+
+    // ランキングのカテゴリ名を取得
+    getRankingCategoryInfo(category) {
+        const categories = GameData.RANKING.CATEGORIES;
+        for (const key in categories) {
+            if (categories[key].id === category) {
+                return categories[key];
+            }
+        }
+        return { id: category, name: category, icon: '📊' };
+    }
+
     // 召喚実行
     performSummon(count) {
         const results = [];

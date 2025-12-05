@@ -123,6 +123,10 @@
                 <span class="nav-icon">🗼</span>
                 <span class="nav-label">塔</span>
             </button>
+            <button class="nav-btn" data-tab="ranking">
+                <span class="nav-icon">🏆</span>
+                <span class="nav-label">順位</span>
+            </button>
         </nav>
 
         <!-- タブパネル -->
@@ -476,6 +480,75 @@
                 <div class="tower-shop-section">
                     <h3>🏅 メダル交換所</h3>
                     <div id="tower-shop-list" class="tower-shop-grid"></div>
+                </div>
+            </div>
+
+            <!-- ランキングタブ -->
+            <div id="ranking-panel" class="tab-panel">
+                <div class="panel-header">
+                    <h2>🏆 ランキング</h2>
+                </div>
+
+                <!-- カテゴリ選択 -->
+                <div class="ranking-categories">
+                    <button class="ranking-category-btn active" data-category="stage">
+                        <span class="category-icon">🏔️</span>
+                        <span class="category-name">ステージ</span>
+                    </button>
+                    <button class="ranking-category-btn" data-category="totalTap">
+                        <span class="category-icon">👆</span>
+                        <span class="category-name">タップ</span>
+                    </button>
+                    <button class="ranking-category-btn" data-category="tower">
+                        <span class="category-icon">🗼</span>
+                        <span class="category-name">塔</span>
+                    </button>
+                    <button class="ranking-category-btn" data-category="userLevel">
+                        <span class="category-icon">⭐</span>
+                        <span class="category-name">レベル</span>
+                    </button>
+                </div>
+
+                <!-- プレイヤーの順位 -->
+                <div class="my-rank-card">
+                    <div class="my-rank-header">
+                        <span class="my-rank-label">あなたの順位</span>
+                        <span id="my-rank-position" class="my-rank-position">#--</span>
+                    </div>
+                    <div class="my-rank-details">
+                        <span id="my-rank-value" class="my-rank-value">--</span>
+                        <span id="my-rank-category-label" class="my-rank-category">最高ステージ</span>
+                    </div>
+                </div>
+
+                <!-- ランキングリスト -->
+                <div class="ranking-list-container">
+                    <div id="ranking-list" class="ranking-list">
+                        <!-- ランキングエントリはJSで生成 -->
+                    </div>
+                </div>
+
+                <!-- 報酬情報 -->
+                <div class="ranking-rewards-info">
+                    <div class="rewards-title">🎁 順位報酬（週次）</div>
+                    <div class="rewards-grid">
+                        <div class="reward-tier tier-1">
+                            <span class="tier-rank">1位</span>
+                            <span class="tier-rewards">💎100 🪙10000</span>
+                        </div>
+                        <div class="reward-tier tier-2">
+                            <span class="tier-rank">2位</span>
+                            <span class="tier-rewards">💎75 🪙7500</span>
+                        </div>
+                        <div class="reward-tier tier-3">
+                            <span class="tier-rank">3位</span>
+                            <span class="tier-rewards">💎50 🪙5000</span>
+                        </div>
+                        <div class="reward-tier tier-other">
+                            <span class="tier-rank">4-10位</span>
+                            <span class="tier-rewards">💎30 🪙3000</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

@@ -196,6 +196,12 @@ class UI {
         this.elements.towerAbandonBtn = document.getElementById('tower-abandon-btn');
         this.elements.towerShopList = document.getElementById('tower-shop-list');
 
+        // ランキング
+        this.elements.rankingList = document.getElementById('ranking-list');
+        this.elements.myRankPosition = document.getElementById('my-rank-position');
+        this.elements.myRankValue = document.getElementById('my-rank-value');
+        this.elements.myRankCategoryLabel = document.getElementById('my-rank-category-label');
+
         // 設定モーダル
         this.elements.settingsBtn = document.getElementById('settings-btn');
         this.elements.settingsModal = document.getElementById('settings-modal');
@@ -429,6 +435,14 @@ class UI {
                 }
             });
         }
+
+        // ランキングカテゴリ切り替え
+        document.querySelectorAll('.ranking-category-btn').forEach(btn => {
+            addTouchAndClick(btn, () => {
+                const category = btn.dataset.category;
+                this.switchRankingCategory(category);
+            });
+        });
 
         // 装備モーダル内のボタン用イベント委譲（モバイル対応）
         if (this.elements.equipModalStats) {
@@ -1548,6 +1562,7 @@ class UI {
         if (tabId === 'tower') this.towerShopRendered = false;
         if (tabId === 'shop') this.renderShop();
         if (tabId === 'tower') this.renderTower();
+        if (tabId === 'ranking') this.renderRanking();
     }
 
     // ========================================
@@ -3938,6 +3953,123 @@ class UI {
         }
 
         this.renderTower();
+    }
+
+    // ========================================
+    // ランキング
+    // ========================================
+
+    // 現在選択中のカテゴリ
+    currentRankingCategory = 'stage';
+
+    // ランキングカテゴリを切り替え
+    switchRankingCategory(category) {
+        this.currentRankingCategory = category;
+
+        // ボタンのアクティブ状態を更新
+        document.querySelectorAll('.ranking-category-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.category === category);
+        });
+
+        // ランキングを再描画
+        this.renderRanking();
+    }
+
+    // ランキングパネルを描画
+    renderRanking() {
+        const category = this.currentRankingCategory;
+        const rankings = this.game.getRanking(category);
+        const categoryInfo = this.game.getRankingCategoryInfo(category);
+
+        // プレイヤーの順位と値を更新
+        const playerEntry = rankings.find(e => e.isPlayer);
+        if (playerEntry) {
+            if (this.elements.myRankPosition) {
+                this.elements.myRankPosition.textContent = `#${playerEntry.rank}`;
+            }
+            if (this.elements.myRankValue) {
+                this.elements.myRankValue.textContent = this.formatRankingValue(playerEntry.score, category);
+            }
+            if (this.elements.myRankCategoryLabel) {
+                this.elements.myRankCategoryLabel.textContent = categoryInfo.name;
+            }
+        }
+
+        // ランキングリストを描画
+        if (!this.elements.rankingList) return;
+
+        let html = '';
+
+        // 上位10位を表示
+        const topEntries = rankings.slice(0, 10);
+        topEntries.forEach(entry => {
+            html += this.createRankingEntryHtml(entry, category);
+        });
+
+        // プレイヤーが10位以下の場合、プレイヤー周辺も表示
+        if (playerEntry && playerEntry.rank > 10) {
+            html += '<div class="ranking-separator">...</div>';
+
+            // プレイヤー前後の人を表示
+            const nearbyStart = Math.max(10, playerEntry.rank - 3);
+            const nearbyEnd = Math.min(100, playerEntry.rank + 2);
+
+            for (let i = nearbyStart; i <= nearbyEnd && i <= rankings.length; i++) {
+                const entry = rankings[i - 1];
+                if (entry) {
+                    html += this.createRankingEntryHtml(entry, category);
+                }
+            }
+        }
+
+        this.elements.rankingList.innerHTML = html;
+    }
+
+    // ランキングエントリのHTMLを生成
+    createRankingEntryHtml(entry, category) {
+        const rankClass = entry.rank <= 3 ? `rank-${entry.rank}` : '';
+        const playerClass = entry.isPlayer ? 'is-player' : '';
+
+        // メダル（1-3位）
+        let medal = '';
+        if (entry.rank === 1) medal = '<span class="rank-medal">🥇</span>';
+        else if (entry.rank === 2) medal = '<span class="rank-medal">🥈</span>';
+        else if (entry.rank === 3) medal = '<span class="rank-medal">🥉</span>';
+
+        // タイトル表示
+        const titleHtml = entry.title ? `<span class="rank-player-title">${entry.title}</span>` : '';
+
+        return `
+            <div class="ranking-entry ${rankClass} ${playerClass}">
+                <div class="rank-position">${medal}${entry.rank}</div>
+                <div class="rank-player-info">
+                    <span class="rank-player-name">${entry.isPlayer ? '👤 ' : ''}${entry.name}</span>
+                    ${titleHtml}
+                </div>
+                <div class="rank-score">${this.formatRankingValue(entry.score, category)}</div>
+            </div>
+        `;
+    }
+
+    // ランキング値をフォーマット
+    formatRankingValue(value, category) {
+        switch (category) {
+            case 'stage':
+                return `Stage ${value}`;
+            case 'totalTap':
+                if (value >= 1000000) {
+                    return `${(value / 1000000).toFixed(1)}M`;
+                } else if (value >= 1000) {
+                    return `${(value / 1000).toFixed(1)}K`;
+                }
+                return value.toString();
+            case 'tower':
+                return `${value}F`;
+            case 'userLevel':
+                return `Lv.${value}`;
+            default:
+                return value.toString();
+        }
     }
 
     // ========================================
