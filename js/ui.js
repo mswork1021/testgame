@@ -396,6 +396,49 @@ class UI {
                 }
             });
         }
+
+        // 装備モーダル内のボタン用イベント委譲（モバイル対応）
+        if (this.elements.equipModalStats) {
+            const self = this;
+            const handleAction = (action, idx) => {
+                console.log('Equipment action:', action, idx);
+                switch (action) {
+                    case 'enhance':
+                        self.onEnhanceItem();
+                        break;
+                    case 'addSubstat':
+                        self.onAddSubstat();
+                        break;
+                    case 'valueReroll':
+                        self.onValueReroll();
+                        break;
+                    case 'typeReroll':
+                        self.onTypeReroll();
+                        break;
+                    case 'selectSubstat':
+                        self.selectSubstat(parseInt(idx, 10));
+                        break;
+                }
+            };
+
+            // タッチイベント（モバイル優先）
+            this.elements.equipModalStats.addEventListener('touchend', (e) => {
+                const btn = e.target.closest('[data-action]');
+                if (btn && !btn.disabled) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleAction(btn.dataset.action, btn.dataset.idx);
+                }
+            }, { passive: false });
+
+            // クリックイベント（PC用）
+            this.elements.equipModalStats.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-action]');
+                if (btn && !btn.disabled && !e.defaultPrevented) {
+                    handleAction(btn.dataset.action, btn.dataset.idx);
+                }
+            });
+        }
     }
 
     setupGameCallbacks() {
@@ -1473,7 +1516,7 @@ class UI {
             item.substats.forEach((sub, idx) => {
                 const isSelected = this.selectedSubstatIndex === idx;
                 const style = isSelected ? 'background:#3498db; color:#fff; padding:2px 6px; border-radius:4px;' : '';
-                statsHtml += `<p style="font-size:11px; color:#ccc; cursor:pointer; ${style}" onclick="window.TapQuest.ui.selectSubstat(${idx})">・${this.getStatLabel(sub.type)} +${sub.value}</p>`;
+                statsHtml += `<p style="font-size:11px; color:#ccc; cursor:pointer; ${style}" data-action="selectSubstat" data-idx="${idx}">・${this.getStatLabel(sub.type)} +${sub.value}</p>`;
             });
             statsHtml += `</div>`;
         }
@@ -1497,9 +1540,9 @@ class UI {
 
         statsHtml += `<div class="stone-ability-list">`;
 
-        // 強化ボタン（鉄くず）- インラインonclickで確実に動作
+        // 強化ボタン（鉄くず）- data-action属性でイベント委譲
         statsHtml += `<div class="stone-ability-row">`;
-        statsHtml += `<button class="btn-stone-ability" ${canEnhance ? '' : 'disabled'} onclick="window.TapQuest.ui.onEnhanceItem()">🪨 強化 (${enhanceCost})</button>`;
+        statsHtml += `<button class="btn-stone-ability" ${canEnhance ? '' : 'disabled'} data-action="enhance">🪨 強化 (${enhanceCost})</button>`;
         statsHtml += `<span class="ability-desc">効果値 +1%</span>`;
         statsHtml += `</div>`;
 
@@ -1507,7 +1550,7 @@ class UI {
         const addSubstat = GameData.STONE_ABILITIES.addSubstat;
         const canAddSubstat = stones.purpleGem >= addSubstat.cost && substatCount < 3;
         statsHtml += `<div class="stone-ability-row">`;
-        statsHtml += `<button class="btn-stone-ability purple" ${canAddSubstat ? '' : 'disabled'} onclick="window.TapQuest.ui.onAddSubstat()">💜 サブステ追加 (${addSubstat.cost})</button>`;
+        statsHtml += `<button class="btn-stone-ability purple" ${canAddSubstat ? '' : 'disabled'} data-action="addSubstat">💜 サブステ追加 (${addSubstat.cost})</button>`;
         statsHtml += `<span class="ability-desc">${substatCount}/3</span>`;
         statsHtml += `</div>`;
 
@@ -1515,7 +1558,7 @@ class UI {
         const substatValueReroll = GameData.STONE_ABILITIES.substatValueReroll;
         const canValueReroll = hasSubstats && stones.magicStone >= substatValueReroll.cost;
         statsHtml += `<div class="stone-ability-row">`;
-        statsHtml += `<button class="btn-stone-ability magic" ${canValueReroll ? '' : 'disabled'} onclick="window.TapQuest.ui.onValueReroll()">💚 サブステ値抽選 (${substatValueReroll.cost})</button>`;
+        statsHtml += `<button class="btn-stone-ability magic" ${canValueReroll ? '' : 'disabled'} data-action="valueReroll">💚 サブステ値抽選 (${substatValueReroll.cost})</button>`;
         statsHtml += `<span class="ability-desc">${hasSubstats ? `${substatValueMin}〜${substatValueMax}` : 'サブステなし'}</span>`;
         statsHtml += `</div>`;
 
@@ -1526,7 +1569,7 @@ class UI {
         const selectedSubstat = item.substats?.[selectedIdx];
         const selectedLabel = selectedSubstat ? this.getStatLabel(selectedSubstat.type) : '';
         statsHtml += `<div class="stone-ability-row">`;
-        statsHtml += `<button class="btn-stone-ability blue" ${canTypeReroll ? '' : 'disabled'} onclick="window.TapQuest.ui.onTypeReroll()">💙 種類変更 (${substatTypeReroll.cost})</button>`;
+        statsHtml += `<button class="btn-stone-ability blue" ${canTypeReroll ? '' : 'disabled'} data-action="typeReroll">💙 種類変更 (${substatTypeReroll.cost})</button>`;
         statsHtml += `<span class="ability-desc">${hasSubstats ? `[${selectedLabel}]を変更` : 'サブステなし'}</span>`;
         statsHtml += `</div>`;
 
@@ -1578,13 +1621,16 @@ class UI {
         const result = this.game.enhanceEquipment(this.selectedItem.id);
         if (result.success) {
             if (window.soundManager) window.soundManager.playBuy();
-            this.showToast(`⚔️ ${result.equipment.name} を+${result.newLevel}に強化！`);
-            this.openEquipmentModal(result.equipment);
+            // モーダルを強制的に更新
+            this.selectedItem = result.equipment;
+            this.openEquipmentModal(this.selectedItem);
             this.renderEquipment();
             this.renderInventory();
             this.updateDisplay();
+            // トースト表示
+            this.showToast(`⚔️ +${result.newLevel}に強化！`);
         } else {
-            this.showToast(`❌ ${result.reason || '強化に失敗しました'}`);
+            this.showToast(`❌ ${result.reason || '強化失敗'}`);
         }
     }
 
@@ -1594,20 +1640,20 @@ class UI {
         const result = this.game.rerollSubstatValues(this.selectedItem.id);
         if (result.success) {
             if (window.soundManager) window.soundManager.playBuy();
+            this.selectedItem = result.equipment;
+            this.openEquipmentModal(this.selectedItem);
+            this.renderEquipment();
+            this.renderInventory();
+            this.updateDisplay();
             // 変化を表示
             let changes = [];
             for (let i = 0; i < result.oldValues.length; i++) {
                 const oldVal = result.oldValues[i].value;
                 const newVal = result.newValues[i].value;
-                const diff = newVal - oldVal;
-                const arrow = diff > 0 ? '▲' : diff < 0 ? '▼' : '→';
+                const arrow = newVal > oldVal ? '▲' : newVal < oldVal ? '▼' : '→';
                 changes.push(`${oldVal}${arrow}${newVal}`);
             }
-            this.showToast(`💚 サブステ値変更: ${changes.join(', ')}`);
-            this.openEquipmentModal(result.equipment);
-            this.renderEquipment();
-            this.renderInventory();
-            this.updateDisplay();
+            this.showToast(`💚 ${changes.join(', ')}`);
         } else {
             this.showToast(`❌ ${result.reason}`);
         }
@@ -1850,17 +1896,26 @@ class UI {
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.9);
-            color: white;
+            background: rgba(0,0,0,0.95);
+            color: #fff;
             padding: 16px 24px;
             border-radius: 8px;
-            z-index: 9999;
-            animation: fadeInOut 2s ease;
+            z-index: 99999;
+            font-size: 14px;
+            font-weight: bold;
+            text-align: center;
+            pointer-events: none;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
         `;
         toast.textContent = message;
         document.body.appendChild(toast);
 
-        setTimeout(() => toast.remove(), 2000);
+        // フェードアウト
+        setTimeout(() => {
+            toast.style.transition = 'opacity 0.3s';
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 1500);
     }
 
     // ========================================
