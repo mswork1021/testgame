@@ -282,37 +282,6 @@ class UI {
         addTouchAndClick(this.elements.closeEquipModal, () => this.closeEquipmentModal());
         addTouchAndClick(this.elements.claimDaily, () => this.claimDailyBonus());
 
-        // 装備モーダル内の動的ボタン用イベント委譲（1回だけ設定）
-        if (this.elements.equipModalStats) {
-            const self = this;
-            const handleModalAction = function(e) {
-                const target = e.target.closest('button, .substat-item');
-                if (!target) return;
-
-                e.preventDefault();
-                e.stopPropagation();
-
-                if (target.disabled) return;
-
-                if (target.id === 'enhance-btn') {
-                    self.onEnhanceItem();
-                } else if (target.id === 'add-substat-btn') {
-                    self.onAddSubstat();
-                } else if (target.id === 'value-reroll-btn') {
-                    self.onValueReroll();
-                } else if (target.id === 'type-reroll-btn') {
-                    self.onTypeReroll();
-                } else if (target.classList.contains('substat-item')) {
-                    const idx = parseInt(target.dataset.index);
-                    self.selectedSubstatIndex = idx;
-                    self.openEquipmentModal(self.selectedItem);
-                }
-            };
-
-            this.elements.equipModalStats.addEventListener('touchend', handleModalAction, { passive: false });
-            this.elements.equipModalStats.addEventListener('click', handleModalAction);
-        }
-
         // ストーリーモード
         if (this.elements.storyNextBtn) {
             addTouchAndClick(this.elements.storyNextBtn, () => this.advanceStory());
@@ -1504,7 +1473,7 @@ class UI {
             item.substats.forEach((sub, idx) => {
                 const isSelected = this.selectedSubstatIndex === idx;
                 const style = isSelected ? 'background:#3498db; color:#fff; padding:2px 6px; border-radius:4px;' : '';
-                statsHtml += `<p class="substat-item" data-index="${idx}" style="font-size:11px; color:#ccc; cursor:pointer; ${style}">・${this.getStatLabel(sub.type)} +${sub.value}</p>`;
+                statsHtml += `<p style="font-size:11px; color:#ccc; cursor:pointer; ${style}" onclick="window.TapQuest.ui.selectSubstat(${idx})">・${this.getStatLabel(sub.type)} +${sub.value}</p>`;
             });
             statsHtml += `</div>`;
         }
@@ -1528,36 +1497,36 @@ class UI {
 
         statsHtml += `<div class="stone-ability-list">`;
 
-        // 強化ボタン（鉄くず）
+        // 強化ボタン（鉄くず）- インラインonclickで確実に動作
         statsHtml += `<div class="stone-ability-row">`;
-        statsHtml += `<button id="enhance-btn" class="btn-stone-ability" ${canEnhance ? '' : 'disabled'}>🪨 強化 (${enhanceCost})</button>`;
+        statsHtml += `<button class="btn-stone-ability" ${canEnhance ? '' : 'disabled'} onclick="window.TapQuest.ui.onEnhanceItem()">🪨 強化 (${enhanceCost})</button>`;
         statsHtml += `<span class="ability-desc">効果値 +1%</span>`;
         statsHtml += `</div>`;
 
-        // サブステ追加（紫輝石）- 先に追加を表示
+        // サブステ追加（紫輝石）
         const addSubstat = GameData.STONE_ABILITIES.addSubstat;
         const canAddSubstat = stones.purpleGem >= addSubstat.cost && substatCount < 3;
         statsHtml += `<div class="stone-ability-row">`;
-        statsHtml += `<button id="add-substat-btn" class="btn-stone-ability purple" ${canAddSubstat ? '' : 'disabled'}>💜 サブステ追加 (${addSubstat.cost})</button>`;
+        statsHtml += `<button class="btn-stone-ability purple" ${canAddSubstat ? '' : 'disabled'} onclick="window.TapQuest.ui.onAddSubstat()">💜 サブステ追加 (${addSubstat.cost})</button>`;
         statsHtml += `<span class="ability-desc">${substatCount}/3</span>`;
         statsHtml += `</div>`;
 
-        // サブステ値抽選（魔石）- サブステがないと使えない
+        // サブステ値抽選（魔石）
         const substatValueReroll = GameData.STONE_ABILITIES.substatValueReroll;
         const canValueReroll = hasSubstats && stones.magicStone >= substatValueReroll.cost;
         statsHtml += `<div class="stone-ability-row">`;
-        statsHtml += `<button id="value-reroll-btn" class="btn-stone-ability magic" ${canValueReroll ? '' : 'disabled'}>💚 サブステ値抽選 (${substatValueReroll.cost})</button>`;
+        statsHtml += `<button class="btn-stone-ability magic" ${canValueReroll ? '' : 'disabled'} onclick="window.TapQuest.ui.onValueReroll()">💚 サブステ値抽選 (${substatValueReroll.cost})</button>`;
         statsHtml += `<span class="ability-desc">${hasSubstats ? `${substatValueMin}〜${substatValueMax}` : 'サブステなし'}</span>`;
         statsHtml += `</div>`;
 
-        // サブステ種類変更（蒼結晶）- サブステがないと使えない
+        // サブステ種類変更（蒼結晶）
         const substatTypeReroll = GameData.STONE_ABILITIES.substatTypeReroll;
         const canTypeReroll = hasSubstats && stones.blueCrystal >= substatTypeReroll.cost;
         const selectedIdx = this.selectedSubstatIndex || 0;
         const selectedSubstat = item.substats?.[selectedIdx];
         const selectedLabel = selectedSubstat ? this.getStatLabel(selectedSubstat.type) : '';
         statsHtml += `<div class="stone-ability-row">`;
-        statsHtml += `<button id="type-reroll-btn" class="btn-stone-ability blue" ${canTypeReroll ? '' : 'disabled'}>💙 種類変更 (${substatTypeReroll.cost})</button>`;
+        statsHtml += `<button class="btn-stone-ability blue" ${canTypeReroll ? '' : 'disabled'} onclick="window.TapQuest.ui.onTypeReroll()">💙 種類変更 (${substatTypeReroll.cost})</button>`;
         statsHtml += `<span class="ability-desc">${hasSubstats ? `[${selectedLabel}]を変更` : 'サブステなし'}</span>`;
         statsHtml += `</div>`;
 
@@ -1586,7 +1555,15 @@ class UI {
 
         this.elements.equipModalStats.innerHTML = statsHtml;
         this.elements.equipmentModal.classList.remove('hidden');
-        // イベントはbindEventsで設定済み（イベント委譲）
+        // イベントはインラインonclickで設定済み
+    }
+
+    // サブステ選択
+    selectSubstat(idx) {
+        this.selectedSubstatIndex = idx;
+        if (this.selectedItem) {
+            this.openEquipmentModal(this.selectedItem);
+        }
     }
 
     closeEquipmentModal() {
