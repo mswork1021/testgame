@@ -187,6 +187,24 @@ class UI {
         this.elements.modalAchievementsList = document.getElementById('modal-achievements-list');
         this.elements.modalUnlockedAchievements = document.getElementById('modal-unlocked-achievements');
         this.elements.modalTotalAchievements = document.getElementById('modal-total-achievements');
+
+        // 装備石
+        this.elements.stoneIron = document.getElementById('stone-iron');
+        this.elements.stoneMagic = document.getElementById('stone-magic');
+        this.elements.stoneBlue = document.getElementById('stone-blue');
+        this.elements.stonePurple = document.getElementById('stone-purple');
+        this.elements.stoneRadiant = document.getElementById('stone-radiant');
+
+        // 石交換所モーダル
+        this.elements.stoneExchangeBtn = document.getElementById('stone-exchange-btn');
+        this.elements.stoneExchangeModal = document.getElementById('stone-exchange-modal');
+        this.elements.closeStoneExchange = document.getElementById('close-stone-exchange');
+        this.elements.stoneExchangeList = document.getElementById('stone-exchange-list');
+        this.elements.modalStoneIron = document.getElementById('modal-stone-iron');
+        this.elements.modalStoneMagic = document.getElementById('modal-stone-magic');
+        this.elements.modalStoneBlue = document.getElementById('modal-stone-blue');
+        this.elements.modalStonePurple = document.getElementById('modal-stone-purple');
+        this.elements.modalStoneRadiant = document.getElementById('modal-stone-radiant');
     }
 
     bindEvents() {
@@ -295,6 +313,14 @@ class UI {
             addTouchAndClick(this.elements.closeAchievements, () => this.closeAchievementsModal());
         }
 
+        // 石交換所モーダル
+        if (this.elements.stoneExchangeBtn) {
+            addTouchAndClick(this.elements.stoneExchangeBtn, () => this.openStoneExchangeModal());
+        }
+        if (this.elements.closeStoneExchange) {
+            addTouchAndClick(this.elements.closeStoneExchange, () => this.closeStoneExchangeModal());
+        }
+
         // インベントリ管理ボタン
         if (this.elements.sortInventoryBtn) {
             addTouchAndClick(this.elements.sortInventoryBtn, () => this.sortInventory());
@@ -398,8 +424,8 @@ class UI {
         };
 
         // ドロップ
-        this.game.onLoot = (item) => {
-            this.showLootPopup(item);
+        this.game.onLoot = (item, isDuplicate, stone) => {
+            this.showLootPopup(item, isDuplicate, stone);
         };
 
         // 宝箱自動収集
@@ -882,6 +908,15 @@ class UI {
         this.elements.soulsDisplay.textContent = this.formatNumber(this.game.state.souls);
         this.elements.gemsDisplay.textContent = this.formatNumber(this.game.state.gems);
 
+        // 装備石
+        if (this.game.state.stones) {
+            if (this.elements.stoneIron) this.elements.stoneIron.textContent = this.formatNumber(this.game.state.stones.ironScrap);
+            if (this.elements.stoneMagic) this.elements.stoneMagic.textContent = this.formatNumber(this.game.state.stones.magicStone);
+            if (this.elements.stoneBlue) this.elements.stoneBlue.textContent = this.formatNumber(this.game.state.stones.blueCrystal);
+            if (this.elements.stonePurple) this.elements.stonePurple.textContent = this.formatNumber(this.game.state.stones.purpleGem);
+            if (this.elements.stoneRadiant) this.elements.stoneRadiant.textContent = this.formatNumber(this.game.state.stones.radiantStone);
+        }
+
         // タワーモードチェック
         const inTowerMode = this.game.state.tower && this.game.state.tower.inProgress;
 
@@ -1291,6 +1326,9 @@ class UI {
                 compareText = `<span class="item-compare new">NEW</span>`;
             }
 
+            const enhanceLevel = item.enhanceLevel || 0;
+            const enhanceText = enhanceLevel > 0 ? `<span class="item-enhance-level">+${enhanceLevel}</span>` : '';
+
             html += `
                 <div class="inventory-item-row ${item.rarityClass}" data-index="${index}">
                     <div class="item-icon">${item.emoji}</div>
@@ -1298,6 +1336,7 @@ class UI {
                         <div class="item-name">${item.name}</div>
                         <div class="item-stat">${this.getStatLabel(item.stat)} +${item.value}</div>
                     </div>
+                    ${enhanceText}
                     ${compareText}
                 </div>
             `;
@@ -1416,13 +1455,26 @@ class UI {
     openEquipmentModal(item) {
         this.selectedItem = item;
 
-        this.elements.equipModalTitle.textContent = `${item.emoji} ${item.name}`;
+        const enhanceLevel = item.enhanceLevel || 0;
+        const enhanceText = enhanceLevel > 0 ? ` +${enhanceLevel}` : '';
+        this.elements.equipModalTitle.textContent = `${item.emoji} ${item.name}${enhanceText}`;
         this.elements.equipModalTitle.style.color = GameData.RARITY[item.rarity].color;
 
         const typeLabel = item.type === 'weapon' ? '武器' : item.type === 'armor' ? '防具' : 'アクセサリー';
         let statsHtml = `<p style="color: ${GameData.RARITY[item.rarity].color}">${item.rarityName}</p>`;
         statsHtml += `<p>タイプ: ${typeLabel}</p>`;
         statsHtml += `<p>効果: ${this.getStatLabel(item.stat)} +${item.value}</p>`;
+        statsHtml += `<p>強化レベル: +${enhanceLevel} / 99</p>`;
+
+        // 強化セクション
+        const enhanceCost = GameData.ENHANCE_COST[item.rarity] || 100;
+        const canEnhance = enhanceLevel < 99 && this.game.state.stones.ironScrap >= enhanceCost;
+        statsHtml += `<div class="enhance-section" style="margin-top:10px; padding:10px; background:rgba(0,0,0,0.3); border-radius:8px;">`;
+        statsHtml += `<p style="color:#ffd700;">🪨 強化コスト: ${enhanceCost}鉄くず</p>`;
+        statsHtml += `<p style="color:#888; font-size:12px;">所持: ${this.game.state.stones.ironScrap}個</p>`;
+        statsHtml += `<button id="enhance-btn" class="btn-enhance" ${canEnhance ? '' : 'disabled'}>`;
+        statsHtml += enhanceLevel >= 99 ? '最大強化済み' : `強化する（+${enhanceLevel} → +${enhanceLevel + 1}）`;
+        statsHtml += `</button></div>`;
 
         // 現在の装備との比較
         const currentEquip = this.game.state.equipment[item.type];
@@ -1447,11 +1499,35 @@ class UI {
 
         this.elements.equipModalStats.innerHTML = statsHtml;
         this.elements.equipmentModal.classList.remove('hidden');
+
+        // 強化ボタンのイベント
+        const enhanceBtn = document.getElementById('enhance-btn');
+        if (enhanceBtn) {
+            enhanceBtn.onclick = () => this.onEnhanceItem();
+        }
     }
 
     closeEquipmentModal() {
         this.elements.equipmentModal.classList.add('hidden');
         this.selectedItem = null;
+    }
+
+    onEnhanceItem() {
+        if (!this.selectedItem) return;
+
+        const result = this.game.enhanceEquipment(this.selectedItem.id);
+        if (result.success) {
+            // 強化成功エフェクト
+            if (window.soundManager) window.soundManager.playBuy();
+            this.showToast(`⚔️ ${this.selectedItem.name} を+${result.newLevel}に強化！`);
+
+            // モーダルを再度開いて更新
+            this.openEquipmentModal(this.selectedItem);
+            this.renderInventory();
+            this.updateDisplay();
+        } else {
+            this.showToast(`❌ ${result.message}`);
+        }
     }
 
     onEquipItem() {
@@ -1519,22 +1595,34 @@ class UI {
         }
     }
 
-    showLootPopup(item) {
+    showLootPopup(item, isDuplicate = false, stone = null) {
         const rarity = GameData.RARITY[item.rarity];
-        this.elements.lootPopup.innerHTML = `
-            <span style="color: ${rarity.color}">${item.emoji} ${item.rarityName} ${item.name} ドロップ！</span>
-        `;
-        this.elements.lootPopup.classList.remove('hidden');
 
-        // ドロップ音＆エフェクト（レジェンダリーは特別）
-        if (item.rarity === 'LEGENDARY') {
-            if (window.soundManager) window.soundManager.playLegendaryDrop();
-            this.showLegendaryDropEffect();
-        } else if (item.rarity === 'EPIC') {
-            if (window.soundManager) window.soundManager.playLegendaryDrop();
-        } else {
+        if (isDuplicate && stone) {
+            // 被り装備 → 石に変換
+            this.elements.lootPopup.innerHTML = `
+                <span style="color: ${rarity.color}">${item.emoji} ${item.name}</span>
+                <span style="color: #ffd700;"> → ${stone.icon} ${stone.name}に変換！</span>
+            `;
             if (window.soundManager) window.soundManager.playDrop();
+        } else {
+            // 新しい装備
+            this.elements.lootPopup.innerHTML = `
+                <span style="color: ${rarity.color}">${item.emoji} ${item.rarityName} ${item.name} ドロップ！</span>
+            `;
+
+            // ドロップ音＆エフェクト（レジェンダリーは特別）
+            if (item.rarity === 'LEGENDARY') {
+                if (window.soundManager) window.soundManager.playLegendaryDrop();
+                this.showLegendaryDropEffect();
+            } else if (item.rarity === 'EPIC') {
+                if (window.soundManager) window.soundManager.playLegendaryDrop();
+            } else {
+                if (window.soundManager) window.soundManager.playDrop();
+            }
         }
+
+        this.elements.lootPopup.classList.remove('hidden');
 
         setTimeout(() => {
             this.elements.lootPopup.classList.add('hidden');
@@ -3422,6 +3510,89 @@ class UI {
     closeAchievementsModal() {
         if (this.elements.achievementsModal) {
             this.elements.achievementsModal.classList.add('hidden');
+        }
+    }
+
+    // ========================================
+    // 石交換所モーダル
+    // ========================================
+    openStoneExchangeModal() {
+        if (this.elements.stoneExchangeModal) {
+            this.elements.stoneExchangeModal.classList.remove('hidden');
+            this.renderStoneExchangeModal();
+        }
+    }
+
+    closeStoneExchangeModal() {
+        if (this.elements.stoneExchangeModal) {
+            this.elements.stoneExchangeModal.classList.add('hidden');
+        }
+    }
+
+    renderStoneExchangeModal() {
+        if (!this.elements.stoneExchangeList) return;
+
+        // モーダル内の石表示を更新
+        const stones = this.game.state.stones;
+        if (this.elements.modalStoneIron) this.elements.modalStoneIron.textContent = this.formatNumber(stones.ironScrap);
+        if (this.elements.modalStoneMagic) this.elements.modalStoneMagic.textContent = this.formatNumber(stones.magicStone);
+        if (this.elements.modalStoneBlue) this.elements.modalStoneBlue.textContent = this.formatNumber(stones.blueCrystal);
+        if (this.elements.modalStonePurple) this.elements.modalStonePurple.textContent = this.formatNumber(stones.purpleGem);
+        if (this.elements.modalStoneRadiant) this.elements.modalStoneRadiant.textContent = this.formatNumber(stones.radiantStone);
+
+        let html = '';
+        const exchanges = GameData.STONE_EXCHANGE;
+        const purchases = this.game.state.stoneExchangeWeekly?.purchases || {};
+
+        for (const item of exchanges) {
+            const currentStones = stones[item.stone] || 0;
+            const canAfford = currentStones >= item.cost;
+            const weeklyPurchased = purchases[item.id] || 0;
+            const weeklyLimit = item.weeklyLimit;
+            const atLimit = weeklyLimit > 0 && weeklyPurchased >= weeklyLimit;
+            const canExchange = canAfford && !atLimit;
+
+            let limitText = '';
+            if (weeklyLimit > 0) {
+                limitText = `週間: ${weeklyPurchased}/${weeklyLimit}`;
+            }
+
+            html += `
+                <div class="exchange-item" data-exchange-id="${item.id}">
+                    <div class="exchange-icon">${item.icon}</div>
+                    <div class="exchange-info">
+                        <div class="exchange-name">${item.name}</div>
+                        <div class="exchange-desc">${item.desc}</div>
+                        ${limitText ? `<div class="exchange-limit">${limitText}</div>` : ''}
+                    </div>
+                    <button class="exchange-btn" data-id="${item.id}" ${canExchange ? '' : 'disabled'}>
+                        ${atLimit ? '制限' : '交換'}
+                    </button>
+                </div>
+            `;
+        }
+
+        this.elements.stoneExchangeList.innerHTML = html;
+
+        // イベントリスナーを追加（イベントデリゲーション）
+        this.elements.stoneExchangeList.onclick = (e) => {
+            const btn = e.target.closest('.exchange-btn');
+            if (btn && !btn.disabled) {
+                const exchangeId = btn.dataset.id;
+                this.onStoneExchange(exchangeId);
+            }
+        };
+    }
+
+    onStoneExchange(exchangeId) {
+        const result = this.game.executeStoneExchange(exchangeId);
+        if (result.success) {
+            if (window.soundManager) window.soundManager.playBuy();
+            this.showToast(`✨ ${result.rewardText}`);
+            this.renderStoneExchangeModal();
+            this.updateDisplay();
+        } else {
+            this.showToast(`❌ ${result.message}`);
         }
     }
 

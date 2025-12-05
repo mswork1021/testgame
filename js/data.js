@@ -1681,7 +1681,55 @@ const GameData = {
         { id: 'tower_sword', name: '塔の魔剣', desc: 'タップダメージ+50%（永続）', cost: 100, reward: { type: 'buff', stat: 'tapDamage', amount: 50 }, icon: '🗡️', limit: 1 },
         { id: 'tower_armor', name: '塔の神鎧', desc: 'DPS+30%（永続）', cost: 100, reward: { type: 'buff', stat: 'dps', amount: 30 }, icon: '🛡️', limit: 1 },
         { id: 'tower_crown', name: '塔の王冠', desc: 'ゴールド獲得+25%（永続）', cost: 150, reward: { type: 'buff', stat: 'goldBonus', amount: 25 }, icon: '👑', limit: 1 }
-    ]
+    ],
+
+    // ========================================
+    // 装備石システム
+    // ========================================
+    STONES: {
+        COMMON: { id: 'ironScrap', name: '鉄くず', icon: '🪨', rarity: 'COMMON' },
+        UNCOMMON: { id: 'magicStone', name: '魔石', icon: '💚', rarity: 'UNCOMMON' },
+        RARE: { id: 'blueCrystal', name: '蒼結晶', icon: '💙', rarity: 'RARE' },
+        EPIC: { id: 'purpleGem', name: '紫輝石', icon: '💜', rarity: 'EPIC' },
+        LEGENDARY: { id: 'radiantStone', name: '輝煌石', icon: '💛', rarity: 'LEGENDARY' }
+    },
+
+    // 強化コスト（鉄くず消費量/+1あたり）
+    ENHANCE_COST: {
+        COMMON: 100,
+        UNCOMMON: 200,
+        RARE: 500,
+        EPIC: 1000,
+        LEGENDARY: 2000
+    },
+
+    // 石の交換所
+    STONE_EXCHANGE: [
+        // 鉄くず交換
+        { id: 'scrap_to_gold', stone: 'ironScrap', cost: 1000, reward: { type: 'gold', amount: 10000 }, name: 'ゴールド交換', desc: '1,000鉄くず → 10,000G', icon: '💰', weeklyLimit: -1 },
+        { id: 'scrap_to_magic', stone: 'ironScrap', cost: 5000, reward: { type: 'stone', stoneType: 'magicStone', amount: 1 }, name: '魔石に変換', desc: '5,000鉄くず → 魔石×1', icon: '💚', weeklyLimit: 10 },
+
+        // 魔石交換
+        { id: 'magic_to_blue', stone: 'magicStone', cost: 3000, reward: { type: 'stone', stoneType: 'blueCrystal', amount: 1 }, name: '蒼結晶に変換', desc: '3,000魔石 → 蒼結晶×1', icon: '💙', weeklyLimit: 5 },
+
+        // 蒼結晶交換
+        { id: 'blue_to_medals', stone: 'blueCrystal', cost: 500, reward: { type: 'towerMedals', amount: 100 }, name: '塔メダル交換', desc: '500蒼結晶 → 塔メダル×100', icon: '🏅', weeklyLimit: 3 },
+
+        // 紫輝石交換
+        { id: 'purple_to_epic_ticket', stone: 'purpleGem', cost: 200, reward: { type: 'epicTicket', amount: 1 }, name: 'エピック確定券', desc: '200紫輝石 → エピック装備確定', icon: '🎫', weeklyLimit: 2 },
+
+        // 輝煌石交換
+        { id: 'radiant_to_legend_ticket', stone: 'radiantStone', cost: 100, reward: { type: 'legendTicket', amount: 1 }, name: 'レジェンド確定券', desc: '100輝煌石 → レジェンド装備確定', icon: '🎟️', weeklyLimit: 1 },
+        { id: 'radiant_to_summon', stone: 'radiantStone', cost: 50, reward: { type: 'summonTicket', amount: 1 }, name: '10連チケット', desc: '50輝煌石 → 召喚10連', icon: '🌟', weeklyLimit: 2 }
+    ],
+
+    // 石の特殊機能コスト
+    STONE_ABILITIES: {
+        valueReroll: { stone: 'magicStone', cost: 500, name: '数値リロール', desc: 'ステータスの数値を再抽選' },
+        typeReroll: { stone: 'blueCrystal', cost: 300, name: '種類リロール', desc: 'ステータスの種類を変更' },
+        addSubstat: { stone: 'purpleGem', cost: 100, name: 'サブステ追加', desc: 'サブステータスを1つ追加' },
+        addInscription: { stone: 'radiantStone', cost: 50, name: '刻印付与', desc: '強力な固有効果を付与' }
+    }
 };
 
 // グローバルにエクスポート
