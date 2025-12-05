@@ -1108,6 +1108,114 @@ class Game {
         return { ...this.state.stones };
     }
 
+    // 数値リロール（魔石）- 装備のステータス値を再抽選
+    rerollEquipmentValue(equipmentId) {
+        const ability = GameData.STONE_ABILITIES.valueReroll;
+        const equipment = this.findEquipmentById(equipmentId);
+        if (!equipment) return { success: false, reason: '装備が見つかりません' };
+
+        if (this.state.stones[ability.stone] < ability.cost) {
+            return { success: false, reason: `${ability.stone === 'magicStone' ? '魔石' : '石'}が足りません` };
+        }
+
+        // 石を消費
+        this.state.stones[ability.stone] -= ability.cost;
+
+        // 元のテンプレートを探す
+        const template = this.findEquipmentTemplate(equipment.name);
+        if (!template) return { success: false, reason: 'テンプレートが見つかりません' };
+
+        // 値を再抽選（レアリティ倍率を適用）
+        const rarity = GameData.RARITY[equipment.rarity];
+        const oldValue = equipment.value;
+        const baseValue = Math.floor(template.baseValue * rarity.multiplier * (0.8 + Math.random() * 0.4));
+        equipment.value = Math.floor(baseValue * (1 + (equipment.enhanceLevel || 0) * 0.01));
+
+        return { success: true, equipment, oldValue, newValue: equipment.value };
+    }
+
+    // 種類リロール（蒼結晶）- 装備のステータス種類を変更
+    rerollEquipmentType(equipmentId) {
+        const ability = GameData.STONE_ABILITIES.typeReroll;
+        const equipment = this.findEquipmentById(equipmentId);
+        if (!equipment) return { success: false, reason: '装備が見つかりません' };
+
+        if (this.state.stones[ability.stone] < ability.cost) {
+            return { success: false, reason: `${ability.stone === 'blueCrystal' ? '蒼結晶' : '石'}が足りません` };
+        }
+
+        // 石を消費
+        this.state.stones[ability.stone] -= ability.cost;
+
+        // 利用可能なステータス種類
+        const statTypes = ['tapDamage', 'goldBonus', 'critChance', 'critDamage', 'allStats'];
+        const oldStat = equipment.stat;
+
+        // 現在と異なるステータスをランダム選択
+        const availableStats = statTypes.filter(s => s !== oldStat);
+        equipment.stat = availableStats[Math.floor(Math.random() * availableStats.length)];
+
+        return { success: true, equipment, oldStat, newStat: equipment.stat };
+    }
+
+    // サブステータス追加（紫輝石）
+    addEquipmentSubstat(equipmentId) {
+        const ability = GameData.STONE_ABILITIES.addSubstat;
+        const equipment = this.findEquipmentById(equipmentId);
+        if (!equipment) return { success: false, reason: '装備が見つかりません' };
+
+        // サブステータス上限チェック
+        if (!equipment.substats) equipment.substats = [];
+        if (equipment.substats.length >= 3) {
+            return { success: false, reason: 'サブステータスは3つまでです' };
+        }
+
+        if (this.state.stones[ability.stone] < ability.cost) {
+            return { success: false, reason: `${ability.stone === 'purpleGem' ? '紫輝石' : '石'}が足りません` };
+        }
+
+        // 石を消費
+        this.state.stones[ability.stone] -= ability.cost;
+
+        // サブステータスを追加
+        const substatTypes = ['tapDamage', 'goldBonus', 'critChance', 'critDamage'];
+        const existingStats = equipment.substats.map(s => s.type);
+        const availableStats = substatTypes.filter(s => !existingStats.includes(s) && s !== equipment.stat);
+
+        if (availableStats.length === 0) {
+            return { success: false, reason: '追加できるサブステータスがありません' };
+        }
+
+        const newStatType = availableStats[Math.floor(Math.random() * availableStats.length)];
+        const value = Math.floor(equipment.value * (0.1 + Math.random() * 0.15)); // メインの10-25%
+
+        equipment.substats.push({ type: newStatType, value });
+
+        return { success: true, equipment, addedSubstat: { type: newStatType, value } };
+    }
+
+    // 装備テンプレートを名前から検索
+    findEquipmentTemplate(name) {
+        for (const typeKey of ['WEAPONS', 'ARMORS', 'ACCESSORIES']) {
+            const found = GameData.EQUIPMENT[typeKey].find(t => t.name === name);
+            if (found) return found;
+        }
+        return null;
+    }
+
+    // IDで装備を検索（インベントリと装備中の両方）
+    findEquipmentById(equipmentId) {
+        let equipment = this.state.inventory.find(item => item.id === equipmentId);
+        if (equipment) return equipment;
+
+        for (const slot of ['weapon', 'armor', 'accessory']) {
+            if (this.state.equipment[slot] && this.state.equipment[slot].id === equipmentId) {
+                return this.state.equipment[slot];
+            }
+        }
+        return null;
+    }
+
     // 石交換を実行
     executeStoneExchange(exchangeId) {
         const exchange = GameData.STONE_EXCHANGE.find(e => e.id === exchangeId);
