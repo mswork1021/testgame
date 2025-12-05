@@ -1464,17 +1464,51 @@ class UI {
         let statsHtml = `<p style="color: ${GameData.RARITY[item.rarity].color}">${item.rarityName}</p>`;
         statsHtml += `<p>タイプ: ${typeLabel}</p>`;
         statsHtml += `<p>効果: ${this.getStatLabel(item.stat)} +${item.value}</p>`;
+
+        // サブステータス表示
+        if (item.substats && item.substats.length > 0) {
+            statsHtml += `<div style="margin-top:5px; padding:5px; background:rgba(155,89,182,0.2); border-radius:4px;">`;
+            statsHtml += `<p style="color:#9b59b6; font-size:11px;">サブステータス:</p>`;
+            item.substats.forEach(sub => {
+                statsHtml += `<p style="font-size:11px; color:#ccc;">・${this.getStatLabel(sub.type)} +${sub.value}</p>`;
+            });
+            statsHtml += `</div>`;
+        }
+
         statsHtml += `<p>強化レベル: +${enhanceLevel} / 99</p>`;
 
         // 強化セクション
+        const stones = this.game.state.stones;
         const enhanceCost = GameData.ENHANCE_COST[item.rarity] || 100;
-        const canEnhance = enhanceLevel < 99 && this.game.state.stones.ironScrap >= enhanceCost;
+        const canEnhance = enhanceLevel < 99 && stones.ironScrap >= enhanceCost;
         statsHtml += `<div class="enhance-section" style="margin-top:10px; padding:10px; background:rgba(0,0,0,0.3); border-radius:8px;">`;
-        statsHtml += `<p style="color:#ffd700;">🪨 強化コスト: ${enhanceCost}鉄くず</p>`;
-        statsHtml += `<p style="color:#888; font-size:12px;">所持: ${this.game.state.stones.ironScrap}個</p>`;
-        statsHtml += `<button id="enhance-btn" class="btn-enhance" ${canEnhance ? '' : 'disabled'}>`;
-        statsHtml += enhanceLevel >= 99 ? '最大強化済み' : `強化する（+${enhanceLevel} → +${enhanceLevel + 1}）`;
-        statsHtml += `</button></div>`;
+        statsHtml += `<p style="font-size:12px; color:#888; margin-bottom:6px;">🪨鉄くず:${this.formatNumber(stones.ironScrap)} 💚魔石:${stones.magicStone} 💙蒼結晶:${stones.blueCrystal} 💜紫輝石:${stones.purpleGem}</p>`;
+        statsHtml += `<div class="stone-ability-grid">`;
+
+        // 強化ボタン
+        statsHtml += `<button id="enhance-btn" class="btn-stone-ability" ${canEnhance ? '' : 'disabled'}>`;
+        statsHtml += `🪨 強化 (${enhanceCost})</button>`;
+
+        // 数値リロール（魔石）
+        const valueReroll = GameData.STONE_ABILITIES.valueReroll;
+        const canValueReroll = stones.magicStone >= valueReroll.cost;
+        statsHtml += `<button id="value-reroll-btn" class="btn-stone-ability magic" ${canValueReroll ? '' : 'disabled'}>`;
+        statsHtml += `💚 数値抽選 (${valueReroll.cost})</button>`;
+
+        // 種類リロール（蒼結晶）
+        const typeReroll = GameData.STONE_ABILITIES.typeReroll;
+        const canTypeReroll = stones.blueCrystal >= typeReroll.cost;
+        statsHtml += `<button id="type-reroll-btn" class="btn-stone-ability blue" ${canTypeReroll ? '' : 'disabled'}>`;
+        statsHtml += `💙 種類変更 (${typeReroll.cost})</button>`;
+
+        // サブステ追加（紫輝石）
+        const addSubstat = GameData.STONE_ABILITIES.addSubstat;
+        const substatCount = item.substats?.length || 0;
+        const canAddSubstat = stones.purpleGem >= addSubstat.cost && substatCount < 3;
+        statsHtml += `<button id="add-substat-btn" class="btn-stone-ability purple" ${canAddSubstat ? '' : 'disabled'}>`;
+        statsHtml += `💜 サブステ (${addSubstat.cost}) ${substatCount}/3</button>`;
+
+        statsHtml += `</div></div>`;
 
         // 現在の装備との比較
         const currentEquip = this.game.state.equipment[item.type];
@@ -1500,11 +1534,18 @@ class UI {
         this.elements.equipModalStats.innerHTML = statsHtml;
         this.elements.equipmentModal.classList.remove('hidden');
 
-        // 強化ボタンのイベント
+        // 各ボタンのイベント設定
         const enhanceBtn = document.getElementById('enhance-btn');
-        if (enhanceBtn) {
-            enhanceBtn.onclick = () => this.onEnhanceItem();
-        }
+        if (enhanceBtn) enhanceBtn.onclick = () => this.onEnhanceItem();
+
+        const valueRerollBtn = document.getElementById('value-reroll-btn');
+        if (valueRerollBtn) valueRerollBtn.onclick = () => this.onValueReroll();
+
+        const typeRerollBtn = document.getElementById('type-reroll-btn');
+        if (typeRerollBtn) typeRerollBtn.onclick = () => this.onTypeReroll();
+
+        const addSubstatBtn = document.getElementById('add-substat-btn');
+        if (addSubstatBtn) addSubstatBtn.onclick = () => this.onAddSubstat();
     }
 
     closeEquipmentModal() {
@@ -1517,16 +1558,60 @@ class UI {
 
         const result = this.game.enhanceEquipment(this.selectedItem.id);
         if (result.success) {
-            // 強化成功エフェクト
             if (window.soundManager) window.soundManager.playBuy();
-            this.showToast(`⚔️ ${this.selectedItem.name} を+${result.newLevel}に強化！`);
-
-            // モーダルを再度開いて更新
-            this.openEquipmentModal(this.selectedItem);
+            this.showToast(`⚔️ ${result.equipment.name} を+${result.newLevel}に強化！`);
+            this.openEquipmentModal(result.equipment);
             this.renderInventory();
             this.updateDisplay();
         } else {
-            this.showToast(`❌ ${result.message}`);
+            this.showToast(`❌ ${result.reason || '強化に失敗しました'}`);
+        }
+    }
+
+    onValueReroll() {
+        if (!this.selectedItem) return;
+
+        const result = this.game.rerollEquipmentValue(this.selectedItem.id);
+        if (result.success) {
+            if (window.soundManager) window.soundManager.playBuy();
+            const diff = result.newValue - result.oldValue;
+            const arrow = diff > 0 ? '▲' : diff < 0 ? '▼' : '→';
+            this.showToast(`💚 数値変更: ${result.oldValue} ${arrow} ${result.newValue}`);
+            this.openEquipmentModal(result.equipment);
+            this.renderInventory();
+            this.updateDisplay();
+        } else {
+            this.showToast(`❌ ${result.reason}`);
+        }
+    }
+
+    onTypeReroll() {
+        if (!this.selectedItem) return;
+
+        const result = this.game.rerollEquipmentType(this.selectedItem.id);
+        if (result.success) {
+            if (window.soundManager) window.soundManager.playBuy();
+            this.showToast(`💙 種類変更: ${this.getStatLabel(result.oldStat)} → ${this.getStatLabel(result.newStat)}`);
+            this.openEquipmentModal(result.equipment);
+            this.renderInventory();
+            this.updateDisplay();
+        } else {
+            this.showToast(`❌ ${result.reason}`);
+        }
+    }
+
+    onAddSubstat() {
+        if (!this.selectedItem) return;
+
+        const result = this.game.addEquipmentSubstat(this.selectedItem.id);
+        if (result.success) {
+            if (window.soundManager) window.soundManager.playBuy();
+            this.showToast(`💜 サブステ追加: ${this.getStatLabel(result.addedSubstat.type)} +${result.addedSubstat.value}`);
+            this.openEquipmentModal(result.equipment);
+            this.renderInventory();
+            this.updateDisplay();
+        } else {
+            this.showToast(`❌ ${result.reason}`);
         }
     }
 
@@ -3532,6 +3617,15 @@ class UI {
     renderStoneExchangeModal() {
         if (!this.elements.stoneExchangeList) return;
 
+        // 石IDからアイコンを取得するマップ
+        const stoneIcons = {
+            ironScrap: '🪨',
+            magicStone: '💚',
+            blueCrystal: '💙',
+            purpleGem: '💜',
+            radiantStone: '💛'
+        };
+
         // モーダル内の石表示を更新
         const stones = this.game.state.stones;
         if (this.elements.modalStoneIron) this.elements.modalStoneIron.textContent = this.formatNumber(stones.ironScrap);
@@ -3552,6 +3646,7 @@ class UI {
             const atLimit = weeklyLimit > 0 && weeklyPurchased >= weeklyLimit;
             const canExchange = canAfford && !atLimit;
 
+            const stoneIcon = stoneIcons[item.stone] || '💎';
             let limitText = '';
             if (weeklyLimit > 0) {
                 limitText = `週間: ${weeklyPurchased}/${weeklyLimit}`;
@@ -3562,7 +3657,7 @@ class UI {
                     <div class="exchange-icon">${item.icon}</div>
                     <div class="exchange-info">
                         <div class="exchange-name">${item.name}</div>
-                        <div class="exchange-desc">${item.desc}</div>
+                        <div class="exchange-cost">${stoneIcon} ${this.formatNumber(item.cost)} (所持:${this.formatNumber(currentStones)})</div>
                         ${limitText ? `<div class="exchange-limit">${limitText}</div>` : ''}
                     </div>
                     <button class="exchange-btn" data-id="${item.id}" ${canExchange ? '' : 'disabled'}>

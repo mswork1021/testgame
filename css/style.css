@@ -1149,6 +1149,10 @@ h3 {
     padding-bottom: var(--spacing-md);
     max-height: 300px;
     overflow-y: auto;
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .inventory-item {
@@ -1161,6 +1165,8 @@ h3 {
     cursor: pointer;
     transition: all 0.2s ease;
     border: 2px solid #333;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .inventory-item:active {
@@ -1668,6 +1674,61 @@ h3 {
     background: linear-gradient(180deg, #555 0%, #333 100%);
     border-color: #666;
     color: #888;
+    cursor: not-allowed;
+}
+
+/* 石能力ボタングリッド */
+.stone-ability-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.btn-stone-ability {
+    padding: 8px 6px;
+    font-size: 11px;
+    font-weight: bold;
+    border: 2px solid;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: linear-gradient(180deg, #ffd700 0%, #cc9900 100%);
+    border-color: #ffee88;
+    color: #000;
+}
+
+.btn-stone-ability.magic {
+    background: linear-gradient(180deg, #2ecc71 0%, #27ae60 100%);
+    border-color: #58d68d;
+    color: #fff;
+}
+
+.btn-stone-ability.blue {
+    background: linear-gradient(180deg, #3498db 0%, #2980b9 100%);
+    border-color: #5dade2;
+    color: #fff;
+}
+
+.btn-stone-ability.purple {
+    background: linear-gradient(180deg, #9b59b6 0%, #8e44ad 100%);
+    border-color: #af7ac5;
+    color: #fff;
+}
+
+.btn-stone-ability:hover:not(:disabled) {
+    transform: scale(1.02);
+    filter: brightness(1.1);
+}
+
+.btn-stone-ability:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.btn-stone-ability:disabled {
+    background: linear-gradient(180deg, #444 0%, #333 100%);
+    border-color: #555;
+    color: #666;
     cursor: not-allowed;
 }
 
@@ -2599,7 +2660,11 @@ button:focus {
     gap: var(--spacing-xs);
     padding: var(--spacing-sm);
     overflow-y: auto;
+    overflow-x: hidden;
     flex: 1;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .collection-item {
@@ -2613,6 +2678,8 @@ button:focus {
     padding: var(--spacing-xs);
     transition: all 0.2s ease;
     position: relative;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .collection-item.discovered {
@@ -5552,6 +5619,13 @@ button:focus {
     font-size: 11px;
     color: #aaa;
     margin-top: 2px;
+}
+
+.exchange-cost {
+    font-size: 12px;
+    color: #ffd700;
+    margin-top: 2px;
+    font-weight: bold;
 }
 
 .exchange-limit {
