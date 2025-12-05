@@ -1556,28 +1556,28 @@ class UI {
         this.elements.equipModalStats.innerHTML = statsHtml;
         this.elements.equipmentModal.classList.remove('hidden');
 
-        // 各ボタンのイベント設定
-        const enhanceBtn = document.getElementById('enhance-btn');
-        if (enhanceBtn) enhanceBtn.onclick = () => this.onEnhanceItem();
+        // イベント委譲でボタンクリックを処理（より確実）
+        this.elements.equipModalStats.onclick = (e) => {
+            const target = e.target;
+            if (target.tagName !== 'BUTTON' && !target.classList.contains('substat-item')) return;
 
-        const valueRerollBtn = document.getElementById('value-reroll-btn');
-        if (valueRerollBtn) valueRerollBtn.onclick = () => this.onValueReroll();
+            e.preventDefault();
+            e.stopPropagation();
 
-        const typeRerollBtn = document.getElementById('type-reroll-btn');
-        if (typeRerollBtn) typeRerollBtn.onclick = () => this.onTypeReroll();
-
-        const addSubstatBtn = document.getElementById('add-substat-btn');
-        if (addSubstatBtn) addSubstatBtn.onclick = () => this.onAddSubstat();
-
-        // サブステ選択イベント
-        const substatItems = document.querySelectorAll('.substat-item');
-        substatItems.forEach(el => {
-            el.onclick = () => {
-                const idx = parseInt(el.dataset.index);
+            if (target.id === 'enhance-btn' && !target.disabled) {
+                this.onEnhanceItem();
+            } else if (target.id === 'value-reroll-btn' && !target.disabled) {
+                this.onValueReroll();
+            } else if (target.id === 'type-reroll-btn' && !target.disabled) {
+                this.onTypeReroll();
+            } else if (target.id === 'add-substat-btn' && !target.disabled) {
+                this.onAddSubstat();
+            } else if (target.classList.contains('substat-item')) {
+                const idx = parseInt(target.dataset.index);
                 this.selectedSubstatIndex = idx;
-                this.openEquipmentModal(this.selectedItem); // 選択状態を反映
-            };
-        });
+                this.openEquipmentModal(this.selectedItem);
+            }
+        };
     }
 
     closeEquipmentModal() {
