@@ -2401,7 +2401,14 @@ class Game {
     getOwnedHeroes() {
         const owned = [];
         for (const heroId in this.state.summonedHeroes) {
-            const hero = GameData.SUMMON_HEROES.find(h => h.id === heroId);
+            // 通常キャラから検索
+            let hero = GameData.SUMMON_HEROES.find(h => h.id === heroId);
+
+            // 見つからなければイベントキャラから検索
+            if (!hero && GameData.EVENT_GACHA.CURRENT_EVENT) {
+                hero = GameData.EVENT_GACHA.CURRENT_EVENT.pickupCharacters.find(h => h.id === heroId);
+            }
+
             if (hero) {
                 owned.push({
                     ...hero,
@@ -2416,8 +2423,13 @@ class Game {
     getSummonHeroBonus(effectType) {
         let bonus = 0;
         for (const heroId in this.state.summonedHeroes) {
-            const hero = GameData.SUMMON_HEROES.find(h => h.id === heroId);
-            if (hero && hero.effect.type === effectType) {
+            // 通常キャラから検索
+            let hero = GameData.SUMMON_HEROES.find(h => h.id === heroId);
+            // イベントキャラから検索
+            if (!hero && GameData.EVENT_GACHA.CURRENT_EVENT) {
+                hero = GameData.EVENT_GACHA.CURRENT_EVENT.pickupCharacters.find(h => h.id === heroId);
+            }
+            if (hero && hero.effect && hero.effect.type === effectType) {
                 const level = this.state.summonedHeroes[heroId];
                 bonus += hero.effect.baseValue + (hero.effect.perLevel * (level - 1));
             }
@@ -2429,8 +2441,13 @@ class Game {
     getAllStatsBonus() {
         let bonus = 0;
         for (const heroId in this.state.summonedHeroes) {
-            const hero = GameData.SUMMON_HEROES.find(h => h.id === heroId);
-            if (hero && hero.effect.type === 'allStats') {
+            // 通常キャラから検索
+            let hero = GameData.SUMMON_HEROES.find(h => h.id === heroId);
+            // イベントキャラから検索
+            if (!hero && GameData.EVENT_GACHA.CURRENT_EVENT) {
+                hero = GameData.EVENT_GACHA.CURRENT_EVENT.pickupCharacters.find(h => h.id === heroId);
+            }
+            if (hero && hero.effect && hero.effect.type === 'allStats') {
                 const level = this.state.summonedHeroes[heroId];
                 bonus += hero.effect.baseValue + (hero.effect.perLevel * (level - 1));
             }
