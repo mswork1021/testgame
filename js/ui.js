@@ -2832,7 +2832,13 @@ class UI {
         if (!this.elements.ownedHeroesList) return;
 
         const ownedHeroes = this.game.getOwnedHeroes();
-        const totalHeroes = GameData.SUMMON_HEROES.length;
+
+        // イベントキャラを含めた全キャラリスト
+        let allHeroes = [...GameData.SUMMON_HEROES];
+        if (GameData.EVENT_GACHA.CURRENT_EVENT) {
+            allHeroes = allHeroes.concat(GameData.EVENT_GACHA.CURRENT_EVENT.pickupCharacters);
+        }
+        const totalHeroes = allHeroes.length;
 
         // カウント表示
         if (this.elements.ownedHeroesCount) {
@@ -2842,22 +2848,24 @@ class UI {
         let html = '';
 
         // 全キャラをループ（所持していないものは?表示）
-        GameData.SUMMON_HEROES.forEach(hero => {
+        allHeroes.forEach(hero => {
             const owned = ownedHeroes.find(h => h.id === hero.id);
             const rarityClass = hero.rarity.toLowerCase();
+            const isLimited = hero.isLimited ? ' limited' : '';
 
             if (owned) {
                 const inBattle = this.game.isHeroInBattle(hero.id);
                 html += `
-                    <div class="hero-card ${rarityClass}${inBattle ? ' in-battle' : ''}" data-hero-id="${hero.id}">
+                    <div class="hero-card ${rarityClass}${isLimited}${inBattle ? ' in-battle' : ''}" data-hero-id="${hero.id}">
                         ${this.getHeroImageHtml(hero)}
                         <span class="hero-card-level">Lv.${owned.level}</span>
                         <span class="hero-card-stars">${this.getRarityStars(hero.rarity)}</span>
+                        ${isLimited ? '<span class="limited-mark">限定</span>' : ''}
                         ${inBattle ? '<span class="battle-indicator">⚔</span>' : ''}
                     </div>
                 `;
             } else {
-                html += `<div class="hero-card locked"></div>`;
+                html += `<div class="hero-card locked${isLimited}"></div>`;
             }
         });
 
@@ -3143,7 +3151,14 @@ class UI {
     showHeroDetailModal(heroId) {
         if (!this.elements.heroDetailModal) return;
 
-        const hero = GameData.SUMMON_HEROES.find(h => h.id === heroId);
+        // 通常キャラから検索
+        let hero = GameData.SUMMON_HEROES.find(h => h.id === heroId);
+
+        // 見つからなければイベントキャラから検索
+        if (!hero && GameData.EVENT_GACHA.CURRENT_EVENT) {
+            hero = GameData.EVENT_GACHA.CURRENT_EVENT.pickupCharacters.find(h => h.id === heroId);
+        }
+
         if (!hero) return;
 
         const ownedHeroes = this.game.getOwnedHeroes();

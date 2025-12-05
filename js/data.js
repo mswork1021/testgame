@@ -1817,7 +1817,8 @@ const GameData = {
                     emoji: '👼',
                     rarity: 'LEGENDARY',
                     description: '聖なる力でDPSを大幅強化',
-                    baseDps: 500,
+                    effect: { type: 'dps', baseValue: 30, perLevel: 15 },
+                    color: '#FFD700',
                     isLimited: true,  // 期間限定
                     pickupRate: 0.5   // ★5の中でのピックアップ率50%
                 },
@@ -1827,7 +1828,8 @@ const GameData = {
                     emoji: '🎅',
                     rarity: 'EPIC',
                     description: 'ゴールド獲得量を増加',
-                    baseDps: 200,
+                    effect: { type: 'gold', baseValue: 15, perLevel: 8 },
+                    color: '#E74C3C',
                     isLimited: true,
                     pickupRate: 0.5
                 },
@@ -1837,7 +1839,8 @@ const GameData = {
                     emoji: '🦌',
                     rarity: 'RARE',
                     description: 'タップダメージを強化',
-                    baseDps: 80,
+                    effect: { type: 'tapDamage', baseValue: 10, perLevel: 5 },
+                    color: '#8B4513',
                     isLimited: true,
                     pickupRate: 0.5
                 }
