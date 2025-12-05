@@ -422,19 +422,29 @@ class UI {
             };
 
             // タッチイベント（モバイル優先）
-            this.elements.equipModalStats.addEventListener('touchend', (e) => {
+            // 重要: setTimeoutでUI更新を遅延させないと、モバイルブラウザでDOM更新がブロックされる
+            let touchHandled = false;
+            this.elements.equipModalStats.addEventListener('touchstart', (e) => {
                 const btn = e.target.closest('[data-action]');
                 if (btn && !btn.disabled) {
                     e.preventDefault();
                     e.stopPropagation();
-                    handleAction(btn.dataset.action, btn.dataset.idx);
+                    touchHandled = true;
+                    // setTimeoutでイベント処理完了後にハンドラーを実行
+                    setTimeout(() => {
+                        handleAction(btn.dataset.action, btn.dataset.idx);
+                    }, 0);
                 }
             }, { passive: false });
 
-            // クリックイベント（PC用）
+            // クリックイベント（PC用）- タッチで処理済みならスキップ
             this.elements.equipModalStats.addEventListener('click', (e) => {
+                if (touchHandled) {
+                    touchHandled = false;
+                    return;
+                }
                 const btn = e.target.closest('[data-action]');
-                if (btn && !btn.disabled && !e.defaultPrevented) {
+                if (btn && !btn.disabled) {
                     handleAction(btn.dataset.action, btn.dataset.idx);
                 }
             });

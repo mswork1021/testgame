@@ -1718,6 +1718,11 @@ h3 {
     width: 160px;
     flex-shrink: 0;
     text-align: center;
+    /* モバイルでのタッチ遅延を防止 */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .btn-stone-ability.magic {
