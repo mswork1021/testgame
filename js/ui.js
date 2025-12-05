@@ -282,6 +282,36 @@ class UI {
         addTouchAndClick(this.elements.closeEquipModal, () => this.closeEquipmentModal());
         addTouchAndClick(this.elements.claimDaily, () => this.claimDailyBonus());
 
+        // 装備モーダル内の動的ボタン用イベント委譲（1回だけ設定）
+        if (this.elements.equipModalStats) {
+            const handleModalAction = (e) => {
+                const target = e.target.closest('button, .substat-item');
+                if (!target) return;
+
+                e.preventDefault();
+                e.stopPropagation();
+
+                if (target.disabled) return;
+
+                if (target.id === 'enhance-btn') {
+                    this.onEnhanceItem();
+                } else if (target.id === 'add-substat-btn') {
+                    this.onAddSubstat();
+                } else if (target.id === 'value-reroll-btn') {
+                    this.onValueReroll();
+                } else if (target.id === 'type-reroll-btn') {
+                    this.onTypeReroll();
+                } else if (target.classList.contains('substat-item')) {
+                    const idx = parseInt(target.dataset.index);
+                    this.selectedSubstatIndex = idx;
+                    this.openEquipmentModal(this.selectedItem);
+                }
+            };
+
+            this.elements.equipModalStats.addEventListener('touchend', handleModalAction, { passive: false });
+            this.elements.equipModalStats.addEventListener('click', handleModalAction);
+        }
+
         // ストーリーモード
         if (this.elements.storyNextBtn) {
             addTouchAndClick(this.elements.storyNextBtn, () => this.advanceStory());
@@ -1555,50 +1585,7 @@ class UI {
 
         this.elements.equipModalStats.innerHTML = statsHtml;
         this.elements.equipmentModal.classList.remove('hidden');
-
-        // ボタンイベントを設定（タッチとクリック両対応）
-        const setupButton = (id, handler) => {
-            const btn = document.getElementById(id);
-            if (!btn) return;
-
-            const wrappedHandler = () => {
-                if (btn.disabled) return;
-                handler();
-            };
-
-            btn.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                wrappedHandler();
-            }, { passive: false });
-
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                wrappedHandler();
-            });
-        };
-
-        setupButton('enhance-btn', () => this.onEnhanceItem());
-        setupButton('add-substat-btn', () => this.onAddSubstat());
-        setupButton('value-reroll-btn', () => this.onValueReroll());
-        setupButton('type-reroll-btn', () => this.onTypeReroll());
-
-        // サブステ選択イベント
-        const substatItems = this.elements.equipModalStats.querySelectorAll('.substat-item');
-        substatItems.forEach(el => {
-            const handler = () => {
-                const idx = parseInt(el.dataset.index);
-                this.selectedSubstatIndex = idx;
-                this.openEquipmentModal(this.selectedItem);
-            };
-            el.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                handler();
-            });
-            el.addEventListener('click', (e) => {
-                if (!e.defaultPrevented) handler();
-            });
-        });
+        // イベントはbindEventsで設定済み（イベント委譲）
     }
 
     closeEquipmentModal() {
