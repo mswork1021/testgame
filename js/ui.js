@@ -1577,6 +1577,7 @@ class UI {
             if (window.soundManager) window.soundManager.playBuy();
             this.showToast(`⚔️ ${result.equipment.name} を+${result.newLevel}に強化！`);
             this.openEquipmentModal(result.equipment);
+            this.renderEquipment();
             this.renderInventory();
             this.updateDisplay();
         } else {
@@ -1601,6 +1602,7 @@ class UI {
             }
             this.showToast(`💚 サブステ値変更: ${changes.join(', ')}`);
             this.openEquipmentModal(result.equipment);
+            this.renderEquipment();
             this.renderInventory();
             this.updateDisplay();
         } else {
@@ -1617,6 +1619,7 @@ class UI {
             if (window.soundManager) window.soundManager.playBuy();
             this.showToast(`💙 サブステ種類変更: ${this.getStatLabel(result.oldType)} → ${this.getStatLabel(result.newType)}`);
             this.openEquipmentModal(result.equipment);
+            this.renderEquipment();
             this.renderInventory();
             this.updateDisplay();
         } else {
@@ -1632,6 +1635,7 @@ class UI {
             if (window.soundManager) window.soundManager.playBuy();
             this.showToast(`💜 サブステ追加: ${this.getStatLabel(result.addedSubstat.type)} +${result.addedSubstat.value}`);
             this.openEquipmentModal(result.equipment);
+            this.renderEquipment();
             this.renderInventory();
             this.updateDisplay();
         } else {
