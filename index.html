@@ -32,6 +32,18 @@
                     <button id="settings-btn" class="header-icon-btn" title="設定">⚙️</button>
                 </div>
             </div>
+            <!-- ユーザーレベル -->
+            <div class="user-level-bar">
+                <div class="user-level-info">
+                    <span class="user-level-icon">⭐</span>
+                    <span id="user-level-display">Lv.1</span>
+                    <span id="user-title-display" class="user-title">見習い冒険者</span>
+                </div>
+                <div class="user-exp-bar">
+                    <div id="user-exp-fill" class="user-exp-fill" style="width: 0%"></div>
+                    <span id="user-exp-text" class="user-exp-text">0 / 100</span>
+                </div>
+            </div>
             <div class="stage-info">
                 <span id="stage-display">ステージ 1-1</span>
                 <div class="progress-bar">
@@ -110,6 +122,10 @@
             <button class="nav-btn" data-tab="tower">
                 <span class="nav-icon">🗼</span>
                 <span class="nav-label">塔</span>
+            </button>
+            <button class="nav-btn" data-tab="ranking">
+                <span class="nav-icon">🏆</span>
+                <span class="nav-label">順位</span>
             </button>
         </nav>
 
@@ -227,40 +243,118 @@
                     <div class="gems-display">💎 <span id="summon-gems">0</span></div>
                 </div>
 
-                <!-- 召喚バナー -->
-                <div class="summon-banner">
-                    <div class="banner-title">★ 仲間ガチャ ★</div>
-                    <div class="banner-rates">
-                        <span class="rate rate-common">★50%</span>
-                        <span class="rate rate-uncommon">★★30%</span>
-                        <span class="rate rate-rare">★★★14%</span>
-                        <span class="rate rate-epic">★★★★5%</span>
-                        <span class="rate rate-legendary">★★★★★1%</span>
+                <!-- サブタブ切り替え -->
+                <div class="summon-subtabs">
+                    <button class="summon-subtab active" data-subtab="normal">通常召喚</button>
+                    <button class="summon-subtab" data-subtab="event">
+                        <span class="event-badge">🎄</span>
+                        イベント
+                    </button>
+                </div>
+
+                <!-- 通常召喚パネル -->
+                <div id="normal-summon-panel" class="summon-subpanel active">
+                    <!-- 召喚バナー -->
+                    <div class="summon-banner">
+                        <div class="banner-title">★ 仲間ガチャ ★</div>
+                        <div class="banner-rates">
+                            <span class="rate rate-common">★50%</span>
+                            <span class="rate rate-uncommon">★★30%</span>
+                            <span class="rate rate-rare">★★★14%</span>
+                            <span class="rate rate-epic">★★★★5%</span>
+                            <span class="rate rate-legendary">★★★★★1%</span>
+                        </div>
+                    </div>
+
+                    <!-- 天井カウンター -->
+                    <div class="pity-counter">
+                        <div class="pity-info">
+                            <span>天井まで: <strong id="pity-count">0</strong>/100</span>
+                            <span class="pity-note">※100連で★★★★★確定</span>
+                        </div>
+                        <div class="pity-bar">
+                            <div id="pity-fill" class="pity-fill"></div>
+                        </div>
+                    </div>
+
+                    <!-- 召喚ボタン -->
+                    <div class="summon-buttons">
+                        <button id="summon-single-btn" class="summon-btn single">
+                            <span class="summon-btn-title">単発召喚</span>
+                            <span class="summon-btn-cost">💎 5</span>
+                        </button>
+                        <button id="summon-multi-btn" class="summon-btn multi">
+                            <span class="summon-btn-title">10連召喚</span>
+                            <span class="summon-btn-cost">💎 45</span>
+                            <span class="summon-btn-bonus">+1回ボーナス!</span>
+                        </button>
                     </div>
                 </div>
 
-                <!-- 天井カウンター -->
-                <div class="pity-counter">
-                    <div class="pity-info">
-                        <span>天井まで: <strong id="pity-count">0</strong>/100</span>
-                        <span class="pity-note">※100連で★★★★★確定</span>
+                <!-- イベント召喚パネル -->
+                <div id="event-summon-panel" class="summon-subpanel">
+                    <!-- イベントバナー -->
+                    <div class="event-banner" id="event-banner">
+                        <div class="event-banner-bg">
+                            <span class="event-emoji">🎄</span>
+                        </div>
+                        <div class="event-banner-content">
+                            <div class="event-title" id="event-title">聖夜の奇跡ガチャ</div>
+                            <div class="event-description" id="event-description">限定キャラ「聖夜の天使」登場！</div>
+                            <div class="event-period">
+                                <span id="event-remaining">残り --日 --時間</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="pity-bar">
-                        <div id="pity-fill" class="pity-fill"></div>
-                    </div>
-                </div>
 
-                <!-- 召喚ボタン -->
-                <div class="summon-buttons">
-                    <button id="summon-single-btn" class="summon-btn single">
-                        <span class="summon-btn-title">単発召喚</span>
-                        <span class="summon-btn-cost">💎 5</span>
-                    </button>
-                    <button id="summon-multi-btn" class="summon-btn multi">
-                        <span class="summon-btn-title">10連召喚</span>
-                        <span class="summon-btn-cost">💎 45</span>
-                        <span class="summon-btn-bonus">+1回ボーナス!</span>
-                    </button>
+                    <!-- ピックアップキャラ -->
+                    <div class="pickup-section">
+                        <div class="pickup-title">★ ピックアップ ★</div>
+                        <div class="pickup-characters" id="pickup-characters">
+                            <!-- JSで動的生成 -->
+                        </div>
+                    </div>
+
+                    <!-- イベント確率 -->
+                    <div class="event-rates">
+                        <div class="event-rates-title">排出確率UP!</div>
+                        <div class="banner-rates">
+                            <span class="rate rate-legendary">★★★★★2%</span>
+                            <span class="rate rate-epic">★★★★8%</span>
+                            <span class="rate rate-rare">★★★20%</span>
+                        </div>
+                    </div>
+
+                    <!-- イベント天井 -->
+                    <div class="pity-counter event-pity">
+                        <div class="pity-info">
+                            <span>天井まで: <strong id="event-pity-count">0</strong>/80</span>
+                            <span class="pity-note">※80連でピックアップ★5確定!</span>
+                        </div>
+                        <div class="pity-bar">
+                            <div id="event-pity-fill" class="pity-fill event"></div>
+                        </div>
+                    </div>
+
+                    <!-- イベント召喚ボタン -->
+                    <div class="summon-buttons">
+                        <button id="event-summon-single-btn" class="summon-btn single event">
+                            <span class="summon-btn-title">単発召喚</span>
+                            <span class="summon-btn-cost">💎 5</span>
+                        </button>
+                        <button id="event-summon-multi-btn" class="summon-btn multi event">
+                            <span class="summon-btn-title">10連召喚</span>
+                            <span class="summon-btn-cost">💎 45</span>
+                            <span class="summon-btn-bonus">+1回ボーナス!</span>
+                        </button>
+                    </div>
+
+                    <!-- イベント終了時の表示 -->
+                    <div id="no-event-message" class="no-event-message hidden">
+                        <div class="no-event-icon">📅</div>
+                        <div class="no-event-text">現在開催中のイベントはありません</div>
+                        <div class="no-event-subtext">次のイベントをお楽しみに！</div>
+                    </div>
                 </div>
 
                 <!-- 所持キャラ一覧 -->
@@ -386,6 +480,75 @@
                 <div class="tower-shop-section">
                     <h3>🏅 メダル交換所</h3>
                     <div id="tower-shop-list" class="tower-shop-grid"></div>
+                </div>
+            </div>
+
+            <!-- ランキングタブ -->
+            <div id="ranking-panel" class="tab-panel">
+                <div class="panel-header">
+                    <h2>🏆 ランキング</h2>
+                </div>
+
+                <!-- カテゴリ選択 -->
+                <div class="ranking-categories">
+                    <button class="ranking-category-btn active" data-category="stage">
+                        <span class="category-icon">🏔️</span>
+                        <span class="category-name">ステージ</span>
+                    </button>
+                    <button class="ranking-category-btn" data-category="totalTap">
+                        <span class="category-icon">👆</span>
+                        <span class="category-name">タップ</span>
+                    </button>
+                    <button class="ranking-category-btn" data-category="tower">
+                        <span class="category-icon">🗼</span>
+                        <span class="category-name">塔</span>
+                    </button>
+                    <button class="ranking-category-btn" data-category="userLevel">
+                        <span class="category-icon">⭐</span>
+                        <span class="category-name">レベル</span>
+                    </button>
+                </div>
+
+                <!-- プレイヤーの順位 -->
+                <div class="my-rank-card">
+                    <div class="my-rank-header">
+                        <span class="my-rank-label">あなたの順位</span>
+                        <span id="my-rank-position" class="my-rank-position">#--</span>
+                    </div>
+                    <div class="my-rank-details">
+                        <span id="my-rank-value" class="my-rank-value">--</span>
+                        <span id="my-rank-category-label" class="my-rank-category">最高ステージ</span>
+                    </div>
+                </div>
+
+                <!-- ランキングリスト -->
+                <div class="ranking-list-container">
+                    <div id="ranking-list" class="ranking-list">
+                        <!-- ランキングエントリはJSで生成 -->
+                    </div>
+                </div>
+
+                <!-- 報酬情報 -->
+                <div class="ranking-rewards-info">
+                    <div class="rewards-title">🎁 順位報酬（週次）</div>
+                    <div class="rewards-grid">
+                        <div class="reward-tier tier-1">
+                            <span class="tier-rank">1位</span>
+                            <span class="tier-rewards">💎100 🪙10000</span>
+                        </div>
+                        <div class="reward-tier tier-2">
+                            <span class="tier-rank">2位</span>
+                            <span class="tier-rewards">💎75 🪙7500</span>
+                        </div>
+                        <div class="reward-tier tier-3">
+                            <span class="tier-rank">3位</span>
+                            <span class="tier-rewards">💎50 🪙5000</span>
+                        </div>
+                        <div class="reward-tier tier-other">
+                            <span class="tier-rank">4-10位</span>
+                            <span class="tier-rewards">💎30 🪙3000</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

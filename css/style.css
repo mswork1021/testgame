@@ -199,6 +199,77 @@ body {
     padding-right: 50px;
 }
 
+/* ユーザーレベルバー */
+.user-level-bar {
+    padding: 4px 8px;
+    background: linear-gradient(90deg, rgba(255,215,0,0.1) 0%, rgba(255,215,0,0.05) 100%);
+    border-bottom: 1px solid rgba(255,215,0,0.3);
+}
+
+.user-level-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 2px;
+}
+
+.user-level-icon {
+    font-size: 14px;
+}
+
+#user-level-display {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--accent-gold);
+    letter-spacing: 1px;
+}
+
+.user-title {
+    font-size: 10px;
+    color: #aaa;
+    margin-left: auto;
+}
+
+.user-exp-bar {
+    height: 6px;
+    background: #1a1a1a;
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid #333;
+}
+
+.user-exp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ffd700 0%, #ffaa00 100%);
+    transition: width 0.3s ease;
+    box-shadow: 0 0 8px rgba(255,215,0,0.5);
+}
+
+.user-exp-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 8px;
+    color: #fff;
+    text-shadow: 0 0 2px #000;
+    white-space: nowrap;
+}
+
+/* レベルアップアニメーション */
+@keyframes levelUpGlow {
+    0%, 100% {
+        background: linear-gradient(90deg, rgba(255,215,0,0.1) 0%, rgba(255,215,0,0.05) 100%);
+        box-shadow: none;
+    }
+    50% {
+        background: linear-gradient(90deg, rgba(255,215,0,0.4) 0%, rgba(255,215,0,0.2) 100%);
+        box-shadow: 0 0 20px rgba(255,215,0,0.5);
+    }
+}
+
 #stage-display {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 16px;
@@ -4106,6 +4177,232 @@ button:focus {
     margin-top: 2px;
 }
 
+/* サブタブ */
+.summon-subtabs {
+    display: flex;
+    gap: 4px;
+    padding: 8px;
+    background: rgba(0,0,0,0.3);
+}
+
+.summon-subtab {
+    flex: 1;
+    padding: 10px;
+    border: 2px solid #333;
+    background: #1a1a1a;
+    color: #888;
+    font-size: 12px;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.summon-subtab.active {
+    background: linear-gradient(180deg, #333 0%, #222 100%);
+    border-color: var(--accent-gold);
+    color: var(--accent-gold);
+}
+
+.summon-subtab:not(.active):hover {
+    border-color: #555;
+    color: #aaa;
+}
+
+.event-badge {
+    font-size: 14px;
+}
+
+/* サブパネル */
+.summon-subpanel {
+    display: none;
+}
+
+.summon-subpanel.active {
+    display: block;
+}
+
+/* イベントバナー */
+.event-banner {
+    margin: 8px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #1a3a1a 0%, #0d2818 100%);
+    border: 3px solid #2d5a2d;
+    position: relative;
+}
+
+.event-banner-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.15;
+    font-size: 80px;
+}
+
+.event-banner-content {
+    position: relative;
+    padding: 16px;
+    text-align: center;
+}
+
+.event-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    color: #ffd700;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    letter-spacing: 2px;
+}
+
+.event-description {
+    font-size: 12px;
+    color: #aaa;
+    margin-top: 4px;
+}
+
+.event-period {
+    margin-top: 8px;
+    padding: 4px 12px;
+    background: rgba(255,0,0,0.2);
+    border-radius: 4px;
+    display: inline-block;
+}
+
+#event-remaining {
+    font-size: 11px;
+    color: #ff6b6b;
+    font-weight: bold;
+}
+
+/* ピックアップセクション */
+.pickup-section {
+    margin: 8px;
+    padding: 12px;
+    background: rgba(255,215,0,0.05);
+    border-radius: 8px;
+    border: 1px solid rgba(255,215,0,0.2);
+}
+
+.pickup-title {
+    text-align: center;
+    font-size: 12px;
+    color: #ffd700;
+    margin-bottom: 8px;
+}
+
+.pickup-characters {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.pickup-character {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 8px;
+    min-width: 70px;
+}
+
+.pickup-character.legendary {
+    border: 2px solid #f39c12;
+    box-shadow: 0 0 10px rgba(243,156,18,0.3);
+}
+
+.pickup-character.epic {
+    border: 2px solid #9b59b6;
+}
+
+.pickup-character.rare {
+    border: 2px solid #3498db;
+}
+
+.pickup-emoji {
+    font-size: 28px;
+    margin-bottom: 4px;
+}
+
+.pickup-name {
+    font-size: 9px;
+    color: #fff;
+    text-align: center;
+}
+
+.pickup-rarity {
+    font-size: 8px;
+    margin-top: 2px;
+}
+
+.pickup-character.legendary .pickup-rarity { color: #f39c12; }
+.pickup-character.epic .pickup-rarity { color: #9b59b6; }
+.pickup-character.rare .pickup-rarity { color: #3498db; }
+
+/* イベント確率 */
+.event-rates {
+    text-align: center;
+    padding: 8px;
+}
+
+.event-rates-title {
+    font-size: 11px;
+    color: #ff6b6b;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+/* イベント天井 */
+.pity-counter.event-pity .pity-fill.event {
+    background: linear-gradient(90deg, #2ecc71 0%, #27ae60 100%);
+    box-shadow: 0 0 10px rgba(46,204,113,0.5);
+}
+
+/* イベントボタン */
+.summon-btn.event {
+    border-color: #2ecc71;
+}
+
+.summon-btn.event.single {
+    background: linear-gradient(180deg, #27ae60 0%, #1e8449 100%);
+}
+
+.summon-btn.event.multi {
+    background: linear-gradient(180deg, #2ecc71 0%, #27ae60 100%);
+}
+
+/* イベントなしメッセージ */
+.no-event-message {
+    padding: 40px 20px;
+    text-align: center;
+}
+
+.no-event-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+}
+
+.no-event-text {
+    font-size: 14px;
+    color: #888;
+    margin-bottom: 4px;
+}
+
+.no-event-subtext {
+    font-size: 11px;
+    color: #555;
+}
+
 /* 所持キャラセクション */
 .owned-heroes-section {
     margin-top: 8px;
@@ -4379,6 +4676,43 @@ button:focus {
     font-size: 8px;
     padding: 2px 4px;
     border-radius: 4px;
+}
+
+/* イベント召喚専用バッジ */
+.summon-result-card .pickup-badge {
+    position: absolute;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
+    color: #fff;
+    font-size: 7px;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-weight: bold;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    animation: pickupPulse 1s ease-in-out infinite;
+    white-space: nowrap;
+}
+
+.summon-result-card .limited-badge {
+    position: absolute;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #9b59b6, #8e44ad);
+    color: #fff;
+    font-size: 6px;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+@keyframes pickupPulse {
+    0%, 100% { transform: translateX(-50%) scale(1); }
+    50% { transform: translateX(-50%) scale(1.1); }
 }
 
 /* 召喚演出背景 */
@@ -5693,4 +6027,252 @@ button:focus {
     font-size: 11px;
     color: #888;
     margin-top: 10px;
+}
+
+/* ========================================
+   ランキングUI
+   ======================================== */
+
+/* カテゴリ選択 */
+.ranking-categories {
+    display: flex;
+    gap: 6px;
+    padding: 10px;
+    background: rgba(0,0,0,0.3);
+}
+
+.ranking-category-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 6px;
+    border: 2px solid #333;
+    background: #1a1a1a;
+    color: #888;
+    font-size: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ranking-category-btn .category-icon {
+    font-size: 18px;
+}
+
+.ranking-category-btn.active {
+    background: linear-gradient(180deg, #333 0%, #222 100%);
+    border-color: var(--accent-gold);
+    color: var(--accent-gold);
+}
+
+.ranking-category-btn:not(.active):hover {
+    border-color: #555;
+    color: #aaa;
+}
+
+/* プレイヤー順位カード */
+.my-rank-card {
+    margin: 10px;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #2d1f4e 0%, #1a1333 100%);
+    border: 2px solid #7c5cbf;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(124, 92, 191, 0.3);
+}
+
+.my-rank-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.my-rank-label {
+    font-size: 12px;
+    color: #b8a8d8;
+}
+
+.my-rank-position {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    color: var(--accent-gold);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.my-rank-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.my-rank-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    color: #fff;
+}
+
+.my-rank-category {
+    font-size: 11px;
+    color: #888;
+}
+
+/* ランキングリスト */
+.ranking-list-container {
+    margin: 10px;
+    max-height: 280px;
+    overflow-y: auto;
+    background: rgba(0,0,0,0.2);
+    border-radius: 8px;
+}
+
+.ranking-list {
+    padding: 8px;
+}
+
+.ranking-entry {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+    margin-bottom: 6px;
+    transition: background 0.2s ease;
+}
+
+.ranking-entry:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.ranking-entry.is-player {
+    background: linear-gradient(90deg, rgba(124, 92, 191, 0.3), rgba(124, 92, 191, 0.1));
+    border: 1px solid #7c5cbf;
+}
+
+/* 順位表示 */
+.rank-position {
+    width: 40px;
+    text-align: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    color: #888;
+}
+
+.ranking-entry.rank-1 .rank-position {
+    color: #ffd700;
+    text-shadow: 0 0 8px rgba(255,215,0,0.5);
+}
+
+.ranking-entry.rank-2 .rank-position {
+    color: #c0c0c0;
+    text-shadow: 0 0 8px rgba(192,192,192,0.5);
+}
+
+.ranking-entry.rank-3 .rank-position {
+    color: #cd7f32;
+    text-shadow: 0 0 8px rgba(205,127,50,0.5);
+}
+
+/* メダルアイコン（上位3位） */
+.rank-medal {
+    font-size: 20px;
+    margin-right: 4px;
+}
+
+/* プレイヤー情報 */
+.rank-player-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-left: 8px;
+}
+
+.rank-player-name {
+    font-size: 13px;
+    font-weight: bold;
+    color: #fff;
+}
+
+.ranking-entry.is-player .rank-player-name {
+    color: #b8a8d8;
+}
+
+.rank-player-title {
+    font-size: 10px;
+    color: #888;
+}
+
+/* スコア */
+.rank-score {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    color: var(--accent-gold);
+}
+
+/* 報酬情報 */
+.ranking-rewards-info {
+    margin: 10px;
+    padding: 12px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 8px;
+}
+
+.rewards-title {
+    text-align: center;
+    font-size: 13px;
+    font-weight: bold;
+    color: #ffd700;
+    margin-bottom: 10px;
+}
+
+.rewards-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.reward-tier {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.05);
+}
+
+.reward-tier.tier-1 {
+    background: linear-gradient(90deg, rgba(255,215,0,0.2), rgba(255,215,0,0.05));
+    border: 1px solid rgba(255,215,0,0.3);
+}
+
+.reward-tier.tier-2 {
+    background: linear-gradient(90deg, rgba(192,192,192,0.2), rgba(192,192,192,0.05));
+    border: 1px solid rgba(192,192,192,0.3);
+}
+
+.reward-tier.tier-3 {
+    background: linear-gradient(90deg, rgba(205,127,50,0.2), rgba(205,127,50,0.05));
+    border: 1px solid rgba(205,127,50,0.3);
+}
+
+.tier-rank {
+    font-size: 11px;
+    font-weight: bold;
+    color: #fff;
+}
+
+.tier-rewards {
+    font-size: 10px;
+    color: #ccc;
+}
+
+/* ランキングセパレーター */
+.ranking-separator {
+    text-align: center;
+    color: #555;
+    font-size: 14px;
+    padding: 8px;
+    letter-spacing: 4px;
 }

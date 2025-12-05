@@ -32,6 +32,12 @@ class UI {
         this.elements.stageDisplay = document.getElementById('stage-display');
         this.elements.stageProgress = document.getElementById('stage-progress');
 
+        // ユーザーレベル
+        this.elements.userLevelDisplay = document.getElementById('user-level-display');
+        this.elements.userTitleDisplay = document.getElementById('user-title-display');
+        this.elements.userExpFill = document.getElementById('user-exp-fill');
+        this.elements.userExpText = document.getElementById('user-exp-text');
+
         // バトルエリア
         this.elements.bossTimer = document.getElementById('boss-timer');
         this.elements.bossTimeLeft = document.getElementById('boss-time-left');
@@ -138,6 +144,20 @@ class UI {
         this.elements.summonResultDisplay = document.getElementById('summon-result-display');
         this.elements.closeSummonResult = document.getElementById('close-summon-result');
 
+        // イベント召喚
+        this.elements.normalSummonPanel = document.getElementById('normal-summon-panel');
+        this.elements.eventSummonPanel = document.getElementById('event-summon-panel');
+        this.elements.eventBanner = document.getElementById('event-banner');
+        this.elements.eventTitle = document.getElementById('event-title');
+        this.elements.eventDescription = document.getElementById('event-description');
+        this.elements.eventRemaining = document.getElementById('event-remaining');
+        this.elements.pickupCharacters = document.getElementById('pickup-characters');
+        this.elements.eventPityCount = document.getElementById('event-pity-count');
+        this.elements.eventPityFill = document.getElementById('event-pity-fill');
+        this.elements.eventSummonSingleBtn = document.getElementById('event-summon-single-btn');
+        this.elements.eventSummonMultiBtn = document.getElementById('event-summon-multi-btn');
+        this.elements.noEventMessage = document.getElementById('no-event-message');
+
         // キャラ詳細モーダル
         this.elements.heroDetailModal = document.getElementById('hero-detail-modal');
         this.elements.heroDetailImage = document.getElementById('hero-detail-image');
@@ -175,6 +195,12 @@ class UI {
         this.elements.towerBuyAttemptBtn = document.getElementById('tower-buy-attempt-btn');
         this.elements.towerAbandonBtn = document.getElementById('tower-abandon-btn');
         this.elements.towerShopList = document.getElementById('tower-shop-list');
+
+        // ランキング
+        this.elements.rankingList = document.getElementById('ranking-list');
+        this.elements.myRankPosition = document.getElementById('my-rank-position');
+        this.elements.myRankValue = document.getElementById('my-rank-value');
+        this.elements.myRankCategoryLabel = document.getElementById('my-rank-category-label');
 
         // 設定モーダル
         this.elements.settingsBtn = document.getElementById('settings-btn');
@@ -359,6 +385,19 @@ class UI {
             addTouchAndClick(this.elements.closeSummonResult, () => this.closeSummonResultModal());
         }
 
+        // イベント召喚ボタン
+        if (this.elements.eventSummonSingleBtn) {
+            addTouchAndClick(this.elements.eventSummonSingleBtn, () => this.onEventSummonSingle());
+        }
+        if (this.elements.eventSummonMultiBtn) {
+            addTouchAndClick(this.elements.eventSummonMultiBtn, () => this.onEventSummonMulti());
+        }
+
+        // 召喚サブタブ切り替え
+        document.querySelectorAll('.summon-subtab').forEach(tab => {
+            addTouchAndClick(tab, () => this.switchSummonSubtab(tab.dataset.subtab));
+        });
+
         // キャラ詳細モーダル
         if (this.elements.closeHeroDetail) {
             addTouchAndClick(this.elements.closeHeroDetail, () => this.closeHeroDetailModal());
@@ -396,6 +435,14 @@ class UI {
                 }
             });
         }
+
+        // ランキングカテゴリ切り替え
+        document.querySelectorAll('.ranking-category-btn').forEach(btn => {
+            addTouchAndClick(btn, () => {
+                const category = btn.dataset.category;
+                this.switchRankingCategory(category);
+            });
+        });
 
         // 装備モーダル内のボタン用イベント委譲（モバイル対応）
         if (this.elements.equipModalStats) {
@@ -475,6 +522,12 @@ class UI {
         // ボス戦失敗
         this.game.onBossFailed = () => {
             this.showToast('ボス戦に失敗...1ステージ戻ります');
+        };
+
+        // レベルアップ
+        this.game.onLevelUp = (level, rewards) => {
+            this.showLevelUpEffect(level, rewards);
+            this.updateUserLevelDisplay();
         };
 
         // ボス出現
@@ -966,6 +1019,9 @@ class UI {
         this.elements.goldDisplay.textContent = this.formatNumber(this.game.state.gold);
         this.elements.soulsDisplay.textContent = this.formatNumber(this.game.state.souls);
         this.elements.gemsDisplay.textContent = this.formatNumber(this.game.state.gems);
+
+        // ユーザーレベル
+        this.updateUserLevelDisplay();
 
         // 装備石
         if (this.game.state.stones) {
@@ -1506,6 +1562,7 @@ class UI {
         if (tabId === 'tower') this.towerShopRendered = false;
         if (tabId === 'shop') this.renderShop();
         if (tabId === 'tower') this.renderTower();
+        if (tabId === 'ranking') this.renderRanking();
     }
 
     // ========================================
@@ -1925,6 +1982,52 @@ class UI {
         setTimeout(() => {
             window.location.href = window.location.href.split('?')[0] + '?v=' + Date.now();
         }, 500);
+    }
+
+    // ========================================
+    // ユーザーレベル表示
+    // ========================================
+    updateUserLevelDisplay() {
+        try {
+            const info = this.game.getUserLevelInfo();
+            if (this.elements.userLevelDisplay) {
+                this.elements.userLevelDisplay.textContent = `Lv.${info.level}`;
+            }
+            if (this.elements.userTitleDisplay) {
+                this.elements.userTitleDisplay.textContent = info.title;
+            }
+            if (this.elements.userExpFill) {
+                this.elements.userExpFill.style.width = `${info.expPercent}%`;
+            }
+            if (this.elements.userExpText) {
+                if (info.isMaxLevel) {
+                    this.elements.userExpText.textContent = 'MAX';
+                } else {
+                    this.elements.userExpText.textContent = `${this.formatNumber(info.exp)} / ${this.formatNumber(info.expRequired)}`;
+                }
+            }
+        } catch (e) {
+            // 初期化前は無視
+        }
+    }
+
+    // レベルアップ演出
+    showLevelUpEffect(level, rewards) {
+        // レベルアップトースト
+        let rewardText = `⭐ Lv.${level}達成！`;
+        if (rewards.gems) rewardText += ` 💎+${rewards.gems}`;
+        if (rewards.souls) rewardText += ` 👻+${rewards.souls}`;
+        if (rewards.gold) rewardText += ` 💰+${this.formatNumber(rewards.gold)}`;
+        this.showToast(rewardText);
+
+        // レベルバーを光らせる
+        const levelBar = document.querySelector('.user-level-bar');
+        if (levelBar) {
+            levelBar.style.animation = 'levelUpGlow 0.5s ease 3';
+            setTimeout(() => {
+                levelBar.style.animation = '';
+            }, 1500);
+        }
     }
 
     // ========================================
@@ -2852,22 +2955,166 @@ class UI {
         }
     }
 
-    showSummonResult(results) {
+    // ========================================
+    // イベント召喚
+    // ========================================
+
+    // サブタブ切り替え
+    switchSummonSubtab(subtab) {
+        // タブのアクティブ状態を切り替え
+        document.querySelectorAll('.summon-subtab').forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.subtab === subtab);
+        });
+
+        // パネルの表示/非表示を切り替え
+        if (this.elements.normalSummonPanel) {
+            this.elements.normalSummonPanel.classList.toggle('active', subtab === 'normal');
+        }
+        if (this.elements.eventSummonPanel) {
+            this.elements.eventSummonPanel.classList.toggle('active', subtab === 'event');
+        }
+
+        // イベントパネルに切り替えた時は内容を更新
+        if (subtab === 'event') {
+            this.renderEventSummonPanel();
+        }
+    }
+
+    // イベント召喚パネルの描画
+    renderEventSummonPanel() {
+        const event = this.game.getCurrentEvent();
+
+        // イベントがなければメッセージを表示
+        if (!event) {
+            if (this.elements.eventBanner) this.elements.eventBanner.classList.add('hidden');
+            if (this.elements.noEventMessage) this.elements.noEventMessage.classList.remove('hidden');
+            document.querySelectorAll('#event-summon-panel .pickup-section, #event-summon-panel .event-rates, #event-summon-panel .pity-counter, #event-summon-panel .summon-buttons').forEach(el => {
+                el.classList.add('hidden');
+            });
+            return;
+        }
+
+        // イベントがあれば表示
+        if (this.elements.eventBanner) this.elements.eventBanner.classList.remove('hidden');
+        if (this.elements.noEventMessage) this.elements.noEventMessage.classList.add('hidden');
+        document.querySelectorAll('#event-summon-panel .pickup-section, #event-summon-panel .event-rates, #event-summon-panel .pity-counter, #event-summon-panel .summon-buttons').forEach(el => {
+            el.classList.remove('hidden');
+        });
+
+        // イベント情報を更新
+        if (this.elements.eventTitle) {
+            this.elements.eventTitle.textContent = event.name;
+        }
+        if (this.elements.eventDescription) {
+            this.elements.eventDescription.textContent = event.description;
+        }
+
+        // 残り時間
+        this.updateEventRemainingTime();
+
+        // ピックアップキャラ
+        if (this.elements.pickupCharacters) {
+            let html = '';
+            event.pickupCharacters.forEach(char => {
+                const rarityClass = char.rarity.toLowerCase();
+                html += `
+                    <div class="pickup-character ${rarityClass}">
+                        <div class="pickup-emoji">${char.emoji}</div>
+                        <div class="pickup-name">${char.name}</div>
+                        <div class="pickup-rarity">${this.getStarsForRarity(char.rarity)}</div>
+                    </div>
+                `;
+            });
+            this.elements.pickupCharacters.innerHTML = html;
+        }
+
+        // イベント天井
+        const pityInfo = this.game.getEventPityInfo();
+        if (this.elements.eventPityCount) {
+            this.elements.eventPityCount.textContent = pityInfo.count;
+        }
+        if (this.elements.eventPityFill) {
+            const pityPercent = (pityInfo.count / pityInfo.max) * 100;
+            this.elements.eventPityFill.style.width = `${pityPercent}%`;
+        }
+
+        // ボタンの有効/無効
+        const canSummon = this.game.state.gems >= event.singleCost;
+        const canMultiSummon = this.game.state.gems >= event.multiCost;
+        if (this.elements.eventSummonSingleBtn) {
+            this.elements.eventSummonSingleBtn.disabled = !canSummon;
+        }
+        if (this.elements.eventSummonMultiBtn) {
+            this.elements.eventSummonMultiBtn.disabled = !canMultiSummon;
+        }
+    }
+
+    // イベント残り時間を更新
+    updateEventRemainingTime() {
+        const remaining = this.game.getEventRemainingTime();
+        if (!remaining || !this.elements.eventRemaining) return;
+
+        if (remaining.days > 0) {
+            this.elements.eventRemaining.textContent = `残り ${remaining.days}日 ${remaining.hours}時間`;
+        } else if (remaining.hours > 0) {
+            this.elements.eventRemaining.textContent = `残り ${remaining.hours}時間 ${remaining.minutes}分`;
+        } else {
+            this.elements.eventRemaining.textContent = `残り ${remaining.minutes}分`;
+        }
+    }
+
+    // イベント単発召喚
+    onEventSummonSingle() {
+        const results = this.game.eventSummonSingle();
+        if (results) {
+            this.showSummonResult(results, true);
+            if (window.soundManager) window.soundManager.playChestOpen();
+        } else {
+            this.showToast('ジェムが足りません');
+        }
+    }
+
+    // イベント10連召喚
+    onEventSummonMulti() {
+        const results = this.game.eventSummonMulti();
+        if (results) {
+            this.showSummonResult(results, true);
+            if (window.soundManager) window.soundManager.playChestOpen();
+        } else {
+            this.showToast('ジェムが足りません');
+        }
+    }
+
+    showSummonResult(results, isEvent = false) {
         if (!this.elements.summonResultModal || !this.elements.summonResultDisplay) return;
 
         let html = '';
         results.forEach((result, index) => {
             const hero = result.hero;
             const rarityClass = hero.rarity.toLowerCase();
-            const badge = result.isNew
+
+            // NEW/+1バッジ
+            const newBadge = result.isNew
                 ? '<span class="new-badge">NEW!</span>'
                 : `<span class="dupe-badge">+1</span>`;
+
+            // イベント召喚固有バッジ
+            let eventBadges = '';
+            if (isEvent) {
+                if (result.isPickup) {
+                    eventBadges += '<span class="pickup-badge">PICK UP!</span>';
+                }
+                if (result.isLimited) {
+                    eventBadges += '<span class="limited-badge">LIMITED</span>';
+                }
+            }
 
             html += `
                 <div class="summon-result-card ${rarityClass}" style="animation-delay: ${index * 0.1}s">
                     ${this.getHeroImageHtml(hero)}
                     <div class="hero-name">${hero.name}</div>
-                    ${badge}
+                    ${newBadge}
+                    ${eventBadges}
                 </div>
             `;
         });
@@ -2877,6 +3124,9 @@ class UI {
 
         // 更新
         this.renderSummonPanel();
+        if (isEvent) {
+            this.renderEventSummonPanel();
+        }
         this.renderBattleHeroes();
     }
 
@@ -3703,6 +3953,123 @@ class UI {
         }
 
         this.renderTower();
+    }
+
+    // ========================================
+    // ランキング
+    // ========================================
+
+    // 現在選択中のカテゴリ
+    currentRankingCategory = 'stage';
+
+    // ランキングカテゴリを切り替え
+    switchRankingCategory(category) {
+        this.currentRankingCategory = category;
+
+        // ボタンのアクティブ状態を更新
+        document.querySelectorAll('.ranking-category-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.category === category);
+        });
+
+        // ランキングを再描画
+        this.renderRanking();
+    }
+
+    // ランキングパネルを描画
+    renderRanking() {
+        const category = this.currentRankingCategory;
+        const rankings = this.game.getRanking(category);
+        const categoryInfo = this.game.getRankingCategoryInfo(category);
+
+        // プレイヤーの順位と値を更新
+        const playerEntry = rankings.find(e => e.isPlayer);
+        if (playerEntry) {
+            if (this.elements.myRankPosition) {
+                this.elements.myRankPosition.textContent = `#${playerEntry.rank}`;
+            }
+            if (this.elements.myRankValue) {
+                this.elements.myRankValue.textContent = this.formatRankingValue(playerEntry.score, category);
+            }
+            if (this.elements.myRankCategoryLabel) {
+                this.elements.myRankCategoryLabel.textContent = categoryInfo.name;
+            }
+        }
+
+        // ランキングリストを描画
+        if (!this.elements.rankingList) return;
+
+        let html = '';
+
+        // 上位10位を表示
+        const topEntries = rankings.slice(0, 10);
+        topEntries.forEach(entry => {
+            html += this.createRankingEntryHtml(entry, category);
+        });
+
+        // プレイヤーが10位以下の場合、プレイヤー周辺も表示
+        if (playerEntry && playerEntry.rank > 10) {
+            html += '<div class="ranking-separator">...</div>';
+
+            // プレイヤー前後の人を表示
+            const nearbyStart = Math.max(10, playerEntry.rank - 3);
+            const nearbyEnd = Math.min(100, playerEntry.rank + 2);
+
+            for (let i = nearbyStart; i <= nearbyEnd && i <= rankings.length; i++) {
+                const entry = rankings[i - 1];
+                if (entry) {
+                    html += this.createRankingEntryHtml(entry, category);
+                }
+            }
+        }
+
+        this.elements.rankingList.innerHTML = html;
+    }
+
+    // ランキングエントリのHTMLを生成
+    createRankingEntryHtml(entry, category) {
+        const rankClass = entry.rank <= 3 ? `rank-${entry.rank}` : '';
+        const playerClass = entry.isPlayer ? 'is-player' : '';
+
+        // メダル（1-3位）
+        let medal = '';
+        if (entry.rank === 1) medal = '<span class="rank-medal">🥇</span>';
+        else if (entry.rank === 2) medal = '<span class="rank-medal">🥈</span>';
+        else if (entry.rank === 3) medal = '<span class="rank-medal">🥉</span>';
+
+        // タイトル表示
+        const titleHtml = entry.title ? `<span class="rank-player-title">${entry.title}</span>` : '';
+
+        return `
+            <div class="ranking-entry ${rankClass} ${playerClass}">
+                <div class="rank-position">${medal}${entry.rank}</div>
+                <div class="rank-player-info">
+                    <span class="rank-player-name">${entry.isPlayer ? '👤 ' : ''}${entry.name}</span>
+                    ${titleHtml}
+                </div>
+                <div class="rank-score">${this.formatRankingValue(entry.score, category)}</div>
+            </div>
+        `;
+    }
+
+    // ランキング値をフォーマット
+    formatRankingValue(value, category) {
+        switch (category) {
+            case 'stage':
+                return `Stage ${value}`;
+            case 'totalTap':
+                if (value >= 1000000) {
+                    return `${(value / 1000000).toFixed(1)}M`;
+                } else if (value >= 1000) {
+                    return `${(value / 1000).toFixed(1)}K`;
+                }
+                return value.toString();
+            case 'tower':
+                return `${value}F`;
+            case 'userLevel':
+                return `Lv.${value}`;
+            default:
+                return value.toString();
+        }
     }
 
     // ========================================

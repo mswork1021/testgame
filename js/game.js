@@ -133,6 +133,13 @@ class Game {
             stoneExchangeWeekly: {
                 lastResetDate: null,
                 purchases: {}      // { exchangeId: count }
+            },
+
+            // ユーザーレベル
+            userLevel: {
+                level: 1,
+                exp: 0,
+                totalExp: 0        // 累計獲得経験値
             }
         };
 
@@ -856,6 +863,15 @@ class Game {
                 console.error('[DEBUG] ドロップエラー:', e);
             }
 
+            // 経験値獲得
+            try {
+                const expRewards = GameData.USER_LEVEL.EXP_REWARDS;
+                const expAmount = monster.isBoss ? expRewards.bossKill : expRewards.monsterKill;
+                this.gainExp(expAmount, monster.isBoss ? 'bossKill' : 'monsterKill');
+            } catch (e) {
+                console.error('[DEBUG] 経験値エラー:', e);
+            }
+
             // コールバック（エラーでも続行）
             try {
                 if (this.onMonsterKill) {
@@ -922,6 +938,14 @@ class Game {
 
         if (this.state.currentStage > this.state.maxStageReached) {
             this.state.maxStageReached = this.state.currentStage;
+        }
+
+        // ステージクリア経験値
+        try {
+            const expRewards = GameData.USER_LEVEL.EXP_REWARDS;
+            this.gainExp(expRewards.stageComplete, 'stageComplete');
+        } catch (e) {
+            console.error('[DEBUG] ステージクリア経験値エラー:', e);
         }
 
         this.spawnMonster();
@@ -1949,6 +1973,357 @@ class Game {
         return result;
     }
 
+    // ========================================
+    // イベント召喚
+    // ========================================
+
+    // イベント開催中かチェック
+    isEventActive() {
+        const event = GameData.EVENT_GACHA.CURRENT_EVENT;
+        if (!event) return false;
+
+        const now = new Date();
+        const start = new Date(event.startDate);
+        const end = new Date(event.endDate);
+
+        return now >= start && now <= end;
+    }
+
+    // 現在のイベント情報を取得
+    getCurrentEvent() {
+        if (!this.isEventActive()) return null;
+        return GameData.EVENT_GACHA.CURRENT_EVENT;
+    }
+
+    // イベント残り時間を取得
+    getEventRemainingTime() {
+        const event = this.getCurrentEvent();
+        if (!event) return null;
+
+        const now = new Date();
+        const end = new Date(event.endDate);
+        const diff = end - now;
+
+        if (diff <= 0) return { days: 0, hours: 0, minutes: 0 };
+
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+        return { days, hours, minutes };
+    }
+
+    // イベント天井カウント初期化
+    initEventPity() {
+        if (this.state.eventGachaPityCount === undefined) {
+            this.state.eventGachaPityCount = 0;
+        }
+        if (this.state.eventSummonedHeroes === undefined) {
+            this.state.eventSummonedHeroes = {};
+        }
+    }
+
+    // イベント単発召喚
+    eventSummonSingle() {
+        const event = this.getCurrentEvent();
+        if (!event) return null;
+
+        const cost = event.singleCost;
+        if (this.state.gems < cost) return null;
+
+        this.state.gems -= cost;
+        this.initEventPity();
+        const result = this.performEventSummon(1);
+        this.updateDailyMissionProgress('summon', 1);
+        return result;
+    }
+
+    // イベント10連召喚
+    eventSummonMulti() {
+        const event = this.getCurrentEvent();
+        if (!event) return null;
+
+        const cost = event.multiCost;
+        if (this.state.gems < cost) return null;
+
+        this.state.gems -= cost;
+        this.initEventPity();
+        const count = 10 + (event.multiBonus || 0);
+        const result = this.performEventSummon(count);
+        this.updateDailyMissionProgress('summon', 1);
+        return result;
+    }
+
+    // イベント召喚実行
+    performEventSummon(count) {
+        this.initEventPity();
+        const event = this.getCurrentEvent();
+        if (!event) return [];
+
+        const results = [];
+
+        for (let i = 0; i < count; i++) {
+            this.state.eventGachaPityCount++;
+            const result = this.rollEventGacha();
+            const heroId = result.hero.id;
+            const isNew = !this.state.eventSummonedHeroes[heroId] &&
+                          !this.state.summonedHeroes[heroId];
+
+            // イベントキャラも通常の所持キャラに追加
+            if (!this.state.summonedHeroes[heroId]) {
+                this.state.summonedHeroes[heroId] = 1;
+            } else {
+                this.state.summonedHeroes[heroId]++;
+            }
+
+            // イベント限定キャラは別途記録
+            if (result.hero.isLimited) {
+                if (!this.state.eventSummonedHeroes[heroId]) {
+                    this.state.eventSummonedHeroes[heroId] = 1;
+                } else {
+                    this.state.eventSummonedHeroes[heroId]++;
+                }
+            }
+
+            results.push({
+                hero: result.hero,
+                isNew: isNew,
+                level: this.state.summonedHeroes[heroId],
+                isPickup: result.isPickup,
+                isLimited: result.hero.isLimited
+            });
+
+            // 天井でリセット
+            if (this.state.eventGachaPityCount >= event.pityCount) {
+                this.state.eventGachaPityCount = 0;
+            }
+        }
+
+        return results;
+    }
+
+    // イベントガチャを回す
+    rollEventGacha() {
+        const event = this.getCurrentEvent();
+        let rarity = this.determineEventRarity(event.rates);
+        let isPickup = false;
+
+        // 天井チェック: イベント天井でピックアップ★5確定
+        if (this.state.eventGachaPityCount >= event.pityCount) {
+            rarity = 'LEGENDARY';
+            isPickup = true;
+        }
+        // 10連ごとに★★★以上確定
+        else if (this.state.eventGachaPityCount % 10 === 0 && this.state.eventGachaPityCount > 0) {
+            if (rarity === 'COMMON' || rarity === 'UNCOMMON') {
+                rarity = 'RARE';
+            }
+        }
+
+        // ピックアップ判定
+        const pickupChars = event.pickupCharacters.filter(c => c.rarity === rarity);
+        if (pickupChars.length > 0) {
+            // ピックアップ確率でピックアップキャラが出るかチェック
+            const pickupRate = pickupChars[0].pickupRate || 0.5;
+            if (Math.random() < pickupRate || isPickup) {
+                isPickup = true;
+                const hero = pickupChars[Math.floor(Math.random() * pickupChars.length)];
+                return { hero, isPickup };
+            }
+        }
+
+        // 通常キャラからランダム選択
+        const heroesOfRarity = GameData.SUMMON_HEROES.filter(h => h.rarity === rarity);
+        if (heroesOfRarity.length > 0) {
+            const hero = heroesOfRarity[Math.floor(Math.random() * heroesOfRarity.length)];
+            return { hero, isPickup: false };
+        }
+
+        // フォールバック
+        return { hero: GameData.SUMMON_HEROES[0], isPickup: false };
+    }
+
+    // イベント用レアリティ決定
+    determineEventRarity(rates) {
+        const roll = Math.random() * 100;
+
+        let cumulative = 0;
+        cumulative += rates.LEGENDARY;
+        if (roll < cumulative) return 'LEGENDARY';
+
+        cumulative += rates.EPIC;
+        if (roll < cumulative) return 'EPIC';
+
+        cumulative += rates.RARE;
+        if (roll < cumulative) return 'RARE';
+
+        cumulative += rates.UNCOMMON;
+        if (roll < cumulative) return 'UNCOMMON';
+
+        return 'COMMON';
+    }
+
+    // イベント天井情報を取得
+    getEventPityInfo() {
+        this.initEventPity();
+        const event = this.getCurrentEvent();
+        if (!event) return { count: 0, max: 100 };
+
+        return {
+            count: this.state.eventGachaPityCount,
+            max: event.pityCount
+        };
+    }
+
+    // ========================================
+    // ランキングシステム
+    // ========================================
+
+    // ランキングデータを初期化
+    initRankingData() {
+        if (!this.state.rankingNPCs) {
+            this.state.rankingNPCs = this.generateNPCs();
+        }
+        if (!this.state.playerName) {
+            this.state.playerName = 'あなた';
+        }
+    }
+
+    // ダミーNPCを生成
+    generateNPCs() {
+        const config = GameData.RANKING;
+        const names = [...config.NPC_NAMES];
+        const npcs = [];
+
+        // 名前をシャッフル
+        for (let i = names.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [names[i], names[j]] = [names[j], names[i]];
+        }
+
+        // 99体のNPCを生成（プレイヤーを含めて100人）
+        for (let i = 0; i < 99; i++) {
+            const name = names[i % names.length] + (i >= names.length ? `_${Math.floor(i / names.length) + 1}` : '');
+            npcs.push({
+                id: `npc_${i}`,
+                name: name,
+                // 基本値はプレイヤーの初期状態を想定
+                baseStage: Math.max(1, Math.floor(Math.random() * 100) + 1),
+                baseTotalTap: Math.floor(Math.random() * 50000) + 100,
+                baseTower: Math.max(1, Math.floor(Math.random() * 30) + 1),
+                baseLevel: Math.max(1, Math.floor(Math.random() * 50) + 1),
+                // 成長係数（プレイヤーの成長に連動）
+                growthFactor: 0.3 + Math.random() * 1.4  // 0.3 ～ 1.7
+            });
+        }
+
+        return npcs;
+    }
+
+    // 指定カテゴリのランキングを取得
+    getRanking(category) {
+        this.initRankingData();
+
+        const playerScore = this.getPlayerScore(category);
+        const rankings = [];
+
+        // NPCのスコアを計算
+        this.state.rankingNPCs.forEach(npc => {
+            const score = this.calculateNPCScore(npc, category, playerScore);
+            rankings.push({
+                id: npc.id,
+                name: npc.name,
+                score: score,
+                isPlayer: false
+            });
+        });
+
+        // プレイヤーを追加
+        rankings.push({
+            id: 'player',
+            name: this.state.playerName,
+            score: playerScore,
+            isPlayer: true,
+            title: this.getUserLevelInfo().title
+        });
+
+        // スコアでソート（降順）
+        rankings.sort((a, b) => b.score - a.score);
+
+        // 順位を付与
+        rankings.forEach((entry, index) => {
+            entry.rank = index + 1;
+        });
+
+        return rankings;
+    }
+
+    // プレイヤーのスコアを取得
+    getPlayerScore(category) {
+        switch (category) {
+            case 'stage':
+                return this.state.stage;
+            case 'totalTap':
+                return this.state.totalTaps || 0;
+            case 'tower':
+                return this.state.towerMaxFloor || 1;
+            case 'userLevel':
+                return this.state.userLevel?.level || 1;
+            default:
+                return 0;
+        }
+    }
+
+    // NPCのスコアを計算（プレイヤーの進捗に基づいて動的に調整）
+    calculateNPCScore(npc, category, playerScore) {
+        let baseScore;
+
+        switch (category) {
+            case 'stage':
+                baseScore = npc.baseStage;
+                break;
+            case 'totalTap':
+                baseScore = npc.baseTotalTap;
+                break;
+            case 'tower':
+                baseScore = npc.baseTower;
+                break;
+            case 'userLevel':
+                baseScore = npc.baseLevel;
+                break;
+            default:
+                baseScore = 0;
+        }
+
+        // プレイヤーの進捗に応じてNPCスコアを調整
+        const adjustedScore = Math.floor(baseScore * npc.growthFactor * (1 + playerScore * 0.01));
+
+        // 適切な範囲に収める
+        if (category === 'userLevel') {
+            return Math.min(100, Math.max(1, adjustedScore));  // レベルは1-100
+        }
+
+        return Math.max(1, adjustedScore);
+    }
+
+    // プレイヤーの順位を取得
+    getPlayerRank(category) {
+        const rankings = this.getRanking(category);
+        const playerEntry = rankings.find(e => e.isPlayer);
+        return playerEntry ? playerEntry.rank : 0;
+    }
+
+    // ランキングのカテゴリ名を取得
+    getRankingCategoryInfo(category) {
+        const categories = GameData.RANKING.CATEGORIES;
+        for (const key in categories) {
+            if (categories[key].id === category) {
+                return categories[key];
+            }
+        }
+        return { id: category, name: category, icon: '📊' };
+    }
+
     // 召喚実行
     performSummon(count) {
         const results = [];
@@ -2685,6 +3060,138 @@ class Game {
     getTowerBuff(type) {
         this.initTowerShop();
         return this.state.towerBuffs[type] || 0;
+    }
+
+    // ========================================
+    // ユーザーレベルシステム
+    // ========================================
+
+    // ユーザーレベル初期化
+    initUserLevel() {
+        if (!this.state.userLevel) {
+            this.state.userLevel = {
+                level: 1,
+                exp: 0,
+                totalExp: 0
+            };
+        }
+    }
+
+    // 経験値を獲得
+    gainExp(amount, source = 'unknown') {
+        this.initUserLevel();
+        const userLevel = GameData.USER_LEVEL;
+        const maxLevel = userLevel.MAX_LEVEL;
+
+        // 最大レベルなら経験値獲得しない
+        if (this.state.userLevel.level >= maxLevel) {
+            return { leveledUp: false, newLevel: maxLevel };
+        }
+
+        this.state.userLevel.exp += amount;
+        this.state.userLevel.totalExp += amount;
+
+        let leveledUp = false;
+        let rewards = [];
+
+        // レベルアップ処理
+        while (this.state.userLevel.level < maxLevel) {
+            const expRequired = userLevel.getExpRequired(this.state.userLevel.level);
+
+            if (this.state.userLevel.exp >= expRequired) {
+                this.state.userLevel.exp -= expRequired;
+                this.state.userLevel.level++;
+                leveledUp = true;
+
+                // 報酬を計算
+                const levelRewards = this.calculateLevelRewards(this.state.userLevel.level);
+                rewards.push({ level: this.state.userLevel.level, rewards: levelRewards });
+
+                // 報酬を付与
+                this.applyLevelRewards(levelRewards);
+
+                // コールバック
+                if (this.onLevelUp) {
+                    this.onLevelUp(this.state.userLevel.level, levelRewards);
+                }
+            } else {
+                break;
+            }
+        }
+
+        return {
+            leveledUp,
+            newLevel: this.state.userLevel.level,
+            rewards
+        };
+    }
+
+    // レベルアップ報酬を計算
+    calculateLevelRewards(level) {
+        const levelRewards = GameData.USER_LEVEL.LEVEL_REWARDS;
+        let rewards = { ...levelRewards.normal };
+
+        // 特別節目チェック
+        if (level === 100) {
+            rewards = { ...rewards, ...levelRewards.milestone100 };
+        } else if (level === 75) {
+            rewards = { ...rewards, ...levelRewards.milestone75 };
+        } else if (level === 50) {
+            rewards = { ...rewards, ...levelRewards.milestone50 };
+        } else if (level === 25) {
+            rewards = { ...rewards, ...levelRewards.milestone25 };
+        } else if (level % 10 === 0) {
+            // 10レベルごと
+            rewards = { ...rewards, ...levelRewards.milestone10 };
+        } else if (level % 5 === 0) {
+            // 5レベルごと
+            rewards = { ...rewards, ...levelRewards.milestone5 };
+        }
+
+        return rewards;
+    }
+
+    // レベルアップ報酬を付与
+    applyLevelRewards(rewards) {
+        if (rewards.gems) {
+            this.state.gems += rewards.gems;
+        }
+        if (rewards.gold) {
+            this.state.gold += rewards.gold;
+        }
+        if (rewards.souls) {
+            this.state.souls += rewards.souls;
+        }
+        // チケット系は別途処理（今後実装）
+    }
+
+    // 現在のユーザーレベル情報を取得
+    getUserLevelInfo() {
+        this.initUserLevel();
+        const level = this.state.userLevel.level;
+        const exp = this.state.userLevel.exp;
+        const expRequired = GameData.USER_LEVEL.getExpRequired(level);
+        const maxLevel = GameData.USER_LEVEL.MAX_LEVEL;
+
+        // 称号を取得
+        let title = '見習い冒険者';
+        const titles = GameData.USER_LEVEL.TITLES;
+        for (const lvl of Object.keys(titles).map(Number).sort((a, b) => b - a)) {
+            if (level >= lvl) {
+                title = titles[lvl];
+                break;
+            }
+        }
+
+        return {
+            level,
+            exp,
+            expRequired,
+            expPercent: level >= maxLevel ? 100 : Math.floor((exp / expRequired) * 100),
+            totalExp: this.state.userLevel.totalExp,
+            title,
+            isMaxLevel: level >= maxLevel
+        };
     }
 }
 
