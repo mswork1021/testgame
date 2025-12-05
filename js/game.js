@@ -1108,54 +1108,76 @@ class Game {
         return { ...this.state.stones };
     }
 
-    // 数値リロール（魔石）- 装備のステータス値を再抽選
-    rerollEquipmentValue(equipmentId) {
-        const ability = GameData.STONE_ABILITIES.valueReroll;
+    // サブステ値抽選（魔石）- サブステータスの数値を全て再抽選
+    rerollSubstatValues(equipmentId) {
+        const ability = GameData.STONE_ABILITIES.substatValueReroll;
         const equipment = this.findEquipmentById(equipmentId);
         if (!equipment) return { success: false, reason: '装備が見つかりません' };
 
+        // サブステータスがあるかチェック
+        if (!equipment.substats || equipment.substats.length === 0) {
+            return { success: false, reason: 'サブステータスがありません' };
+        }
+
         if (this.state.stones[ability.stone] < ability.cost) {
-            return { success: false, reason: `${ability.stone === 'magicStone' ? '魔石' : '石'}が足りません` };
+            return { success: false, reason: '魔石が足りません' };
         }
 
         // 石を消費
         this.state.stones[ability.stone] -= ability.cost;
 
-        // 元のテンプレートを探す
-        const template = this.findEquipmentTemplate(equipment.name);
-        if (!template) return { success: false, reason: 'テンプレートが見つかりません' };
+        // 全サブステータスの値を再抽選
+        const oldValues = equipment.substats.map(s => ({ type: s.type, value: s.value }));
+        equipment.substats.forEach(substat => {
+            // メインの10-25%の範囲で再抽選
+            substat.value = Math.floor(equipment.value * (0.1 + Math.random() * 0.15));
+        });
+        const newValues = equipment.substats.map(s => ({ type: s.type, value: s.value }));
 
-        // 値を再抽選（レアリティ倍率を適用）
-        const rarity = GameData.RARITY[equipment.rarity];
-        const oldValue = equipment.value;
-        const baseValue = Math.floor(template.baseValue * rarity.multiplier * (0.8 + Math.random() * 0.4));
-        equipment.value = Math.floor(baseValue * (1 + (equipment.enhanceLevel || 0) * 0.01));
-
-        return { success: true, equipment, oldValue, newValue: equipment.value };
+        return { success: true, equipment, oldValues, newValues };
     }
 
-    // 種類リロール（蒼結晶）- 装備のステータス種類を変更
-    rerollEquipmentType(equipmentId) {
-        const ability = GameData.STONE_ABILITIES.typeReroll;
+    // サブステ種類変更（蒼結晶）- サブステータス1つの種類を変更
+    rerollSubstatType(equipmentId, substatIndex = 0) {
+        const ability = GameData.STONE_ABILITIES.substatTypeReroll;
         const equipment = this.findEquipmentById(equipmentId);
         if (!equipment) return { success: false, reason: '装備が見つかりません' };
 
+        // サブステータスがあるかチェック
+        if (!equipment.substats || equipment.substats.length === 0) {
+            return { success: false, reason: 'サブステータスがありません' };
+        }
+
+        // インデックスが有効かチェック
+        if (substatIndex < 0 || substatIndex >= equipment.substats.length) {
+            return { success: false, reason: '無効なサブステータスです' };
+        }
+
         if (this.state.stones[ability.stone] < ability.cost) {
-            return { success: false, reason: `${ability.stone === 'blueCrystal' ? '蒼結晶' : '石'}が足りません` };
+            return { success: false, reason: '蒼結晶が足りません' };
         }
 
         // 石を消費
         this.state.stones[ability.stone] -= ability.cost;
 
-        // 利用可能なステータス種類
-        const statTypes = ['tapDamage', 'goldBonus', 'critChance', 'critDamage', 'allStats'];
-        const oldStat = equipment.stat;
+        // 利用可能なステータス種類（メインとその他のサブステと被らないもの）
+        const substatTypes = ['tapDamage', 'goldBonus', 'critChance', 'critDamage'];
+        const usedTypes = [equipment.stat, ...equipment.substats.map(s => s.type)];
+        const currentType = equipment.substats[substatIndex].type;
+        const availableTypes = substatTypes.filter(s => !usedTypes.includes(s) || s === currentType);
 
-        // 現在と異なるステータスをランダム選択
-        const availableStats = statTypes.filter(s => s !== oldStat);
-        equipment.stat = availableStats[Math.floor(Math.random() * availableStats.length)];
+        // 現在の種類を除外
+        const otherTypes = availableTypes.filter(s => s !== currentType);
+        if (otherTypes.length === 0) {
+            // 石を返還
+            this.state.stones[ability.stone] += ability.cost;
+            return { success: false, reason: '変更できる種類がありません' };
+        }
 
-        return { success: true, equipment, oldStat, newStat: equipment.stat };
+        const oldType = currentType;
+        equipment.substats[substatIndex].type = otherTypes[Math.floor(Math.random() * otherTypes.length)];
+
+        return { success: true, equipment, substatIndex, oldType, newType: equipment.substats[substatIndex].type };
     }
 
     // サブステータス追加（紫輝石）

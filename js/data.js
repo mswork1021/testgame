@@ -1725,8 +1725,8 @@ const GameData = {
 
     // 石の特殊機能コスト
     STONE_ABILITIES: {
-        valueReroll: { stone: 'magicStone', cost: 500, name: '数値リロール', desc: 'ステータスの数値を再抽選' },
-        typeReroll: { stone: 'blueCrystal', cost: 300, name: '種類リロール', desc: 'ステータスの種類を変更' },
+        substatValueReroll: { stone: 'magicStone', cost: 300, name: 'サブステ値抽選', desc: 'サブステの数値を全て再抽選' },
+        substatTypeReroll: { stone: 'blueCrystal', cost: 200, name: 'サブステ種類変更', desc: 'サブステ1つの種類を変更' },
         addSubstat: { stone: 'purpleGem', cost: 100, name: 'サブステ追加', desc: 'サブステータスを1つ追加' },
         addInscription: { stone: 'radiantStone', cost: 50, name: '刻印付与', desc: '強力な固有効果を付与' }
     }
