@@ -4936,7 +4936,7 @@ button:focus {
 .limited-mark {
     position: absolute;
     bottom: 2px;
-    right: 2px;
+    left: 2px;
     font-size: 7px;
     padding: 1px 3px;
     background: linear-gradient(90deg, #9b59b6, #8e44ad);
