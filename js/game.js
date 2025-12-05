@@ -120,13 +120,13 @@ class Game {
                 goldBonus: 0    // ゴールド獲得+%
             },
 
-            // 装備石
+            // 装備石（テスト用に全て10000）
             stones: {
-                ironScrap: 10000,  // 鉄くず（コモン）テスト用
-                magicStone: 0,     // 魔石（アンコモン）
-                blueCrystal: 0,    // 蒼結晶（レア）
-                purpleGem: 0,      // 紫輝石（エピック）
-                radiantStone: 0    // 輝煌石（レジェンダリー）
+                ironScrap: 10000,
+                magicStone: 10000,
+                blueCrystal: 10000,
+                purpleGem: 10000,
+                radiantStone: 10000
             },
 
             // 石交換所の週間購入履歴
@@ -1083,12 +1083,16 @@ class Game {
 
         // 強化実行
         this.state.stones.ironScrap -= cost;
+
+        // 基礎値を保存（初回強化時のみ）
+        if (equipment.baseValue === undefined) {
+            equipment.baseValue = equipment.value;
+        }
+
         equipment.enhanceLevel++;
 
-        // ステータス更新（強化レベルに応じてvalue増加）
-        // 基本値の1%×強化レベル分増加
-        const baseValue = Math.floor(equipment.value / (1 + (equipment.enhanceLevel - 1) * 0.01));
-        equipment.value = Math.floor(baseValue * (1 + equipment.enhanceLevel * 0.01));
+        // ステータス更新（基礎値の1%×強化レベル分増加）
+        equipment.value = Math.floor(equipment.baseValue * (1 + equipment.enhanceLevel * 0.01));
 
         return {
             success: true,
@@ -1126,11 +1130,12 @@ class Game {
         // 石を消費
         this.state.stones[ability.stone] -= ability.cost;
 
-        // 全サブステータスの値を再抽選
+        // 全サブステータスの値を再抽選（基礎値ベース）
+        const baseVal = equipment.baseValue || equipment.value;
         const oldValues = equipment.substats.map(s => ({ type: s.type, value: s.value }));
         equipment.substats.forEach(substat => {
-            // メインの10-25%の範囲で再抽選
-            substat.value = Math.floor(equipment.value * (0.1 + Math.random() * 0.15));
+            // 基礎値の10-25%の範囲で再抽選
+            substat.value = Math.floor(baseVal * (0.1 + Math.random() * 0.15));
         });
         const newValues = equipment.substats.map(s => ({ type: s.type, value: s.value }));
 
@@ -1209,7 +1214,8 @@ class Game {
         }
 
         const newStatType = availableStats[Math.floor(Math.random() * availableStats.length)];
-        const value = Math.floor(equipment.value * (0.1 + Math.random() * 0.15)); // メインの10-25%
+        const baseVal = equipment.baseValue || equipment.value;
+        const value = Math.floor(baseVal * (0.1 + Math.random() * 0.15)); // 基礎値の10-25%
 
         equipment.substats.push({ type: newStatType, value });
 
