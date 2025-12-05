@@ -144,6 +144,20 @@ class UI {
         this.elements.summonResultDisplay = document.getElementById('summon-result-display');
         this.elements.closeSummonResult = document.getElementById('close-summon-result');
 
+        // イベント召喚
+        this.elements.normalSummonPanel = document.getElementById('normal-summon-panel');
+        this.elements.eventSummonPanel = document.getElementById('event-summon-panel');
+        this.elements.eventBanner = document.getElementById('event-banner');
+        this.elements.eventTitle = document.getElementById('event-title');
+        this.elements.eventDescription = document.getElementById('event-description');
+        this.elements.eventRemaining = document.getElementById('event-remaining');
+        this.elements.pickupCharacters = document.getElementById('pickup-characters');
+        this.elements.eventPityCount = document.getElementById('event-pity-count');
+        this.elements.eventPityFill = document.getElementById('event-pity-fill');
+        this.elements.eventSummonSingleBtn = document.getElementById('event-summon-single-btn');
+        this.elements.eventSummonMultiBtn = document.getElementById('event-summon-multi-btn');
+        this.elements.noEventMessage = document.getElementById('no-event-message');
+
         // キャラ詳細モーダル
         this.elements.heroDetailModal = document.getElementById('hero-detail-modal');
         this.elements.heroDetailImage = document.getElementById('hero-detail-image');
@@ -364,6 +378,19 @@ class UI {
         if (this.elements.closeSummonResult) {
             addTouchAndClick(this.elements.closeSummonResult, () => this.closeSummonResultModal());
         }
+
+        // イベント召喚ボタン
+        if (this.elements.eventSummonSingleBtn) {
+            addTouchAndClick(this.elements.eventSummonSingleBtn, () => this.onEventSummonSingle());
+        }
+        if (this.elements.eventSummonMultiBtn) {
+            addTouchAndClick(this.elements.eventSummonMultiBtn, () => this.onEventSummonMulti());
+        }
+
+        // 召喚サブタブ切り替え
+        document.querySelectorAll('.summon-subtab').forEach(tab => {
+            addTouchAndClick(tab, () => this.switchSummonSubtab(tab.dataset.subtab));
+        });
 
         // キャラ詳細モーダル
         if (this.elements.closeHeroDetail) {
@@ -2913,22 +2940,166 @@ class UI {
         }
     }
 
-    showSummonResult(results) {
+    // ========================================
+    // イベント召喚
+    // ========================================
+
+    // サブタブ切り替え
+    switchSummonSubtab(subtab) {
+        // タブのアクティブ状態を切り替え
+        document.querySelectorAll('.summon-subtab').forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.subtab === subtab);
+        });
+
+        // パネルの表示/非表示を切り替え
+        if (this.elements.normalSummonPanel) {
+            this.elements.normalSummonPanel.classList.toggle('active', subtab === 'normal');
+        }
+        if (this.elements.eventSummonPanel) {
+            this.elements.eventSummonPanel.classList.toggle('active', subtab === 'event');
+        }
+
+        // イベントパネルに切り替えた時は内容を更新
+        if (subtab === 'event') {
+            this.renderEventSummonPanel();
+        }
+    }
+
+    // イベント召喚パネルの描画
+    renderEventSummonPanel() {
+        const event = this.game.getCurrentEvent();
+
+        // イベントがなければメッセージを表示
+        if (!event) {
+            if (this.elements.eventBanner) this.elements.eventBanner.classList.add('hidden');
+            if (this.elements.noEventMessage) this.elements.noEventMessage.classList.remove('hidden');
+            document.querySelectorAll('#event-summon-panel .pickup-section, #event-summon-panel .event-rates, #event-summon-panel .pity-counter, #event-summon-panel .summon-buttons').forEach(el => {
+                el.classList.add('hidden');
+            });
+            return;
+        }
+
+        // イベントがあれば表示
+        if (this.elements.eventBanner) this.elements.eventBanner.classList.remove('hidden');
+        if (this.elements.noEventMessage) this.elements.noEventMessage.classList.add('hidden');
+        document.querySelectorAll('#event-summon-panel .pickup-section, #event-summon-panel .event-rates, #event-summon-panel .pity-counter, #event-summon-panel .summon-buttons').forEach(el => {
+            el.classList.remove('hidden');
+        });
+
+        // イベント情報を更新
+        if (this.elements.eventTitle) {
+            this.elements.eventTitle.textContent = event.name;
+        }
+        if (this.elements.eventDescription) {
+            this.elements.eventDescription.textContent = event.description;
+        }
+
+        // 残り時間
+        this.updateEventRemainingTime();
+
+        // ピックアップキャラ
+        if (this.elements.pickupCharacters) {
+            let html = '';
+            event.pickupCharacters.forEach(char => {
+                const rarityClass = char.rarity.toLowerCase();
+                html += `
+                    <div class="pickup-character ${rarityClass}">
+                        <div class="pickup-emoji">${char.emoji}</div>
+                        <div class="pickup-name">${char.name}</div>
+                        <div class="pickup-rarity">${this.getStarsForRarity(char.rarity)}</div>
+                    </div>
+                `;
+            });
+            this.elements.pickupCharacters.innerHTML = html;
+        }
+
+        // イベント天井
+        const pityInfo = this.game.getEventPityInfo();
+        if (this.elements.eventPityCount) {
+            this.elements.eventPityCount.textContent = pityInfo.count;
+        }
+        if (this.elements.eventPityFill) {
+            const pityPercent = (pityInfo.count / pityInfo.max) * 100;
+            this.elements.eventPityFill.style.width = `${pityPercent}%`;
+        }
+
+        // ボタンの有効/無効
+        const canSummon = this.game.state.gems >= event.singleCost;
+        const canMultiSummon = this.game.state.gems >= event.multiCost;
+        if (this.elements.eventSummonSingleBtn) {
+            this.elements.eventSummonSingleBtn.disabled = !canSummon;
+        }
+        if (this.elements.eventSummonMultiBtn) {
+            this.elements.eventSummonMultiBtn.disabled = !canMultiSummon;
+        }
+    }
+
+    // イベント残り時間を更新
+    updateEventRemainingTime() {
+        const remaining = this.game.getEventRemainingTime();
+        if (!remaining || !this.elements.eventRemaining) return;
+
+        if (remaining.days > 0) {
+            this.elements.eventRemaining.textContent = `残り ${remaining.days}日 ${remaining.hours}時間`;
+        } else if (remaining.hours > 0) {
+            this.elements.eventRemaining.textContent = `残り ${remaining.hours}時間 ${remaining.minutes}分`;
+        } else {
+            this.elements.eventRemaining.textContent = `残り ${remaining.minutes}分`;
+        }
+    }
+
+    // イベント単発召喚
+    onEventSummonSingle() {
+        const results = this.game.eventSummonSingle();
+        if (results) {
+            this.showSummonResult(results, true);
+            if (window.soundManager) window.soundManager.playChestOpen();
+        } else {
+            this.showToast('ジェムが足りません');
+        }
+    }
+
+    // イベント10連召喚
+    onEventSummonMulti() {
+        const results = this.game.eventSummonMulti();
+        if (results) {
+            this.showSummonResult(results, true);
+            if (window.soundManager) window.soundManager.playChestOpen();
+        } else {
+            this.showToast('ジェムが足りません');
+        }
+    }
+
+    showSummonResult(results, isEvent = false) {
         if (!this.elements.summonResultModal || !this.elements.summonResultDisplay) return;
 
         let html = '';
         results.forEach((result, index) => {
             const hero = result.hero;
             const rarityClass = hero.rarity.toLowerCase();
-            const badge = result.isNew
+
+            // NEW/+1バッジ
+            const newBadge = result.isNew
                 ? '<span class="new-badge">NEW!</span>'
                 : `<span class="dupe-badge">+1</span>`;
+
+            // イベント召喚固有バッジ
+            let eventBadges = '';
+            if (isEvent) {
+                if (result.isPickup) {
+                    eventBadges += '<span class="pickup-badge">PICK UP!</span>';
+                }
+                if (result.isLimited) {
+                    eventBadges += '<span class="limited-badge">LIMITED</span>';
+                }
+            }
 
             html += `
                 <div class="summon-result-card ${rarityClass}" style="animation-delay: ${index * 0.1}s">
                     ${this.getHeroImageHtml(hero)}
                     <div class="hero-name">${hero.name}</div>
-                    ${badge}
+                    ${newBadge}
+                    ${eventBadges}
                 </div>
             `;
         });
@@ -2938,6 +3109,9 @@ class UI {
 
         // 更新
         this.renderSummonPanel();
+        if (isEvent) {
+            this.renderEventSummonPanel();
+        }
         this.renderBattleHeroes();
     }
 

@@ -1973,6 +1973,208 @@ class Game {
         return result;
     }
 
+    // ========================================
+    // イベント召喚
+    // ========================================
+
+    // イベント開催中かチェック
+    isEventActive() {
+        const event = GameData.EVENT_GACHA.CURRENT_EVENT;
+        if (!event) return false;
+
+        const now = new Date();
+        const start = new Date(event.startDate);
+        const end = new Date(event.endDate);
+
+        return now >= start && now <= end;
+    }
+
+    // 現在のイベント情報を取得
+    getCurrentEvent() {
+        if (!this.isEventActive()) return null;
+        return GameData.EVENT_GACHA.CURRENT_EVENT;
+    }
+
+    // イベント残り時間を取得
+    getEventRemainingTime() {
+        const event = this.getCurrentEvent();
+        if (!event) return null;
+
+        const now = new Date();
+        const end = new Date(event.endDate);
+        const diff = end - now;
+
+        if (diff <= 0) return { days: 0, hours: 0, minutes: 0 };
+
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+        return { days, hours, minutes };
+    }
+
+    // イベント天井カウント初期化
+    initEventPity() {
+        if (this.state.eventGachaPityCount === undefined) {
+            this.state.eventGachaPityCount = 0;
+        }
+        if (this.state.eventSummonedHeroes === undefined) {
+            this.state.eventSummonedHeroes = {};
+        }
+    }
+
+    // イベント単発召喚
+    eventSummonSingle() {
+        const event = this.getCurrentEvent();
+        if (!event) return null;
+
+        const cost = event.singleCost;
+        if (this.state.gems < cost) return null;
+
+        this.state.gems -= cost;
+        this.initEventPity();
+        const result = this.performEventSummon(1);
+        this.updateDailyMissionProgress('summon', 1);
+        return result;
+    }
+
+    // イベント10連召喚
+    eventSummonMulti() {
+        const event = this.getCurrentEvent();
+        if (!event) return null;
+
+        const cost = event.multiCost;
+        if (this.state.gems < cost) return null;
+
+        this.state.gems -= cost;
+        this.initEventPity();
+        const count = 10 + (event.multiBonus || 0);
+        const result = this.performEventSummon(count);
+        this.updateDailyMissionProgress('summon', 1);
+        return result;
+    }
+
+    // イベント召喚実行
+    performEventSummon(count) {
+        this.initEventPity();
+        const event = this.getCurrentEvent();
+        if (!event) return [];
+
+        const results = [];
+
+        for (let i = 0; i < count; i++) {
+            this.state.eventGachaPityCount++;
+            const result = this.rollEventGacha();
+            const heroId = result.hero.id;
+            const isNew = !this.state.eventSummonedHeroes[heroId] &&
+                          !this.state.summonedHeroes[heroId];
+
+            // イベントキャラも通常の所持キャラに追加
+            if (!this.state.summonedHeroes[heroId]) {
+                this.state.summonedHeroes[heroId] = 1;
+            } else {
+                this.state.summonedHeroes[heroId]++;
+            }
+
+            // イベント限定キャラは別途記録
+            if (result.hero.isLimited) {
+                if (!this.state.eventSummonedHeroes[heroId]) {
+                    this.state.eventSummonedHeroes[heroId] = 1;
+                } else {
+                    this.state.eventSummonedHeroes[heroId]++;
+                }
+            }
+
+            results.push({
+                hero: result.hero,
+                isNew: isNew,
+                level: this.state.summonedHeroes[heroId],
+                isPickup: result.isPickup,
+                isLimited: result.hero.isLimited
+            });
+
+            // 天井でリセット
+            if (this.state.eventGachaPityCount >= event.pityCount) {
+                this.state.eventGachaPityCount = 0;
+            }
+        }
+
+        return results;
+    }
+
+    // イベントガチャを回す
+    rollEventGacha() {
+        const event = this.getCurrentEvent();
+        let rarity = this.determineEventRarity(event.rates);
+        let isPickup = false;
+
+        // 天井チェック: イベント天井でピックアップ★5確定
+        if (this.state.eventGachaPityCount >= event.pityCount) {
+            rarity = 'LEGENDARY';
+            isPickup = true;
+        }
+        // 10連ごとに★★★以上確定
+        else if (this.state.eventGachaPityCount % 10 === 0 && this.state.eventGachaPityCount > 0) {
+            if (rarity === 'COMMON' || rarity === 'UNCOMMON') {
+                rarity = 'RARE';
+            }
+        }
+
+        // ピックアップ判定
+        const pickupChars = event.pickupCharacters.filter(c => c.rarity === rarity);
+        if (pickupChars.length > 0) {
+            // ピックアップ確率でピックアップキャラが出るかチェック
+            const pickupRate = pickupChars[0].pickupRate || 0.5;
+            if (Math.random() < pickupRate || isPickup) {
+                isPickup = true;
+                const hero = pickupChars[Math.floor(Math.random() * pickupChars.length)];
+                return { hero, isPickup };
+            }
+        }
+
+        // 通常キャラからランダム選択
+        const heroesOfRarity = GameData.SUMMON_HEROES.filter(h => h.rarity === rarity);
+        if (heroesOfRarity.length > 0) {
+            const hero = heroesOfRarity[Math.floor(Math.random() * heroesOfRarity.length)];
+            return { hero, isPickup: false };
+        }
+
+        // フォールバック
+        return { hero: GameData.SUMMON_HEROES[0], isPickup: false };
+    }
+
+    // イベント用レアリティ決定
+    determineEventRarity(rates) {
+        const roll = Math.random() * 100;
+
+        let cumulative = 0;
+        cumulative += rates.LEGENDARY;
+        if (roll < cumulative) return 'LEGENDARY';
+
+        cumulative += rates.EPIC;
+        if (roll < cumulative) return 'EPIC';
+
+        cumulative += rates.RARE;
+        if (roll < cumulative) return 'RARE';
+
+        cumulative += rates.UNCOMMON;
+        if (roll < cumulative) return 'UNCOMMON';
+
+        return 'COMMON';
+    }
+
+    // イベント天井情報を取得
+    getEventPityInfo() {
+        this.initEventPity();
+        const event = this.getCurrentEvent();
+        if (!event) return { count: 0, max: 100 };
+
+        return {
+            count: this.state.eventGachaPityCount,
+            max: event.pityCount
+        };
+    }
+
     // 召喚実行
     performSummon(count) {
         const results = [];

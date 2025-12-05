@@ -1780,6 +1780,81 @@ const GameData = {
             75: '伝説の冒険者',
             100: '冒険王'
         }
+    },
+
+    // ========================================
+    // イベントガチャシステム
+    // ========================================
+    EVENT_GACHA: {
+        // 現在開催中のイベント（nullなら開催なし）
+        // 本番ではサーバーから取得、今はハードコード
+        CURRENT_EVENT: {
+            id: 'christmas_2024',
+            name: '聖夜の奇跡ガチャ',
+            description: '限定キャラ「聖夜の天使」登場！',
+            bannerEmoji: '🎄',
+            startDate: '2024-12-01T00:00:00',
+            endDate: '2025-12-31T23:59:59',  // テスト用に長めに設定
+
+            // イベント専用通貨（falseならジェム使用）
+            useEventCurrency: false,
+            currencyName: 'イベントコイン',
+            currencyIcon: '🪙',
+
+            // コスト
+            singleCost: 5,      // 単発
+            multiCost: 45,      // 10連
+            multiBonus: 1,      // 10連ボーナス回数
+
+            // 天井
+            pityCount: 80,      // 天井までの回数（通常より低め）
+
+            // ピックアップキャラ（イベント限定）
+            pickupCharacters: [
+                {
+                    id: 'event_angel',
+                    name: '聖夜の天使',
+                    emoji: '👼',
+                    rarity: 'LEGENDARY',
+                    description: '聖なる力でDPSを大幅強化',
+                    baseDps: 500,
+                    isLimited: true,  // 期間限定
+                    pickupRate: 0.5   // ★5の中でのピックアップ率50%
+                },
+                {
+                    id: 'event_santa',
+                    name: 'サンタクロース',
+                    emoji: '🎅',
+                    rarity: 'EPIC',
+                    description: 'ゴールド獲得量を増加',
+                    baseDps: 200,
+                    isLimited: true,
+                    pickupRate: 0.5
+                },
+                {
+                    id: 'event_reindeer',
+                    name: 'トナカイ戦士',
+                    emoji: '🦌',
+                    rarity: 'RARE',
+                    description: 'タップダメージを強化',
+                    baseDps: 80,
+                    isLimited: true,
+                    pickupRate: 0.5
+                }
+            ],
+
+            // 確率（ピックアップ以外は通常キャラが出る）
+            rates: {
+                LEGENDARY: 2,    // 通常1% → 2%にアップ
+                EPIC: 8,         // 通常5% → 8%
+                RARE: 20,        // 通常14% → 20%
+                UNCOMMON: 35,
+                COMMON: 35
+            }
+        },
+
+        // イベント履歴（過去のイベント、コレクション用）
+        PAST_EVENTS: []
     }
 };
 
