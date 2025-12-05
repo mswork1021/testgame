@@ -196,7 +196,7 @@ body {
     text-align: center;
     position: relative;
     z-index: 1;
-    padding-right: 50px;
+    padding: 0 8px 4px 8px;
 }
 
 /* ユーザーレベルバー */
@@ -285,7 +285,7 @@ body {
 }
 
 .progress-bar {
-    height: 8px;
+    height: 12px;
     background: #1a1a1a;
     border-radius: 0;
     overflow: hidden;
