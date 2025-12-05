@@ -1482,31 +1482,57 @@ class UI {
         const enhanceCost = GameData.ENHANCE_COST[item.rarity] || 100;
         const canEnhance = enhanceLevel < 99 && stones.ironScrap >= enhanceCost;
         statsHtml += `<div class="enhance-section" style="margin-top:10px; padding:10px; background:rgba(0,0,0,0.3); border-radius:8px;">`;
-        statsHtml += `<p style="font-size:12px; color:#888; margin-bottom:6px;">🪨鉄くず:${this.formatNumber(stones.ironScrap)} 💚魔石:${stones.magicStone} 💙蒼結晶:${stones.blueCrystal} 💜紫輝石:${stones.purpleGem}</p>`;
-        statsHtml += `<div class="stone-ability-grid">`;
+        statsHtml += `<p style="font-size:11px; color:#888; margin-bottom:6px;">🪨${this.formatNumber(stones.ironScrap)} 💚${stones.magicStone} 💙${stones.blueCrystal} 💜${stones.purpleGem}</p>`;
+
+        // 数値リロールの範囲を計算
+        const template = this.game.findEquipmentTemplate(item.name);
+        const rarity = GameData.RARITY[item.rarity];
+        let valueRange = { min: 0, max: 0 };
+        if (template && rarity) {
+            const baseMin = Math.floor(template.baseValue * rarity.multiplier * 0.8);
+            const baseMax = Math.floor(template.baseValue * rarity.multiplier * 1.2);
+            const enhanceBonus = 1 + (enhanceLevel * 0.01);
+            valueRange.min = Math.floor(baseMin * enhanceBonus);
+            valueRange.max = Math.floor(baseMax * enhanceBonus);
+        }
+
+        // 種類変更の候補
+        const allStatTypes = ['tapDamage', 'goldBonus', 'critChance', 'critDamage', 'allStats'];
+        const otherStats = allStatTypes.filter(s => s !== item.stat);
+
+        statsHtml += `<div class="stone-ability-list">`;
 
         // 強化ボタン
-        statsHtml += `<button id="enhance-btn" class="btn-stone-ability" ${canEnhance ? '' : 'disabled'}>`;
-        statsHtml += `🪨 強化 (${enhanceCost})</button>`;
+        statsHtml += `<div class="stone-ability-row">`;
+        statsHtml += `<button id="enhance-btn" class="btn-stone-ability" ${canEnhance ? '' : 'disabled'}>🪨 強化 (${enhanceCost})</button>`;
+        statsHtml += `<span class="ability-desc">効果値 +1%</span>`;
+        statsHtml += `</div>`;
 
         // 数値リロール（魔石）
         const valueReroll = GameData.STONE_ABILITIES.valueReroll;
         const canValueReroll = stones.magicStone >= valueReroll.cost;
-        statsHtml += `<button id="value-reroll-btn" class="btn-stone-ability magic" ${canValueReroll ? '' : 'disabled'}>`;
-        statsHtml += `💚 数値抽選 (${valueReroll.cost})</button>`;
+        statsHtml += `<div class="stone-ability-row">`;
+        statsHtml += `<button id="value-reroll-btn" class="btn-stone-ability magic" ${canValueReroll ? '' : 'disabled'}>💚 数値抽選 (${valueReroll.cost})</button>`;
+        statsHtml += `<span class="ability-desc">範囲: ${valueRange.min}〜${valueRange.max}</span>`;
+        statsHtml += `</div>`;
 
         // 種類リロール（蒼結晶）
         const typeReroll = GameData.STONE_ABILITIES.typeReroll;
         const canTypeReroll = stones.blueCrystal >= typeReroll.cost;
-        statsHtml += `<button id="type-reroll-btn" class="btn-stone-ability blue" ${canTypeReroll ? '' : 'disabled'}>`;
-        statsHtml += `💙 種類変更 (${typeReroll.cost})</button>`;
+        const otherStatsLabels = otherStats.map(s => this.getStatLabel(s).replace(/\(.*\)/, '').substring(0, 4)).join('/');
+        statsHtml += `<div class="stone-ability-row">`;
+        statsHtml += `<button id="type-reroll-btn" class="btn-stone-ability blue" ${canTypeReroll ? '' : 'disabled'}>💙 種類変更 (${typeReroll.cost})</button>`;
+        statsHtml += `<span class="ability-desc">${otherStatsLabels}</span>`;
+        statsHtml += `</div>`;
 
         // サブステ追加（紫輝石）
         const addSubstat = GameData.STONE_ABILITIES.addSubstat;
         const substatCount = item.substats?.length || 0;
         const canAddSubstat = stones.purpleGem >= addSubstat.cost && substatCount < 3;
-        statsHtml += `<button id="add-substat-btn" class="btn-stone-ability purple" ${canAddSubstat ? '' : 'disabled'}>`;
-        statsHtml += `💜 サブステ (${addSubstat.cost}) ${substatCount}/3</button>`;
+        statsHtml += `<div class="stone-ability-row">`;
+        statsHtml += `<button id="add-substat-btn" class="btn-stone-ability purple" ${canAddSubstat ? '' : 'disabled'}>💜 サブステ (${addSubstat.cost})</button>`;
+        statsHtml += `<span class="ability-desc">${substatCount}/3 追加ステ</span>`;
+        statsHtml += `</div>`;
 
         statsHtml += `</div></div>`;
 
