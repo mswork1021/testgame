@@ -8,6 +8,7 @@ class UI {
         this.elements = {};
         this.currentTab = 'heroes';
         this.selectedItem = null;
+        this.selectedSubstatIndex = 0;
         // 塔交換所のレンダリング状態フラグ
         this.towerShopRendered = false;
         this.towerShopEventBound = false;
@@ -1465,12 +1466,14 @@ class UI {
         statsHtml += `<p>タイプ: ${typeLabel}</p>`;
         statsHtml += `<p>効果: ${this.getStatLabel(item.stat)} +${item.value}</p>`;
 
-        // サブステータス表示
+        // サブステータス表示（選択可能）
         if (item.substats && item.substats.length > 0) {
             statsHtml += `<div style="margin-top:5px; padding:5px; background:rgba(155,89,182,0.2); border-radius:4px;">`;
-            statsHtml += `<p style="color:#9b59b6; font-size:11px;">サブステータス:</p>`;
-            item.substats.forEach(sub => {
-                statsHtml += `<p style="font-size:11px; color:#ccc;">・${this.getStatLabel(sub.type)} +${sub.value}</p>`;
+            statsHtml += `<p style="color:#9b59b6; font-size:11px;">サブステータス（タップで種類変更）:</p>`;
+            item.substats.forEach((sub, idx) => {
+                const isSelected = this.selectedSubstatIndex === idx;
+                const style = isSelected ? 'background:#3498db; color:#fff; padding:2px 6px; border-radius:4px;' : '';
+                statsHtml += `<p class="substat-item" data-index="${idx}" style="font-size:11px; color:#ccc; cursor:pointer; ${style}">・${this.getStatLabel(sub.type)} +${sub.value}</p>`;
             });
             statsHtml += `</div>`;
         }
@@ -1519,9 +1522,12 @@ class UI {
         // サブステ種類変更（蒼結晶）- サブステがないと使えない
         const substatTypeReroll = GameData.STONE_ABILITIES.substatTypeReroll;
         const canTypeReroll = hasSubstats && stones.blueCrystal >= substatTypeReroll.cost;
+        const selectedIdx = this.selectedSubstatIndex || 0;
+        const selectedSubstat = item.substats?.[selectedIdx];
+        const selectedLabel = selectedSubstat ? this.getStatLabel(selectedSubstat.type) : '';
         statsHtml += `<div class="stone-ability-row">`;
-        statsHtml += `<button id="type-reroll-btn" class="btn-stone-ability blue" ${canTypeReroll ? '' : 'disabled'}>💙 サブステ種類変更 (${substatTypeReroll.cost})</button>`;
-        statsHtml += `<span class="ability-desc">${hasSubstats ? '1つ変更' : 'サブステなし'}</span>`;
+        statsHtml += `<button id="type-reroll-btn" class="btn-stone-ability blue" ${canTypeReroll ? '' : 'disabled'}>💙 種類変更 (${substatTypeReroll.cost})</button>`;
+        statsHtml += `<span class="ability-desc">${hasSubstats ? `[${selectedLabel}]を変更` : 'サブステなし'}</span>`;
         statsHtml += `</div>`;
 
         statsHtml += `</div></div>`;
@@ -1562,11 +1568,22 @@ class UI {
 
         const addSubstatBtn = document.getElementById('add-substat-btn');
         if (addSubstatBtn) addSubstatBtn.onclick = () => this.onAddSubstat();
+
+        // サブステ選択イベント
+        const substatItems = document.querySelectorAll('.substat-item');
+        substatItems.forEach(el => {
+            el.onclick = () => {
+                const idx = parseInt(el.dataset.index);
+                this.selectedSubstatIndex = idx;
+                this.openEquipmentModal(this.selectedItem); // 選択状態を反映
+            };
+        });
     }
 
     closeEquipmentModal() {
         this.elements.equipmentModal.classList.add('hidden');
         this.selectedItem = null;
+        this.selectedSubstatIndex = 0;
     }
 
     onEnhanceItem() {
@@ -1613,8 +1630,9 @@ class UI {
     onTypeReroll() {
         if (!this.selectedItem) return;
 
-        // 最初のサブステの種類を変更（将来的には選択UIを追加可能）
-        const result = this.game.rerollSubstatType(this.selectedItem.id, 0);
+        // 選択中のサブステの種類を変更
+        const substatIndex = this.selectedSubstatIndex || 0;
+        const result = this.game.rerollSubstatType(this.selectedItem.id, substatIndex);
         if (result.success) {
             if (window.soundManager) window.soundManager.playBuy();
             this.showToast(`💙 サブステ種類変更: ${this.getStatLabel(result.oldType)} → ${this.getStatLabel(result.newType)}`);
@@ -1668,6 +1686,7 @@ class UI {
             goldBonus: 'ゴールド獲得(%)',
             critChance: 'クリティカル率(%)',
             critDamage: 'クリティカルダメージ(%)',
+            dps: 'DPS(%)',
             allStats: '全ステータス(%)'
         };
         return labels[stat] || stat;

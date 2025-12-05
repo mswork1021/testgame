@@ -1134,8 +1134,8 @@ class Game {
         const baseVal = equipment.baseValue || equipment.value;
         const oldValues = equipment.substats.map(s => ({ type: s.type, value: s.value }));
         equipment.substats.forEach(substat => {
-            // 基礎値の10-25%の範囲で再抽選
-            substat.value = Math.floor(baseVal * (0.1 + Math.random() * 0.15));
+            // 基礎値の10-25%の範囲で再抽選、最低1を保証
+            substat.value = Math.max(1, Math.floor(baseVal * (0.1 + Math.random() * 0.15)));
         });
         const newValues = equipment.substats.map(s => ({ type: s.type, value: s.value }));
 
@@ -1162,25 +1162,26 @@ class Game {
             return { success: false, reason: '蒼結晶が足りません' };
         }
 
-        // 石を消費
-        this.state.stones[ability.stone] -= ability.cost;
-
-        // 利用可能なステータス種類（メインとその他のサブステと被らないもの）
-        const substatTypes = ['tapDamage', 'goldBonus', 'critChance', 'critDamage'];
-        const usedTypes = [equipment.stat, ...equipment.substats.map(s => s.type)];
+        // 利用可能なステータス種類（拡張版）
+        const allSubstatTypes = ['tapDamage', 'goldBonus', 'critChance', 'critDamage', 'dps', 'bossTime'];
         const currentType = equipment.substats[substatIndex].type;
-        const availableTypes = substatTypes.filter(s => !usedTypes.includes(s) || s === currentType);
 
-        // 現在の種類を除外
-        const otherTypes = availableTypes.filter(s => s !== currentType);
-        if (otherTypes.length === 0) {
-            // 石を返還
-            this.state.stones[ability.stone] += ability.cost;
+        // 現在使用中の種類（メイン + 他のサブステ）を除外
+        const otherSubstats = equipment.substats.filter((_, i) => i !== substatIndex).map(s => s.type);
+        const usedByOthers = [equipment.stat, ...otherSubstats];
+
+        // 変更可能な種類 = 全種類から、他で使用中のものを除外
+        const availableTypes = allSubstatTypes.filter(s => !usedByOthers.includes(s) && s !== currentType);
+
+        if (availableTypes.length === 0) {
             return { success: false, reason: '変更できる種類がありません' };
         }
 
+        // 石を消費
+        this.state.stones[ability.stone] -= ability.cost;
+
         const oldType = currentType;
-        equipment.substats[substatIndex].type = otherTypes[Math.floor(Math.random() * otherTypes.length)];
+        equipment.substats[substatIndex].type = availableTypes[Math.floor(Math.random() * availableTypes.length)];
 
         return { success: true, equipment, substatIndex, oldType, newType: equipment.substats[substatIndex].type };
     }
@@ -1201,21 +1202,22 @@ class Game {
             return { success: false, reason: `${ability.stone === 'purpleGem' ? '紫輝石' : '石'}が足りません` };
         }
 
-        // 石を消費
-        this.state.stones[ability.stone] -= ability.cost;
-
-        // サブステータスを追加
-        const substatTypes = ['tapDamage', 'goldBonus', 'critChance', 'critDamage'];
+        // サブステータスを追加（拡張版）
+        const allSubstatTypes = ['tapDamage', 'goldBonus', 'critChance', 'critDamage', 'dps', 'bossTime'];
         const existingStats = equipment.substats.map(s => s.type);
-        const availableStats = substatTypes.filter(s => !existingStats.includes(s) && s !== equipment.stat);
+        const availableStats = allSubstatTypes.filter(s => !existingStats.includes(s) && s !== equipment.stat);
 
         if (availableStats.length === 0) {
             return { success: false, reason: '追加できるサブステータスがありません' };
         }
 
+        // 石を消費
+        this.state.stones[ability.stone] -= ability.cost;
+
         const newStatType = availableStats[Math.floor(Math.random() * availableStats.length)];
         const baseVal = equipment.baseValue || equipment.value;
-        const value = Math.floor(baseVal * (0.1 + Math.random() * 0.15)); // 基礎値の10-25%
+        // 基礎値の10-25%、最低1を保証
+        const value = Math.max(1, Math.floor(baseVal * (0.1 + Math.random() * 0.15)));
 
         equipment.substats.push({ type: newStatType, value });
 
