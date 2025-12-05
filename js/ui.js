@@ -425,11 +425,14 @@ class UI {
             // 重要: setTimeoutでUI更新を遅延させないと、モバイルブラウザでDOM更新がブロックされる
             let touchHandled = false;
             this.elements.equipModalStats.addEventListener('touchstart', (e) => {
+                console.log('[DEBUG] touchstart on equipModalStats, target:', e.target);
                 const btn = e.target.closest('[data-action]');
+                console.log('[DEBUG] closest button:', btn, 'action:', btn?.dataset?.action);
                 if (btn && !btn.disabled) {
                     e.preventDefault();
                     e.stopPropagation();
                     touchHandled = true;
+                    console.log('[DEBUG] touchstart handled, calling handleAction via setTimeout');
                     // setTimeoutでイベント処理完了後にハンドラーを実行
                     setTimeout(() => {
                         handleAction(btn.dataset.action, btn.dataset.idx);
@@ -439,11 +442,13 @@ class UI {
 
             // クリックイベント（PC用）- タッチで処理済みならスキップ
             this.elements.equipModalStats.addEventListener('click', (e) => {
+                console.log('[DEBUG] click on equipModalStats, touchHandled:', touchHandled);
                 if (touchHandled) {
                     touchHandled = false;
                     return;
                 }
                 const btn = e.target.closest('[data-action]');
+                console.log('[DEBUG] click closest button:', btn, 'action:', btn?.dataset?.action);
                 if (btn && !btn.disabled) {
                     handleAction(btn.dataset.action, btn.dataset.idx);
                 }
@@ -1626,80 +1631,115 @@ class UI {
     }
 
     onEnhanceItem() {
-        if (!this.selectedItem) return;
+        console.log('[DEBUG] onEnhanceItem called, selectedItem:', this.selectedItem?.id);
+        if (!this.selectedItem) {
+            console.log('[DEBUG] selectedItem is null, returning');
+            return;
+        }
 
-        const result = this.game.enhanceEquipment(this.selectedItem.id);
-        if (result.success) {
-            if (window.soundManager) window.soundManager.playBuy();
-            // モーダルを強制的に更新
-            this.selectedItem = result.equipment;
-            this.openEquipmentModal(this.selectedItem);
-            this.renderEquipment();
-            this.renderInventory();
-            this.updateDisplay();
-            // トースト表示
-            this.showToast(`⚔️ +${result.newLevel}に強化！`);
-        } else {
-            this.showToast(`❌ ${result.reason || '強化失敗'}`);
+        try {
+            const result = this.game.enhanceEquipment(this.selectedItem.id);
+            console.log('[DEBUG] enhanceEquipment result:', result);
+
+            if (result.success) {
+                if (window.soundManager) window.soundManager.playBuy();
+
+                // 先にトーストを表示（DOM更新がブロックされても表示される）
+                this.showToast(`⚔️ +${result.newLevel}に強化！`);
+                console.log('[DEBUG] showToast called');
+
+                // モーダルを強制的に更新
+                this.selectedItem = result.equipment;
+                console.log('[DEBUG] about to call openEquipmentModal');
+                this.openEquipmentModal(this.selectedItem);
+                console.log('[DEBUG] openEquipmentModal completed');
+
+                this.renderEquipment();
+                this.renderInventory();
+                this.updateDisplay();
+                console.log('[DEBUG] all updates completed');
+            } else {
+                this.showToast(`❌ ${result.reason || '強化失敗'}`);
+            }
+        } catch (error) {
+            console.error('[DEBUG] Error in onEnhanceItem:', error);
+            alert('Error: ' + error.message);
         }
     }
 
     onValueReroll() {
+        console.log('[DEBUG] onValueReroll called');
         if (!this.selectedItem) return;
 
-        const result = this.game.rerollSubstatValues(this.selectedItem.id);
-        if (result.success) {
-            if (window.soundManager) window.soundManager.playBuy();
-            this.selectedItem = result.equipment;
-            this.openEquipmentModal(this.selectedItem);
-            this.renderEquipment();
-            this.renderInventory();
-            this.updateDisplay();
-            // 変化を表示
-            let changes = [];
-            for (let i = 0; i < result.oldValues.length; i++) {
-                const oldVal = result.oldValues[i].value;
-                const newVal = result.newValues[i].value;
-                const arrow = newVal > oldVal ? '▲' : newVal < oldVal ? '▼' : '→';
-                changes.push(`${oldVal}${arrow}${newVal}`);
+        try {
+            const result = this.game.rerollSubstatValues(this.selectedItem.id);
+            if (result.success) {
+                if (window.soundManager) window.soundManager.playBuy();
+                // 先にトースト表示
+                let changes = [];
+                for (let i = 0; i < result.oldValues.length; i++) {
+                    const oldVal = result.oldValues[i].value;
+                    const newVal = result.newValues[i].value;
+                    const arrow = newVal > oldVal ? '▲' : newVal < oldVal ? '▼' : '→';
+                    changes.push(`${oldVal}${arrow}${newVal}`);
+                }
+                this.showToast(`💚 ${changes.join(', ')}`);
+                this.selectedItem = result.equipment;
+                this.openEquipmentModal(this.selectedItem);
+                this.renderEquipment();
+                this.renderInventory();
+                this.updateDisplay();
+            } else {
+                this.showToast(`❌ ${result.reason}`);
             }
-            this.showToast(`💚 ${changes.join(', ')}`);
-        } else {
-            this.showToast(`❌ ${result.reason}`);
+        } catch (error) {
+            console.error('[DEBUG] Error in onValueReroll:', error);
+            alert('Error: ' + error.message);
         }
     }
 
     onTypeReroll() {
+        console.log('[DEBUG] onTypeReroll called');
         if (!this.selectedItem) return;
 
-        // 選択中のサブステの種類を変更
-        const substatIndex = this.selectedSubstatIndex || 0;
-        const result = this.game.rerollSubstatType(this.selectedItem.id, substatIndex);
-        if (result.success) {
-            if (window.soundManager) window.soundManager.playBuy();
-            this.showToast(`💙 サブステ種類変更: ${this.getStatLabel(result.oldType)} → ${this.getStatLabel(result.newType)}`);
-            this.openEquipmentModal(result.equipment);
-            this.renderEquipment();
-            this.renderInventory();
-            this.updateDisplay();
-        } else {
-            this.showToast(`❌ ${result.reason}`);
+        try {
+            const substatIndex = this.selectedSubstatIndex || 0;
+            const result = this.game.rerollSubstatType(this.selectedItem.id, substatIndex);
+            if (result.success) {
+                if (window.soundManager) window.soundManager.playBuy();
+                this.showToast(`💙 サブステ種類変更: ${this.getStatLabel(result.oldType)} → ${this.getStatLabel(result.newType)}`);
+                this.openEquipmentModal(result.equipment);
+                this.renderEquipment();
+                this.renderInventory();
+                this.updateDisplay();
+            } else {
+                this.showToast(`❌ ${result.reason}`);
+            }
+        } catch (error) {
+            console.error('[DEBUG] Error in onTypeReroll:', error);
+            alert('Error: ' + error.message);
         }
     }
 
     onAddSubstat() {
+        console.log('[DEBUG] onAddSubstat called');
         if (!this.selectedItem) return;
 
-        const result = this.game.addEquipmentSubstat(this.selectedItem.id);
-        if (result.success) {
-            if (window.soundManager) window.soundManager.playBuy();
-            this.showToast(`💜 サブステ追加: ${this.getStatLabel(result.addedSubstat.type)} +${result.addedSubstat.value}`);
-            this.openEquipmentModal(result.equipment);
-            this.renderEquipment();
-            this.renderInventory();
-            this.updateDisplay();
-        } else {
-            this.showToast(`❌ ${result.reason}`);
+        try {
+            const result = this.game.addEquipmentSubstat(this.selectedItem.id);
+            if (result.success) {
+                if (window.soundManager) window.soundManager.playBuy();
+                this.showToast(`💜 サブステ追加: ${this.getStatLabel(result.addedSubstat.type)} +${result.addedSubstat.value}`);
+                this.openEquipmentModal(result.equipment);
+                this.renderEquipment();
+                this.renderInventory();
+                this.updateDisplay();
+            } else {
+                this.showToast(`❌ ${result.reason}`);
+            }
+        } catch (error) {
+            console.error('[DEBUG] Error in onAddSubstat:', error);
+            alert('Error: ' + error.message);
         }
     }
 
