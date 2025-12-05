@@ -143,6 +143,15 @@
                         <div id="accessory-slot" class="slot-item empty">なし</div>
                     </div>
                 </div>
+                <!-- 石の所持数 -->
+                <div class="stones-bar">
+                    <span class="stone-item">🪨<span id="stone-iron">0</span></span>
+                    <span class="stone-item">💚<span id="stone-magic">0</span></span>
+                    <span class="stone-item">💙<span id="stone-blue">0</span></span>
+                    <span class="stone-item">💜<span id="stone-purple">0</span></span>
+                    <span class="stone-item">💛<span id="stone-radiant">0</span></span>
+                    <button id="stone-exchange-btn" class="stone-exchange-btn">交換所</button>
+                </div>
                 <div class="inventory-header">
                     <h3>所持品 <span id="inventory-count"></span></h3>
                     <div class="inventory-actions">
@@ -537,6 +546,25 @@
                     <span id="modal-unlocked-achievements">0</span>/<span id="modal-total-achievements">0</span> 達成
                 </div>
                 <div id="modal-achievements-list" class="achievements-grid"></div>
+            </div>
+        </div>
+
+        <!-- 石交換所モーダル -->
+        <div id="stone-exchange-modal" class="modal hidden">
+            <div class="modal-content stone-exchange-modal-content">
+                <div class="modal-header">
+                    <h2>🪨 石交換所</h2>
+                    <button id="close-stone-exchange" class="close-btn">✕</button>
+                </div>
+                <div class="stones-bar-modal">
+                    <span class="stone-item">🪨<span id="modal-stone-iron">0</span></span>
+                    <span class="stone-item">💚<span id="modal-stone-magic">0</span></span>
+                    <span class="stone-item">💙<span id="modal-stone-blue">0</span></span>
+                    <span class="stone-item">💜<span id="modal-stone-purple">0</span></span>
+                    <span class="stone-item">💛<span id="modal-stone-radiant">0</span></span>
+                </div>
+                <div id="stone-exchange-list" class="stone-exchange-grid"></div>
+                <p class="exchange-note">※ 一部の交換には週間制限があります</p>
             </div>
         </div>
     </div>

@@ -118,6 +118,21 @@ class Game {
                 tapDamage: 0,   // タップダメージ+%
                 dps: 0,         // DPS+%
                 goldBonus: 0    // ゴールド獲得+%
+            },
+
+            // 装備石
+            stones: {
+                ironScrap: 0,      // 鉄くず（コモン）
+                magicStone: 0,     // 魔石（アンコモン）
+                blueCrystal: 0,    // 蒼結晶（レア）
+                purpleGem: 0,      // 紫輝石（エピック）
+                radiantStone: 0    // 輝煌石（レジェンダリー）
+            },
+
+            // 石交換所の週間購入履歴
+            stoneExchangeWeekly: {
+                lastResetDate: null,
+                purchases: {}      // { exchangeId: count }
             }
         };
 
@@ -550,11 +565,10 @@ class Game {
 
         // 装備生成
         const equipment = this.generateEquipment(template, rarity);
-        this.state.inventory.push(equipment);
-        this.recordEquipment(equipment);
+        const result = this.addEquipmentToInventory(equipment);
 
         if (this.onLoot) {
-            this.onLoot(equipment);
+            this.onLoot(equipment, result.isDuplicate, result.stone);
         }
     }
 
@@ -964,13 +978,10 @@ class Game {
 
         // 装備生成
         const equipment = this.generateEquipment(template, rarity);
-        this.state.inventory.push(equipment);
-
-        // 図鑑に記録
-        this.recordEquipment(equipment);
+        const result = this.addEquipmentToInventory(equipment);
 
         if (this.onLoot) {
-            this.onLoot(equipment);
+            this.onLoot(equipment, result.isDuplicate, result.stone);
         }
     }
 
@@ -998,8 +1009,205 @@ class Game {
             value: value,
             rarity: rarityKey,
             rarityName: rarity.name,
-            rarityClass: rarity.class
+            rarityClass: rarity.class,
+            enhanceLevel: 0  // 強化レベル（0〜99）
         };
+    }
+
+    // 装備をインベントリに追加（被りは石に変換）
+    addEquipmentToInventory(equipment) {
+        // 同じ名前の装備がインベントリまたは装備中にあるかチェック
+        const existsInInventory = this.state.inventory.some(item => item.name === equipment.name);
+        const existsInEquipment = Object.values(this.state.equipment).some(
+            item => item && item.name === equipment.name
+        );
+
+        if (existsInInventory || existsInEquipment) {
+            // 被り → 石に変換
+            const stoneType = GameData.STONES[equipment.rarity];
+            if (stoneType && this.state.stones[stoneType.id] !== undefined) {
+                this.state.stones[stoneType.id]++;
+
+                // コールバック（石獲得通知）
+                if (this.onStoneGained) {
+                    this.onStoneGained(stoneType, 1);
+                }
+
+                return { isDuplicate: true, stone: stoneType };
+            }
+        }
+
+        // 新規 → インベントリに追加
+        this.state.inventory.push(equipment);
+        this.recordEquipment(equipment);
+
+        return { isDuplicate: false, equipment };
+    }
+
+    // 装備強化（鉄くずを消費）
+    enhanceEquipment(equipmentId) {
+        // インベントリから装備を探す
+        let equipment = this.state.inventory.find(item => item.id === equipmentId);
+        let isEquipped = false;
+
+        // 装備中からも探す
+        if (!equipment) {
+            for (const slot of ['weapon', 'armor', 'accessory']) {
+                if (this.state.equipment[slot] && this.state.equipment[slot].id === equipmentId) {
+                    equipment = this.state.equipment[slot];
+                    isEquipped = true;
+                    break;
+                }
+            }
+        }
+
+        if (!equipment) return { success: false, reason: '装備が見つかりません' };
+
+        // 強化レベル初期化（古いデータ対応）
+        if (equipment.enhanceLevel === undefined) {
+            equipment.enhanceLevel = 0;
+        }
+
+        // 最大強化チェック
+        if (equipment.enhanceLevel >= 99) {
+            return { success: false, reason: '最大強化済み' };
+        }
+
+        // コスト計算
+        const cost = GameData.ENHANCE_COST[equipment.rarity] || 100;
+
+        // 鉄くず足りるかチェック
+        if (this.state.stones.ironScrap < cost) {
+            return { success: false, reason: '鉄くずが足りません', required: cost, current: this.state.stones.ironScrap };
+        }
+
+        // 強化実行
+        this.state.stones.ironScrap -= cost;
+        equipment.enhanceLevel++;
+
+        // ステータス更新（強化レベルに応じてvalue増加）
+        // 基本値の1%×強化レベル分増加
+        const baseValue = Math.floor(equipment.value / (1 + (equipment.enhanceLevel - 1) * 0.01));
+        equipment.value = Math.floor(baseValue * (1 + equipment.enhanceLevel * 0.01));
+
+        return {
+            success: true,
+            equipment,
+            newLevel: equipment.enhanceLevel,
+            cost
+        };
+    }
+
+    // 石の所持数を取得
+    getStoneCount(stoneId) {
+        return this.state.stones[stoneId] || 0;
+    }
+
+    // 全ての石の所持数を取得
+    getAllStones() {
+        return { ...this.state.stones };
+    }
+
+    // 石交換を実行
+    executeStoneExchange(exchangeId) {
+        const exchange = GameData.STONE_EXCHANGE.find(e => e.id === exchangeId);
+        if (!exchange) return { success: false, message: '交換アイテムが見つかりません' };
+
+        // 週間リセットチェック
+        this.checkWeeklyReset();
+
+        // 週間制限チェック
+        if (exchange.weeklyLimit > 0) {
+            const purchased = this.state.stoneExchangeWeekly.purchases[exchangeId] || 0;
+            if (purchased >= exchange.weeklyLimit) {
+                return { success: false, message: '週間制限に達しています' };
+            }
+        }
+
+        // 石の所持チェック
+        if (this.state.stones[exchange.stone] < exchange.cost) {
+            return { success: false, message: '石が足りません' };
+        }
+
+        // 石を消費
+        this.state.stones[exchange.stone] -= exchange.cost;
+
+        // 報酬を付与
+        let rewardText = '';
+        switch (exchange.reward.type) {
+            case 'gold':
+                this.state.gold += exchange.reward.amount;
+                rewardText = `💰 ${exchange.reward.amount}G 獲得！`;
+                break;
+            case 'stone':
+                this.state.stones[exchange.reward.stoneType] += exchange.reward.amount;
+                const stoneInfo = Object.values(GameData.STONES).find(s => s.id === exchange.reward.stoneType);
+                rewardText = `${stoneInfo?.icon || '💎'} ${stoneInfo?.name || '石'}×${exchange.reward.amount} 獲得！`;
+                break;
+            case 'towerMedals':
+                this.state.towerMedals += exchange.reward.amount;
+                rewardText = `🏅 塔メダル×${exchange.reward.amount} 獲得！`;
+                break;
+            case 'epicTicket':
+                this.dropGuaranteedEquipment('EPIC');
+                rewardText = `🎫 エピック装備を獲得！`;
+                break;
+            case 'legendTicket':
+                this.dropGuaranteedEquipment('LEGENDARY');
+                rewardText = `🎟️ レジェンド装備を獲得！`;
+                break;
+            case 'summonTicket':
+                this.state.gems += GameData.GACHA.MULTI_COST;
+                rewardText = `🌟 10連分のジェム(${GameData.GACHA.MULTI_COST})獲得！`;
+                break;
+            default:
+                rewardText = `${exchange.name} を獲得！`;
+        }
+
+        // 週間購入回数を更新
+        if (exchange.weeklyLimit > 0) {
+            this.state.stoneExchangeWeekly.purchases[exchangeId] =
+                (this.state.stoneExchangeWeekly.purchases[exchangeId] || 0) + 1;
+        }
+
+        return { success: true, rewardText };
+    }
+
+    // 確定レアリティ装備をドロップ
+    dropGuaranteedEquipment(rarity) {
+        const types = ['WEAPONS', 'ARMORS', 'ACCESSORIES'];
+        const typeKey = types[Math.floor(Math.random() * types.length)];
+        const templates = GameData.EQUIPMENT[typeKey];
+        const template = templates[Math.floor(Math.random() * templates.length)];
+
+        const equipment = this.generateEquipment(template, rarity);
+        const result = this.addEquipmentToInventory(equipment);
+
+        if (this.onLoot) {
+            this.onLoot(equipment, result.isDuplicate, result.stone);
+        }
+    }
+
+    // 週間リセットチェック
+    checkWeeklyReset() {
+        const now = new Date();
+        const lastReset = this.state.stoneExchangeWeekly.lastResetDate;
+
+        if (!lastReset) {
+            this.state.stoneExchangeWeekly.lastResetDate = now.toISOString();
+            return;
+        }
+
+        const lastResetDate = new Date(lastReset);
+        const daysSinceReset = Math.floor((now - lastResetDate) / (1000 * 60 * 60 * 24));
+
+        // 7日経過でリセット
+        if (daysSinceReset >= 7) {
+            this.state.stoneExchangeWeekly = {
+                lastResetDate: now.toISOString(),
+                purchases: {}
+            };
+        }
     }
 
     // ========================================
@@ -1335,7 +1543,7 @@ class Game {
                 const templates = GameData.EQUIPMENT[typeKey];
                 const template = templates[Math.floor(Math.random() * templates.length)];
                 const equipment = this.generateEquipment(template, reward.rarity);
-                this.state.inventory.push(equipment);
+                this.addEquipmentToInventory(equipment);
                 break;
         }
 
