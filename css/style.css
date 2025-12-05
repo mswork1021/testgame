@@ -1143,9 +1143,9 @@ h3 {
 }
 
 .inventory-grid {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xs);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
     padding-bottom: var(--spacing-md);
     max-height: 300px;
     overflow-y: auto;
@@ -1186,86 +1186,96 @@ h3 {
     50% { box-shadow: 0 0 20px rgba(255,215,0,0.8); }
 }
 
-/* インベントリ アイテム行表示 */
+/* インベントリ アイテムカード表示 */
 .inventory-item-row {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    padding: 10px;
-    margin-bottom: 8px;
+    justify-content: center;
+    padding: 6px 4px;
     background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
     border: 2px solid #333;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
+    position: relative;
+    min-height: 75px;
 }
 
 .inventory-item-row:active {
-    transform: scale(0.98);
+    transform: scale(0.95);
 }
 
 .inventory-item-row:hover {
     border-color: var(--accent-red);
+    transform: scale(1.05);
+    z-index: 1;
 }
 
 .inventory-item-row.common { border-color: var(--rarity-common); }
 .inventory-item-row.uncommon { border-color: var(--rarity-uncommon); }
-.inventory-item-row.rare { border-color: var(--rarity-rare); box-shadow: 0 0 10px rgba(0,204,255,0.3); }
-.inventory-item-row.epic { border-color: var(--rarity-epic); box-shadow: 0 0 10px rgba(204,102,255,0.4); }
+.inventory-item-row.rare { border-color: var(--rarity-rare); box-shadow: 0 0 8px rgba(0,204,255,0.3); }
+.inventory-item-row.epic { border-color: var(--rarity-epic); box-shadow: 0 0 8px rgba(204,102,255,0.4); }
 .inventory-item-row.legendary {
     border-color: var(--rarity-legendary);
-    box-shadow: 0 0 15px rgba(255,215,0,0.5);
+    box-shadow: 0 0 10px rgba(255,215,0,0.5);
     animation: legendaryGlow 1.5s ease-in-out infinite;
 }
 
 .inventory-item-row .item-icon {
-    font-size: 28px;
-    margin-right: 12px;
-    min-width: 40px;
-    text-align: center;
-}
-
-.inventory-item-row .item-info {
-    flex: 1;
-}
-
-.inventory-item-row .item-name {
-    font-weight: bold;
-    color: #fff;
+    font-size: 24px;
     margin-bottom: 2px;
 }
 
-.inventory-item-row .item-stat {
-    font-size: 12px;
-    color: #888;
+.inventory-item-row .item-info {
+    text-align: center;
+    width: 100%;
+    overflow: hidden;
 }
 
-/* アイテム比較表示 */
-.item-compare {
-    font-size: 12px;
+.inventory-item-row .item-name {
+    font-size: 10px;
     font-weight: bold;
-    padding: 4px 8px;
-    border-radius: 4px;
-    margin-left: 10px;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.inventory-item-row .item-stat {
+    font-size: 9px;
+    color: #aaa;
+}
+
+/* アイテム比較バッジ */
+.item-compare {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 8px;
+    font-weight: bold;
+    padding: 1px 3px;
+    border-radius: 3px;
 }
 
 .item-compare.up {
     color: #4cff4c;
-    background: rgba(76, 255, 76, 0.15);
+    background: rgba(76, 255, 76, 0.25);
 }
 
 .item-compare.down {
     color: #ff4c4c;
-    background: rgba(255, 76, 76, 0.15);
+    background: rgba(255, 76, 76, 0.25);
 }
 
 .item-compare.same {
     color: #888;
-    background: rgba(136, 136, 136, 0.15);
+    background: rgba(136, 136, 136, 0.25);
 }
 
 .item-compare.new {
     color: #ffcc00;
-    background: rgba(255, 204, 0, 0.15);
+    background: rgba(255, 204, 0, 0.25);
 }
 
 /* 装備モーダル比較結果 */
