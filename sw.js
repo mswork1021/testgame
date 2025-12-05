@@ -1,5 +1,5 @@
 // Tap Quest Service Worker
-const CACHE_NAME = 'tapquest-v2.25';
+const CACHE_NAME = 'tapquest-v2.41';
 const urlsToCache = [
     './',
     './index.html',
