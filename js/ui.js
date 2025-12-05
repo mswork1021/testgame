@@ -1484,54 +1484,44 @@ class UI {
         statsHtml += `<div class="enhance-section" style="margin-top:10px; padding:10px; background:rgba(0,0,0,0.3); border-radius:8px;">`;
         statsHtml += `<p style="font-size:11px; color:#888; margin-bottom:6px;">🪨${this.formatNumber(stones.ironScrap)} 💚${stones.magicStone} 💙${stones.blueCrystal} 💜${stones.purpleGem}</p>`;
 
-        // 数値リロールの範囲を計算
-        const template = this.game.findEquipmentTemplate(item.name);
-        const rarity = GameData.RARITY[item.rarity];
-        let valueRange = { min: 0, max: 0 };
-        if (template && rarity) {
-            const baseMin = Math.floor(template.baseValue * rarity.multiplier * 0.8);
-            const baseMax = Math.floor(template.baseValue * rarity.multiplier * 1.2);
-            const enhanceBonus = 1 + (enhanceLevel * 0.01);
-            valueRange.min = Math.floor(baseMin * enhanceBonus);
-            valueRange.max = Math.floor(baseMax * enhanceBonus);
-        }
+        // サブステータス情報
+        const substatCount = item.substats?.length || 0;
+        const hasSubstats = substatCount > 0;
 
-        // 種類変更の候補
-        const allStatTypes = ['tapDamage', 'goldBonus', 'critChance', 'critDamage', 'allStats'];
-        const otherStats = allStatTypes.filter(s => s !== item.stat);
+        // サブステ値の範囲（メインの10-25%）
+        const substatValueMin = Math.floor(item.value * 0.1);
+        const substatValueMax = Math.floor(item.value * 0.25);
 
         statsHtml += `<div class="stone-ability-list">`;
 
-        // 強化ボタン
+        // 強化ボタン（鉄くず）
         statsHtml += `<div class="stone-ability-row">`;
         statsHtml += `<button id="enhance-btn" class="btn-stone-ability" ${canEnhance ? '' : 'disabled'}>🪨 強化 (${enhanceCost})</button>`;
         statsHtml += `<span class="ability-desc">効果値 +1%</span>`;
         statsHtml += `</div>`;
 
-        // 数値リロール（魔石）
-        const valueReroll = GameData.STONE_ABILITIES.valueReroll;
-        const canValueReroll = stones.magicStone >= valueReroll.cost;
-        statsHtml += `<div class="stone-ability-row">`;
-        statsHtml += `<button id="value-reroll-btn" class="btn-stone-ability magic" ${canValueReroll ? '' : 'disabled'}>💚 数値抽選 (${valueReroll.cost})</button>`;
-        statsHtml += `<span class="ability-desc">範囲: ${valueRange.min}〜${valueRange.max}</span>`;
-        statsHtml += `</div>`;
-
-        // 種類リロール（蒼結晶）
-        const typeReroll = GameData.STONE_ABILITIES.typeReroll;
-        const canTypeReroll = stones.blueCrystal >= typeReroll.cost;
-        const otherStatsLabels = otherStats.map(s => this.getStatLabel(s).replace(/\(.*\)/, '').substring(0, 4)).join('/');
-        statsHtml += `<div class="stone-ability-row">`;
-        statsHtml += `<button id="type-reroll-btn" class="btn-stone-ability blue" ${canTypeReroll ? '' : 'disabled'}>💙 種類変更 (${typeReroll.cost})</button>`;
-        statsHtml += `<span class="ability-desc">${otherStatsLabels}</span>`;
-        statsHtml += `</div>`;
-
-        // サブステ追加（紫輝石）
+        // サブステ追加（紫輝石）- 先に追加を表示
         const addSubstat = GameData.STONE_ABILITIES.addSubstat;
-        const substatCount = item.substats?.length || 0;
         const canAddSubstat = stones.purpleGem >= addSubstat.cost && substatCount < 3;
         statsHtml += `<div class="stone-ability-row">`;
-        statsHtml += `<button id="add-substat-btn" class="btn-stone-ability purple" ${canAddSubstat ? '' : 'disabled'}>💜 サブステ (${addSubstat.cost})</button>`;
-        statsHtml += `<span class="ability-desc">${substatCount}/3 追加ステ</span>`;
+        statsHtml += `<button id="add-substat-btn" class="btn-stone-ability purple" ${canAddSubstat ? '' : 'disabled'}>💜 サブステ追加 (${addSubstat.cost})</button>`;
+        statsHtml += `<span class="ability-desc">${substatCount}/3</span>`;
+        statsHtml += `</div>`;
+
+        // サブステ値抽選（魔石）- サブステがないと使えない
+        const substatValueReroll = GameData.STONE_ABILITIES.substatValueReroll;
+        const canValueReroll = hasSubstats && stones.magicStone >= substatValueReroll.cost;
+        statsHtml += `<div class="stone-ability-row">`;
+        statsHtml += `<button id="value-reroll-btn" class="btn-stone-ability magic" ${canValueReroll ? '' : 'disabled'}>💚 サブステ値抽選 (${substatValueReroll.cost})</button>`;
+        statsHtml += `<span class="ability-desc">${hasSubstats ? `${substatValueMin}〜${substatValueMax}` : 'サブステなし'}</span>`;
+        statsHtml += `</div>`;
+
+        // サブステ種類変更（蒼結晶）- サブステがないと使えない
+        const substatTypeReroll = GameData.STONE_ABILITIES.substatTypeReroll;
+        const canTypeReroll = hasSubstats && stones.blueCrystal >= substatTypeReroll.cost;
+        statsHtml += `<div class="stone-ability-row">`;
+        statsHtml += `<button id="type-reroll-btn" class="btn-stone-ability blue" ${canTypeReroll ? '' : 'disabled'}>💙 サブステ種類変更 (${substatTypeReroll.cost})</button>`;
+        statsHtml += `<span class="ability-desc">${hasSubstats ? '1つ変更' : 'サブステなし'}</span>`;
         statsHtml += `</div>`;
 
         statsHtml += `</div></div>`;
@@ -1597,12 +1587,19 @@ class UI {
     onValueReroll() {
         if (!this.selectedItem) return;
 
-        const result = this.game.rerollEquipmentValue(this.selectedItem.id);
+        const result = this.game.rerollSubstatValues(this.selectedItem.id);
         if (result.success) {
             if (window.soundManager) window.soundManager.playBuy();
-            const diff = result.newValue - result.oldValue;
-            const arrow = diff > 0 ? '▲' : diff < 0 ? '▼' : '→';
-            this.showToast(`💚 数値変更: ${result.oldValue} ${arrow} ${result.newValue}`);
+            // 変化を表示
+            let changes = [];
+            for (let i = 0; i < result.oldValues.length; i++) {
+                const oldVal = result.oldValues[i].value;
+                const newVal = result.newValues[i].value;
+                const diff = newVal - oldVal;
+                const arrow = diff > 0 ? '▲' : diff < 0 ? '▼' : '→';
+                changes.push(`${oldVal}${arrow}${newVal}`);
+            }
+            this.showToast(`💚 サブステ値変更: ${changes.join(', ')}`);
             this.openEquipmentModal(result.equipment);
             this.renderInventory();
             this.updateDisplay();
@@ -1614,10 +1611,11 @@ class UI {
     onTypeReroll() {
         if (!this.selectedItem) return;
 
-        const result = this.game.rerollEquipmentType(this.selectedItem.id);
+        // 最初のサブステの種類を変更（将来的には選択UIを追加可能）
+        const result = this.game.rerollSubstatType(this.selectedItem.id, 0);
         if (result.success) {
             if (window.soundManager) window.soundManager.playBuy();
-            this.showToast(`💙 種類変更: ${this.getStatLabel(result.oldStat)} → ${this.getStatLabel(result.newStat)}`);
+            this.showToast(`💙 サブステ種類変更: ${this.getStatLabel(result.oldType)} → ${this.getStatLabel(result.newType)}`);
             this.openEquipmentModal(result.equipment);
             this.renderInventory();
             this.updateDisplay();
