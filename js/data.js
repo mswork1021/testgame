@@ -1716,10 +1716,10 @@ const GameData = {
         { id: 'blue_to_medals', stone: 'blueCrystal', cost: 500, reward: { type: 'towerMedals', amount: 100 }, name: '塔メダル交換', desc: '500蒼結晶 → 塔メダル×100', icon: '🏅', weeklyLimit: 3 },
 
         // 紫輝石交換
-        { id: 'purple_to_epic_ticket', stone: 'purpleGem', cost: 200, reward: { type: 'epicTicket', amount: 1 }, name: 'エピック確定券', desc: '200紫輝石 → エピック装備確定', icon: '🎫', weeklyLimit: 2 },
+        { id: 'purple_to_souls', stone: 'purpleGem', cost: 200, reward: { type: 'souls', amount: 500 }, name: 'ソウル交換', desc: '200紫輝石 → ソウル×500', icon: '👻', weeklyLimit: 3 },
 
         // 輝煌石交換
-        { id: 'radiant_to_legend_ticket', stone: 'radiantStone', cost: 100, reward: { type: 'legendTicket', amount: 1 }, name: 'レジェンド確定券', desc: '100輝煌石 → レジェンド装備確定', icon: '🎟️', weeklyLimit: 1 },
+        { id: 'radiant_to_sp', stone: 'radiantStone', cost: 100, reward: { type: 'skillPoints', amount: 1 }, name: 'SP交換', desc: '100輝煌石 → SP×1', icon: '⚡', weeklyLimit: 1 },
         { id: 'radiant_to_summon', stone: 'radiantStone', cost: 50, reward: { type: 'summonTicket', amount: 1 }, name: '10連チケット', desc: '50輝煌石 → 召喚10連', icon: '🌟', weeklyLimit: 2 }
     ],
 

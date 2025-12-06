@@ -1332,13 +1332,13 @@ class Game {
                 this.state.towerMedals += exchange.reward.amount;
                 rewardText = `🏅 塔メダル×${exchange.reward.amount} 獲得！`;
                 break;
-            case 'epicTicket':
-                this.dropGuaranteedEquipment('EPIC');
-                rewardText = `🎫 エピック装備を獲得！`;
+            case 'souls':
+                this.state.souls += exchange.reward.amount;
+                rewardText = `👻 ソウル×${exchange.reward.amount} 獲得！`;
                 break;
-            case 'legendTicket':
-                this.dropGuaranteedEquipment('LEGENDARY');
-                rewardText = `🎟️ レジェンド装備を獲得！`;
+            case 'skillPoints':
+                this.state.skillPoints += exchange.reward.amount;
+                rewardText = `⚡ SP×${exchange.reward.amount} 獲得！`;
                 break;
             case 'summonTicket':
                 this.state.gems += GameData.GACHA.MULTI_COST;
