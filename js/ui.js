@@ -448,7 +448,6 @@ class UI {
         if (this.elements.equipModalStats) {
             const self = this;
             const handleAction = (action, idx) => {
-                console.log('Equipment action:', action, idx);
                 switch (action) {
                     case 'enhance':
                         self.onEnhanceItem();
@@ -469,33 +468,22 @@ class UI {
             };
 
             // タッチイベント（モバイル優先）
-            // 重要: setTimeoutでUI更新を遅延させないと、モバイルブラウザでDOM更新がブロックされる
-            let touchHandled = false;
             this.elements.equipModalStats.addEventListener('touchstart', (e) => {
-                console.log('[DEBUG] touchstart on equipModalStats, target:', e.target);
                 const btn = e.target.closest('[data-action]');
-                console.log('[DEBUG] closest button:', btn, 'action:', btn?.dataset?.action);
                 if (btn && !btn.disabled) {
                     e.preventDefault();
                     e.stopPropagation();
-                    touchHandled = true;
-                    console.log('[DEBUG] touchstart handled, calling handleAction via setTimeout');
-                    // setTimeoutでイベント処理完了後にハンドラーを実行
                     setTimeout(() => {
                         handleAction(btn.dataset.action, btn.dataset.idx);
                     }, 0);
                 }
             }, { passive: false });
 
-            // クリックイベント（PC用）- タッチで処理済みならスキップ
+            // クリックイベント（PC用）
             this.elements.equipModalStats.addEventListener('click', (e) => {
-                console.log('[DEBUG] click on equipModalStats, touchHandled:', touchHandled);
-                if (touchHandled) {
-                    touchHandled = false;
-                    return;
-                }
+                // タッチデバイスではtouchstartでpreventDefaultされているのでスキップ
+                if (e.defaultPrevented) return;
                 const btn = e.target.closest('[data-action]');
-                console.log('[DEBUG] click closest button:', btn, 'action:', btn?.dataset?.action);
                 if (btn && !btn.disabled) {
                     handleAction(btn.dataset.action, btn.dataset.idx);
                 }

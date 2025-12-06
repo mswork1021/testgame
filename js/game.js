@@ -176,6 +176,12 @@ class Game {
 
         // タワータイマー
         this.towerTimerId = null;
+
+        // アーティファクトキャッシュ（パフォーマンス最適化）
+        this.artifactCache = {};
+        if (GameData.ARTIFACTS) {
+            GameData.ARTIFACTS.forEach(a => this.artifactCache[a.id] = a);
+        }
     }
 
     // ========================================
@@ -228,6 +234,15 @@ class Game {
             };
         }
         this.checkTowerReset();
+
+        // イベントガチャ初期化
+        this.initEventPity();
+
+        // ランキング初期化
+        this.initRankingData();
+
+        // ユーザーレベル初期化
+        this.initUserLevel();
 
         // 最初のモンスター生成
         this.spawnMonster();
@@ -430,8 +445,8 @@ class Game {
             timeLimit += this.state.equipment.armor.value;
         }
 
-        // アーティファクトボーナス
-        const timeCrystal = GameData.ARTIFACTS.find(a => a.id === 'timeCrystal');
+        // アーティファクトボーナス（キャッシュ使用）
+        const timeCrystal = this.artifactCache['timeCrystal'];
         if (timeCrystal && this.state.artifactLevels.timeCrystal > 0) {
             timeLimit += timeCrystal.effect.baseValue * this.state.artifactLevels.timeCrystal;
         }
@@ -680,14 +695,14 @@ class Game {
         // パーセントボーナス適用
         let multiplier = 1;
 
-        // アーティファクト: タップダメージ%
-        const swordOfHeroes = GameData.ARTIFACTS.find(a => a.id === 'swordOfHeroes');
+        // アーティファクト: タップダメージ%（キャッシュ使用）
+        const swordOfHeroes = this.artifactCache['swordOfHeroes'];
         if (swordOfHeroes && this.state.artifactLevels.swordOfHeroes > 0) {
             multiplier += (swordOfHeroes.effect.baseValue * this.state.artifactLevels.swordOfHeroes) / 100;
         }
 
-        // アーティファクト: 全ステータス
-        const infinityStone = GameData.ARTIFACTS.find(a => a.id === 'infinityStone');
+        // アーティファクト: 全ステータス（キャッシュ使用）
+        const infinityStone = this.artifactCache['infinityStone'];
         if (infinityStone && this.state.artifactLevels.infinityStone > 0) {
             multiplier += (infinityStone.effect.baseValue * this.state.artifactLevels.infinityStone) / 100;
         }
@@ -725,14 +740,14 @@ class Game {
         // パーセントボーナス適用
         let multiplier = 1;
 
-        // アーティファクト: DPS%
-        const ancientScroll = GameData.ARTIFACTS.find(a => a.id === 'ancientScroll');
+        // アーティファクト: DPS%（キャッシュ使用）
+        const ancientScroll = this.artifactCache['ancientScroll'];
         if (ancientScroll && this.state.artifactLevels.ancientScroll > 0) {
             multiplier += (ancientScroll.effect.baseValue * this.state.artifactLevels.ancientScroll) / 100;
         }
 
-        // アーティファクト: 全ステータス
-        const infinityStone = GameData.ARTIFACTS.find(a => a.id === 'infinityStone');
+        // アーティファクト: 全ステータス（キャッシュ使用）
+        const infinityStone = this.artifactCache['infinityStone'];
         if (infinityStone && this.state.artifactLevels.infinityStone > 0) {
             multiplier += (infinityStone.effect.baseValue * this.state.artifactLevels.infinityStone) / 100;
         }
@@ -770,8 +785,8 @@ class Game {
     getCriticalChance() {
         let chance = GameData.BALANCE.BASE_CRIT_CHANCE;
 
-        // アーティファクトボーナス
-        const luckyCharm = GameData.ARTIFACTS.find(a => a.id === 'luckyCharm');
+        // アーティファクトボーナス（キャッシュ使用）
+        const luckyCharm = this.artifactCache['luckyCharm'];
         if (luckyCharm && this.state.artifactLevels.luckyCharm > 0) {
             chance += luckyCharm.effect.baseValue * this.state.artifactLevels.luckyCharm;
         }
@@ -796,8 +811,8 @@ class Game {
     getCriticalDamage() {
         let damage = GameData.BALANCE.BASE_CRIT_DAMAGE;
 
-        // アーティファクトボーナス
-        const dragonHeart = GameData.ARTIFACTS.find(a => a.id === 'dragonHeart');
+        // アーティファクトボーナス（キャッシュ使用）
+        const dragonHeart = this.artifactCache['dragonHeart'];
         if (dragonHeart && this.state.artifactLevels.dragonHeart > 0) {
             damage += dragonHeart.effect.baseValue * this.state.artifactLevels.dragonHeart;
         }
@@ -900,8 +915,8 @@ class Game {
     getGoldMultiplier() {
         let multiplier = 1;
 
-        // アーティファクトボーナス
-        const goldenCrown = GameData.ARTIFACTS.find(a => a.id === 'goldenCrown');
+        // アーティファクトボーナス（キャッシュ使用）
+        const goldenCrown = this.artifactCache['goldenCrown'];
         if (goldenCrown && this.state.artifactLevels.goldenCrown > 0) {
             multiplier += (goldenCrown.effect.baseValue * this.state.artifactLevels.goldenCrown) / 100;
         }
@@ -1569,8 +1584,8 @@ class Game {
             souls += Math.floor(GameData.BALANCE.SOULS_PER_STAGE * Math.pow(GameData.BALANCE.SOULS_SCALING, i - GameData.BALANCE.MIN_REBIRTH_STAGE));
         }
 
-        // ソウルボーナス適用
-        const soulVessel = GameData.ARTIFACTS.find(a => a.id === 'soulVessel');
+        // ソウルボーナス適用（キャッシュ使用）
+        const soulVessel = this.artifactCache['soulVessel'];
         if (soulVessel && this.state.artifactLevels.soulVessel > 0) {
             souls = Math.floor(souls * (1 + soulVessel.effect.baseValue * this.state.artifactLevels.soulVessel / 100));
         }
